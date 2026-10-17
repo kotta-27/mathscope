@@ -149,3 +149,9 @@ describe('LaTeX の指数', () => {
     expect(normalizeExpr('x^{-1}')).toBe('x^(-1)')
   })
 })
+
+describe('数字を含む関数名', () => {
+  it('atan2 を atan と 2 に分けない', () => {
+    expect(normalizeExpr('atan2(b, a)')).toBe('atan2(b, a)')
+  })
+})

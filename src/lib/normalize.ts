@@ -188,6 +188,12 @@ function words(s: string): string {
         applyFn(base === '10' ? 'log10' : base === '2' ? 'log2' : `LOGBASE${base}`, [])
         continue
       }
+      // 名前に数字を含む関数 atan2(y, x) は、そのまま残す
+      if (!/[A-Za-z_]/.test(prevChar) && /^atan2\s*\(/.test(s.slice(i))) {
+        out += 'atan2'
+        i += 5
+        continue
+      }
       const st = i
       while (i < s.length && (isLetter(s[i]) || s[i] === '_')) i++
       const w = s.slice(st, i)
