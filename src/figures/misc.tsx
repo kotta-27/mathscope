@@ -21,9 +21,9 @@ export function QuadraticFig() {
       h={360}
       controls={
         <>
-          <Slider name="a" value={a} min={-3} max={3} step={0.1} onChange={(v) => setA(Math.abs(v) < 0.1 ? 0.1 : v)} />
-          <Slider name="b" value={b} min={-6} max={6} step={0.1} onChange={setB} />
-          <Slider name="c" value={c} min={-6} max={6} step={0.1} onChange={setC} />
+          <Slider stack name="a" value={a} min={-3} max={3} step={0.1} onChange={(v) => setA(Math.abs(v) < 0.1 ? 0.1 : v)} />
+          <Slider stack name="b" value={b} min={-6} max={6} step={0.1} onChange={setB} />
+          <Slider stack name="c" value={c} min={-6} max={6} step={0.1} onChange={setC} />
         </>
       }
       caption={
@@ -63,7 +63,7 @@ export function ArithmeticSumFig() {
     <Fig
       w={560}
       h={350}
-      controls={<Slider name="n" value={n} min={1} max={15} step={1} onChange={setN} />}
+      controls={<Slider stack name="n" value={n} min={1} max={15} step={1} onChange={setN} />}
       caption={
         <>
           <Tex block tex={`2S=n(n+1)=${n}\\times${n + 1}\\ \\Rightarrow\\ S=1+2+\\cdots+${n}=${(n * (n + 1)) / 2}`} />
@@ -123,7 +123,7 @@ export function GeometricSumFig() {
     <Fig
       w={560}
       h={340}
-      controls={<Slider name="n" value={n} min={1} max={12} step={1} onChange={setN} />}
+      controls={<Slider stack name="n" value={n} min={1} max={12} step={1} onChange={setN} />}
       caption={
         <Tex block tex={`\\frac12+\\frac14+\\cdots+\\frac1{2^{${n}}}=1-\\frac1{2^{${n}}}=${r2(1 - 1 / 2 ** n, 5)}\\ \\xrightarrow{n\\to\\infty}\\ 1=\\frac{1/2}{1-1/2}`} />
       }
@@ -160,7 +160,7 @@ export function PascalFig() {
     <Fig
       w={560}
       h={385}
-      controls={<Slider name="n" value={n} min={0} max={9} step={1} onChange={setN} />}
+      controls={<Slider stack name="n" value={n} min={0} max={9} step={1} onChange={setN} />}
       caption={<Tex block tex={`(a+b)^{${n}}=${rows[n].map((_, k) => term(k)).join('+') || '1'}`} />}
     >
       {rows.map((row, i) =>
@@ -223,8 +223,8 @@ export function EuclidFig() {
       h={small * sc + 40}
       controls={
         <>
-          <Slider name="a" value={a} min={1} max={60} step={1} onChange={setA} />
-          <Slider name="b" value={b} min={1} max={60} step={1} onChange={setB} />
+          <Slider stack name="a" value={a} min={1} max={60} step={1} onChange={setA} />
+          <Slider stack name="b" value={b} min={1} max={60} step={1} onChange={setB} />
         </>
       }
       caption={
@@ -260,8 +260,8 @@ export function CrtFig() {
       h={330}
       controls={
         <>
-          <Slider name="m" value={m} min={2} max={7} step={1} onChange={setM} />
-          <Slider name="n" value={n} min={2} max={9} step={1} onChange={setN} />
+          <Slider stack name="m" value={m} min={2} max={7} step={1} onChange={setM} />
+          <Slider stack name="n" value={n} min={2} max={9} step={1} onChange={setN} />
         </>
       }
       caption={
@@ -325,8 +325,8 @@ export function DivisorGridFig() {
       h={310}
       controls={
         <>
-          <Slider name="p" tex="2\text{ の指数}" value={e2} min={0} max={6} step={1} onChange={setE2} />
-          <Slider name="q" tex="3\text{ の指数}" value={e3} min={0} max={4} step={1} onChange={setE3} />
+          <Slider stack name="p" tex="2\text{ の指数}" value={e2} min={0} max={6} step={1} onChange={setE2} />
+          <Slider stack name="q" tex="3\text{ の指数}" value={e3} min={0} max={4} step={1} onChange={setE3} />
         </>
       }
       caption={
@@ -371,8 +371,8 @@ export function AmGmFig() {
       h={320}
       controls={
         <>
-          <Slider name="a" value={a} min={0.2} max={10} step={0.1} onChange={setA} />
-          <Slider name="b" value={b} min={0.2} max={10} step={0.1} onChange={setB} />
+          <Slider stack name="a" value={a} min={0.2} max={10} step={0.1} onChange={setA} />
+          <Slider stack name="b" value={b} min={0.2} max={10} step={0.1} onChange={setB} />
         </>
       }
       caption={
@@ -412,9 +412,9 @@ export function JensenFig() {
       h={320}
       controls={
         <>
-          <Slider name="x1" tex="x_1" value={x1} min={-3} max={3} step={0.05} onChange={setX1} />
-          <Slider name="x2" tex="x_2" value={x2} min={-3} max={3} step={0.05} onChange={setX2} />
-          <Slider name="l" tex="\lambda" value={lam} min={0} max={1} step={0.01} onChange={setLam} />
+          <Slider stack name="x1" tex="x_1" value={x1} min={-3} max={3} step={0.05} onChange={setX1} />
+          <Slider stack name="x2" tex="x_2" value={x2} min={-3} max={3} step={0.05} onChange={setX2} />
+          <Slider stack name="l" tex="\lambda" value={lam} min={0} max={1} step={0.01} onChange={setLam} />
         </>
       }
       caption={
