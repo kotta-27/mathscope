@@ -25,6 +25,7 @@ check('さらに戻るとホーム', (await b.evaluate('return !!document.queryS
 
 // スライダーで曲線が変わる
 await b.goto(BASE + '#graph')
+await b.waitFor(`document.querySelector('path.curve')`)
 const before = await b.evaluate(`return document.querySelector('path.curve').getAttribute('d').slice(0, 200)`)
 await b.evaluate(`
   const r = document.querySelector('.slider input[type=range]')
@@ -48,7 +49,8 @@ check('全角入力の読み取り', (await b.evaluate(`return document.querySel
 for (const [i, expect] of [[0, ['#graph', 'a*(x - p)^2 + q']], [1, ['#structure', '(-b + sqrt']], [2, ['#steps', '(a+b)^2']], [3, ['#geometry', null]], [4, ['#theorems', null]]]) {
   await b.goto(BASE + '#home')
   await b.evaluate(`document.querySelectorAll('.usecases .feature')[${i}].click()`)
-  await sleep(2000)
+  // 開いた先のタブの読み込みを待つ（式の入力欄か定理のカードが出るまで）
+  await b.waitFor(`document.querySelector('.math-input input')?.value || document.querySelector('.theorem')`)
   const hash = decodeURIComponent(await b.evaluate('return location.hash'))
   const input = await b.evaluate(`return document.querySelector('.math-input input')?.value ?? ''`)
   const ok = hash.startsWith(expect[0]) && (expect[1] === null || input.startsWith(expect[1]))
@@ -59,6 +61,7 @@ b.close()
 // スマホ幅の定理集
 const m = await launch(390, 800)
 await m.goto(BASE + '#theorems')
+await m.waitFor(`document.querySelector('.theorem')`)
 const dir = await m.evaluate(`return getComputedStyle(document.querySelector('.field-list')).flexDirection`)
 check('スマホの分野チップは横並び', dir === 'row', dir)
 const top = await m.evaluate(`return Math.round(document.querySelector('.theorem').getBoundingClientRect().top)`)
