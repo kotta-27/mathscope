@@ -23,8 +23,8 @@ export function MeanValueFig() {
       h={320}
       controls={
         <>
-          <Slider name="a" value={a} min={-3} max={b - 0.2} step={0.05} onChange={setA} />
-          <Slider name="b" value={b} min={a + 0.2} max={3} step={0.05} onChange={setB} />
+          <Slider stack name="a" value={a} min={-3} max={b - 0.2} step={0.05} onChange={setA} />
+          <Slider stack name="b" value={b} min={a + 0.2} max={3} step={0.05} onChange={setB} />
         </>
       }
       caption={
@@ -77,7 +77,7 @@ export function IvtFig() {
     <Fig
       w={560}
       h={320}
-      controls={<Slider name="k" value={k} min={lo} max={hi} step={0.01} onChange={setK} />}
+      controls={<Slider stack name="k" value={k} min={lo} max={hi} step={0.01} onChange={setK} />}
       caption={
         <>
           <Tex block tex={`f(a)=${r2(f(a))}<k=${r2(k)}<f(b)=${r2(f(b))}\\ \\Rightarrow\\ f(c)=k\\ \\text{となる } c \\text{ が ${roots.length} 個}`} />
@@ -132,7 +132,7 @@ export function FtcFig() {
     <Fig
       w={560}
       h={380}
-      controls={<Slider name="x" value={x} min={0.1} max={5.6} step={0.01} onChange={setX} />}
+      controls={<Slider stack name="x" value={x} min={0.1} max={5.6} step={0.01} onChange={setX} />}
       caption={
         <>
           <Tex
@@ -186,7 +186,7 @@ export function ByPartsFig() {
     <Fig
       w={560}
       h={350}
-      controls={<Slider name="t" tex="\text{終点}" value={t1} min={1.3} max={4.6} step={0.01} onChange={setT1} />}
+      controls={<Slider stack name="t" tex="\text{終点}" value={t1} min={1.3} max={4.6} step={0.01} onChange={setT1} />}
       caption={
         <>
           <Tex

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { Fig, TexAt } from './common'
@@ -6,15 +6,33 @@ import { C, SERIES, frame, r2 } from './util'
 
 /* ---------- ベイズの定理 ---------- */
 
-type BayesState = { names: string[]; prior: number[]; like: number[]; a: string }
+type BayesState = {
+  names: string[]
+  prior: number[]
+  like: number[]
+  a: string
+  /** 表の見出し「〜になる確率」 */
+  likeLabel: string
+  /** 結果の問い。n は原因の名前 */
+  ask: (n: string) => string
+}
 
 const BAYES_PRESETS: { label: string; s: BayesState }[] = [
-  { label: '3 つの工場と不良品', s: { names: ['工場1', '工場2', '工場3'], prior: [0.5, 0.3, 0.2], like: [0.02, 0.05, 0.1], a: '不良品' } },
-  { label: '病気の検査', s: { names: ['病気', '健康'], prior: [0.01, 0.99], like: [0.99, 0.05], a: '陽性' } },
-  { label: '自由に動かす', s: { names: ['B_1', 'B_2', 'B_3'], prior: [0.4, 0.35, 0.25], like: [0.3, 0.6, 0.85], a: 'A' } },
+  {
+    label: '3 つの工場と不良品',
+    s: { names: ['工場1', '工場2', '工場3'], prior: [0.5, 0.3, 0.2], like: [0.02, 0.05, 0.1], a: '不良品', likeLabel: '不良品になる確率', ask: (n) => `不良品が${n}で作られた確率` },
+  },
+  {
+    label: '病気の検査',
+    s: { names: ['病気', '健康'], prior: [0.01, 0.99], like: [0.99, 0.05], a: '陽性', likeLabel: '陽性になる確率', ask: (n) => `陽性だったとき、${n}である確率` },
+  },
+  {
+    label: '自由に動かす',
+    s: { names: ['B1', 'B2', 'B3'], prior: [0.4, 0.35, 0.25], like: [0.3, 0.6, 0.85], a: 'A', likeLabel: 'A が起こる確率', ask: (n) => `A が起きたとき、原因が ${n} である確率` },
+  },
 ]
 
-const isTex = (s: string) => /^[A-Za-z]_\d$/.test(s)
+const pct = (v: number, d = 1) => `${(v * 100).toFixed(d)}%`
 
 export function BayesFig() {
   const [s, setS] = useState(BAYES_PRESETS[0].s)
@@ -41,7 +59,7 @@ export function BayesFig() {
   const BH = 260
   const xs = s.prior.reduce<number[]>((acc, p) => [...acc, acc[acc.length - 1] + p * BW], [X0])
   const BAR = 565
-  const name = (i: number) => (isTex(s.names[i]) ? s.names[i] : `\\text{${s.names[i]}}`)
+  const name = (i: number) => `\\text{${s.names[i]}}`
   const aTex = s.a === 'A' ? 'A' : `\\text{${s.a}}`
 
   // 事後確率バーの各区間
@@ -60,24 +78,67 @@ export function BayesFig() {
               </button>
             ))}
           </div>
-          {s.prior.map((p, i) => (
-            <div key={i}>
-              <Slider name={`p${i}`} tex={`P(${name(i)})`} value={p} min={0.005} max={0.98} step={0.005} onChange={(v) => setPrior(i, v)} />
-              <Slider name={`l${i}`} tex={`P(${aTex}\\mid ${name(i)})`} value={s.like[i]} min={0} max={1} step={0.005} onChange={(v) => setLike(i, v)} />
+          {/* 計算表: 事前確率 × 起こる確率 = 同時確率 → 内訳の割合 */}
+          <div className="bayes-table-wrap">
+            <div className="bayes-table" role="table" aria-label="ベイズの定理の計算">
+              <div className="bayes-row head" role="row">
+                <span role="columnheader">原因</span>
+                <span role="columnheader">事前確率</span>
+                <span aria-hidden>×</span>
+                <span role="columnheader">{s.likeLabel}</span>
+                <span aria-hidden>=</span>
+                <span role="columnheader">同時確率</span>
+                <span role="columnheader">{s.a}の中での割合</span>
+              </div>
+              {s.names.map((n, i) => (
+                <div key={n} className={`bayes-row ${sel === i ? 'on' : ''}`} role="row" onClick={() => setSel(i)} style={{ '--c': SERIES[i] } as CSSProperties}>
+                  <span className="bayes-name" role="cell">
+                    <span className="bayes-swatch" />
+                    {n}
+                  </span>
+                  <label className="bayes-cell" role="cell">
+                    <span className="bayes-num">{pct(s.prior[i])}</span>
+                    <input type="range" min={0.005} max={0.98} step={0.005} value={s.prior[i]} aria-label={`${n}の事前確率`} onChange={(e) => setPrior(i, Number(e.target.value))} />
+                  </label>
+                  <span className="bayes-op" aria-hidden>×</span>
+                  <label className="bayes-cell" role="cell">
+                    <span className="bayes-num">{pct(s.like[i])}</span>
+                    <input type="range" min={0} max={1} step={0.005} value={s.like[i]} aria-label={`${n}のとき${s.likeLabel}`} onChange={(e) => setLike(i, Number(e.target.value))} />
+                  </label>
+                  <span className="bayes-op" aria-hidden>=</span>
+                  <span className="bayes-joint" role="cell">{pct(joint[i], 2)}</span>
+                  <span className="bayes-post" role="cell">
+                    <span className="bayes-bar">
+                      <span style={{ width: `${post[i] * 100}%` }} />
+                    </span>
+                    <strong>{pct(post[i])}</strong>
+                  </span>
+                </div>
+              ))}
+              <div className="bayes-row foot" role="row">
+                <span role="cell">合計</span>
+                <span role="cell">100%</span>
+                <span />
+                <span />
+                <span />
+                <strong role="cell">{pct(pa, 2)}</strong>
+                <span role="cell">← {s.a}になる確率 <Tex tex={`P(${aTex})`} /></span>
+              </div>
             </div>
-          ))}
+          </div>
+          <div className="bayes-result" style={{ '--c': SERIES[sel] } as CSSProperties}>
+            <span className="bayes-ask">
+              {s.ask(s.names[sel])}
+              <Tex tex={`P(${name(sel)}\\mid ${aTex})=${r2(joint[sel] * 100, 2)}\\%\\div ${r2(pa * 100, 2)}\\%`} />
+            </span>
+            <strong>{pct(post[sel])}</strong>
+          </div>
         </>
       }
       caption={
-        <>
-          <Tex
-            block
-            tex={`P(${name(sel)}\\mid ${aTex})=\\frac{\\textcolor{${SERIES[sel]}}{P(${aTex}\\mid ${name(sel)})P(${name(sel)})}}{\\sum_i P(${aTex}\\mid B_i)P(B_i)}=\\frac{${r2(s.like[sel], 3)}\\times${r2(s.prior[sel], 3)}}{${r2(pa, 4)}}=\\mathbf{${r2(post[sel] * 100, 1)}\\%}`}
-          />
-          <span className="hint">
-            列の幅が事前確率、色の濃い部分の高さが「その原因のもとで {s.a} が起こる確率」。濃い部分の面積の合計が {s.a} の起こる確率で、その中で選んだ列が占める割合が事後確率になる。列をクリックで切り替え。
-          </span>
-        </>
+        <span className="hint">
+          図の列の幅が事前確率、色の部分の高さが「その原因のもとで{s.a}になる確率」。表の行か図の列を押すと、下の結果がその原因に切り替わる。
+        </span>
       }
     >
       <text x={X0 + BW / 2} y={22} textAnchor="middle" className="fig-label">全事象 Ω</text>
@@ -133,7 +194,7 @@ export function InclusionExclusionFig() {
     <Fig
       w={600}
       h={300}
-      controls={<Slider name="d" tex="d" value={d} min={0} max={220} step={1} onChange={setD} />}
+      controls={<Slider stack name="d" tex="d" value={d} min={0} max={220} step={1} onChange={setD} />}
       caption={
         <Tex
           block
@@ -173,8 +234,8 @@ export function ConditionalFig() {
       h={290}
       controls={
         <>
-          <Slider name="a" tex="P(A)" value={a} min={0.1} max={1} onChange={setA} />
-          <Slider name="b" tex="B\text{ の位置}" value={bx} min={0} max={1 - bw} onChange={setBx} />
+          <Slider stack name="a" tex="P(A)" value={a} min={0.1} max={1} onChange={setA} />
+          <Slider stack name="b" tex="B\text{ の位置}" value={bx} min={0} max={1 - bw} onChange={setBx} />
         </>
       }
       caption={
@@ -229,8 +290,8 @@ export function BinomialDistFig() {
       h={270}
       controls={
         <>
-          <Slider name="n" value={n} min={1} max={60} step={1} onChange={setN} />
-          <Slider name="p" value={p} min={0.01} max={0.99} step={0.01} onChange={setP} />
+          <Slider stack name="n" value={n} min={1} max={60} step={1} onChange={setN} />
+          <Slider stack name="p" value={p} min={0.01} max={0.99} step={0.01} onChange={setP} />
         </>
       }
       caption={<Tex block tex={`E[X]=np=${r2(mu)},\\quad \\sigma=\\sqrt{np(1-p)}=${r2(sd)}`} />}
@@ -274,7 +335,7 @@ export function CltFig() {
     <Fig
       w={620}
       h={270}
-      controls={<Slider name="n" tex="n\ (\text{個})" value={n} min={1} max={30} step={1} onChange={setN} />}
+      controls={<Slider stack name="n" tex="n\ (\text{個})" value={n} min={1} max={30} step={1} onChange={setN} />}
       caption={
         <span className="hint">
           サイコロ 1 個の目は一様分布（平らな形）だが、n 個の和の分布は n を増やすと正規分布（赤線）に近づく。
