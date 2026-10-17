@@ -3,6 +3,7 @@ import { HomeTab } from './tabs/HomeTab'
 import { readHash } from './lib/route'
 import { HomeBackground } from './hero/HomeBackground'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { Loader } from './components/Loader'
 
 // ホーム以外は開いたときに読み込む（数式ライブラリ mathjs をトップで読み込まないため）
 const GraphTab = lazy(() => import('./tabs/GraphTab').then((m) => ({ default: m.GraphTab })))
@@ -72,7 +73,7 @@ export default function App() {
       </header>
       <main key={`${tab}|${hash}`}>
         <ErrorBoundary label="このページ">
-          <Suspense fallback={<div className="loading">読み込み中…</div>}>{current.el()}</Suspense>
+          <Suspense fallback={<Loader />}>{current.el()}</Suspense>
         </ErrorBoundary>
       </main>
     </div>

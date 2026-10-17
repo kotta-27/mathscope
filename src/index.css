@@ -315,7 +315,6 @@ body { overflow-x: clip; }
 .feature-legend { display: flex; gap: 10px; font-size: 11px; }
 .steps-mini { align-items: flex-start; padding-left: 14%; font-size: 15px; }
 
-.loading { color: var(--muted); padding: 40px 0; text-align: center; }
 
 /* ux polish */
 :where(a, button, input, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -325,4 +324,22 @@ body { overflow-x: clip; }
 @media (max-width: 900px) {
   .field-list { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
   .field-item { flex: none; white-space: nowrap; border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; gap: 6px; }
+}
+
+/* loader: アルキメデスの螺旋 */
+.loader { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 80px 0; color: var(--muted); }
+.loader-svg { width: 120px; height: 120px; overflow: visible; }
+.loader-spin { transform-origin: 50px 50px; animation: loader-spin 6s linear infinite; }
+.loader-track { fill: none; stroke: var(--text); stroke-opacity: 0.08; stroke-width: 1.2; }
+.loader-spiral { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 1 1; animation: loader-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+.loader-dot { fill: #fff; filter: drop-shadow(0 0 3px #a259ff) drop-shadow(0 0 6px #2e86ab); offset-rotate: 0deg; animation: loader-run 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+.loader-caption { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 13px; letter-spacing: 0.08em; }
+.loader-caption .katex { font-size: 1.15em; color: var(--text); opacity: 0.7; }
+@keyframes loader-spin { to { transform: rotate(360deg); } }
+@keyframes loader-draw { 0% { stroke-dashoffset: 1; } 50% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+@keyframes loader-run { 0% { offset-distance: 0%; opacity: 1; } 50% { offset-distance: 100%; opacity: 1; } 60%, 100% { offset-distance: 100%; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .loader-spin, .loader-spiral, .loader-dot { animation: none; }
+  .loader-spiral { stroke-dasharray: none; }
+  .loader-dot { display: none; }
 }
