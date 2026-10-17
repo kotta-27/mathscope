@@ -27,7 +27,9 @@
 |---|---|
 | `ｘ＋１` `2×x` `6÷3` | `x+1` `2*x` `6/3` |
 | `x²` `x⁻¹` `√(x+1)` `|x|` | `x^2` `x^(-1)` `sqrt(x+1)` `abs(x)` |
-| `sinx` `sin²x` `ln x` | `sin(x)` `sin(x)^2` `log(x)` |
+| `sinx` `sin²x` `ln x` | `sin(x)` `sin(x)^2` `log(x)`（`log` だけなら自然対数） |
+| `log10 x` `log_10(x)` `\log_{10} x` `lg x` `log₁₀x` | `log10(x)`（常用対数） |
+| `log_2 8` `log_3(x+1)` `log_a x` | `log2(8)` `log(x+1, 3)` `log(x, a)` |
 | `ax^2+bx+c` | `a*x^2+b*x+c`（2 文字以上の変数は 1 文字ずつの積。`pi` `theta` などは除く） |
 
 ### URL で状態を指定する

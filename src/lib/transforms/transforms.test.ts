@@ -124,6 +124,19 @@ describe('微分', () => {
       sameValue(derivative(normalizeExpr(src), 'x').toString(), r.result!)
     })
   }
+  it('底つきの対数も微分できる', () => {
+    // 答え合わせは mathjs の微分で。mathjs は log2 を微分できないので、同じ意味の log(…, 2) で比べる
+    for (const [src, ref] of [
+      ['log10 x', 'log(x, 10)'],
+      ['log_2(3x+1)', 'log(3x+1, 2)'],
+      ['log_3(x^2+1)', 'log(x^2+1, 3)'],
+    ]) {
+      const r = mode('derive').run(src)
+      if (!r.ok) throw new Error(`${src}: ${r.error}`)
+      sameValue(derivative(ref, 'x').toString(), r.result!)
+    }
+  })
+
   it('積の微分と合成関数の微分の手が出る', () => {
     const a = mode('derive').run('x^2 sin x')
     const b = mode('derive').run('(3x + 1)^5')
