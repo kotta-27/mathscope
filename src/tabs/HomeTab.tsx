@@ -36,7 +36,7 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
   },
   {
     verb: '体感する',
-    tab: '図形',
+    tab: '図解',
     text: <>幅 <Tex tex="h" /> を縮めて、割線が接線に重なっていく＝微分を目で見る</>,
     href: hrefTo('geometry', { demo: 'deriv' }),
     art: <TangentArt />,

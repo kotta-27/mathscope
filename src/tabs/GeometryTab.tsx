@@ -7,12 +7,19 @@ import { Tex } from '../components/Tex'
 import { evalNum, fmt, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
 import { readHash, readNum, replaceHash, useSyncHash } from '../lib/route'
+import { ComplexDemo, LimitDemo, MonteCarloDemo, Related, VectorDemo } from './ZukaiMore'
 
+/** 基本のしくみを、分野ごとに並べる */
 const DEMOS = [
-  { id: 'circle', label: '単位円と三角関数' },
-  { id: 'deriv', label: '微分 = 接線の傾き' },
-  { id: 'integral', label: '積分 = 面積' },
+  { id: 'circle', label: '単位円と三角関数', group: '関数' },
+  { id: 'limit', label: '数列の極限', group: '微分・積分' },
+  { id: 'deriv', label: '微分 = 接線の傾き', group: '微分・積分' },
+  { id: 'integral', label: '積分 = 面積', group: '微分・積分' },
+  { id: 'vector', label: 'ベクトルの和と実数倍', group: 'ベクトル・複素数' },
+  { id: 'complex', label: '複素数の掛け算 = 回転', group: 'ベクトル・複素数' },
+  { id: 'montecarlo', label: '確率 = 面積', group: '確率' },
 ] as const
+const GROUPS = [...new Set(DEMOS.map((d) => d.group))]
 type DemoId = (typeof DEMOS)[number]['id']
 
 /** そのデモを URL で開いたときだけ、URL の値を初期値に使う */
@@ -28,19 +35,33 @@ export function GeometryTab() {
   })
   return (
     <>
-      <div className="subtabs">
-        {DEMOS.map((d) => (
-          <button key={d.id} className={`chip ${demo === d.id ? 'on' : ''}`} onClick={() => {
-              setDemo(d.id)
-              replaceHash('geometry', { demo: d.id })
-            }}>
-            {d.label}
-          </button>
+      <nav className="subtabs zukai-nav" aria-label="図解の項目">
+        {GROUPS.map((g) => (
+          <div key={g} className="zukai-group">
+            <span className="zukai-group-label">{g}</span>
+            {DEMOS.filter((d) => d.group === g).map((d) => (
+              <button
+                key={d.id}
+                className={`chip ${demo === d.id ? 'on' : ''}`}
+                aria-current={demo === d.id ? 'page' : undefined}
+                onClick={() => {
+                  setDemo(d.id)
+                  replaceHash('geometry', { demo: d.id })
+                }}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
         ))}
-      </div>
+      </nav>
       {demo === 'circle' && <UnitCircle />}
       {demo === 'deriv' && <Derivative />}
       {demo === 'integral' && <Integral />}
+      {demo === 'limit' && <LimitDemo />}
+      {demo === 'vector' && <VectorDemo />}
+      {demo === 'complex' && <ComplexDemo />}
+      {demo === 'montecarlo' && <MonteCarloDemo />}
     </>
   )
 }
@@ -119,6 +140,7 @@ function UnitCircle() {
         <p className="hint">
           半径 1 の円の上を点が回ると、x 座標が cos、y 座標が sin になる。右の波は y 座標を角度ごとに並べたもの。点や波をドラッグして動かせる。
         </p>
+        <Related ids={[['unit-circle-def', '単位円による三角関数の定義'], ['pythagorean-identity', '三角関数の相互関係'], ['addition-formula', '加法定理']]} />
       </aside>
       <section className="stage">
         <svg
@@ -239,6 +261,7 @@ function Derivative() {
         <p className="hint">
           ▶ を押すと h が 0 に近づき、オレンジの割線が緑の接線に重なっていく。点はドラッグできる。
         </p>
+        <Related ids={[['derivative-def', '導関数の定義'], ['tangent-line', '接線の方程式'], ['mean-value', '平均値の定理']]} />
       </aside>
       <section className="stage">
         <Plot initial={{ xMin: -4, xMax: 4, yMin: -3, yMax: 3 }} height={520}>
@@ -350,6 +373,7 @@ function Integral() {
         <p className="hint">
           面積を細い長方形の合計で近似する。n を増やすほど合計が積分の値に近づく。x 軸より下の部分は負の面積として数える。
         </p>
+        <Related ids={[['riemann-sum', '区分求積法'], ['ftc', '微分積分学の基本定理'], ['area-between', '2曲線で囲まれた面積']]} />
       </aside>
       <section className="stage">
         <Plot initial={{ xMin: -3, xMax: 5, yMin: -1.5, yMax: 3.5 }} height={520}>

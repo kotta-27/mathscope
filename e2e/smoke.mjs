@@ -168,6 +168,11 @@ await b.waitFor(`document.querySelectorAll('.dropdown-item').length > 20`)
 await b.evaluate(`[...document.querySelectorAll('.dropdown-item')].find(e => e.textContent === '円と直線').click()`)
 await sleep(300)
 check('グラフ: 例を選ぶ', await b.evaluate(`return document.querySelector('.math-input input').value.startsWith('(x - a)^2') && !document.querySelector('.dropdown-list')`))
+// 図解: 新しいデモと関連する定理
+await b.goto('about:blank')
+await b.goto(BASE + '#geometry?demo=complex')
+await b.waitFor(`document.querySelector('.zukai-related a')`)
+check('図解: 複素数の掛け算のデモ', await b.evaluate(`return document.querySelector('.zukai-nav .chip.on')?.textContent.includes('複素数') && document.querySelectorAll('.drag-point').length === 2`))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')
