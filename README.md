@@ -32,15 +32,21 @@
 | `log_2 8` `log_3(x+1)` `log_a x` | `log2(8)` `log(x+1, 3)` `log(x, a)` |
 | `ax^2+bx+c` | `a*x^2+b*x+c`（2 文字以上の変数は 1 文字ずつの積。`pi` `theta` などは除く） |
 
-### URL で状態を指定する
+### URL で状態を共有する
+
+画面を触ると、その状態が URL に残る（履歴は増やさない）。ヘッダーの「リンクをコピー」で、いまの状態のまま開けるリンクをコピーできる。開いただけでは URL を書き換えない。
 
 | URL | 開く状態 |
 |---|---|
-| `#graph?f=sin(x)&f=x-x^3/6` | グラフに 2 つの式を入れて開く |
-| `#structure?f=...` | 構造に式を入れて開く |
-| `#steps?mode=solve&f=x^2=5x-6` | 式変形の種類と式を指定して開く（mode: `expand` `factor` `simplify` `solve` `derive`） |
-| `#geometry?demo=deriv` | 図形の微分デモ（`circle` `integral` も） |
-| `#theorems?q=bayes` | 定理集を検索した状態 |
+| `#graph?f=a*(x-p)^2+q&p=2&q=-1` | グラフに式を入れ、パラメータの値を指定して開く。`f` は複数書ける |
+| `#graph?...&view=-4,4,-2,6&play=a` | 表示範囲（x の最小・最大、y の最小・最大）と、自動再生するパラメータ |
+| `#structure?f=...&a=2` | 構造に式と文字の値を入れて開く |
+| `#steps?mode=solve&f=x^2=5x-6&n=2` | 式変形の種類・式・何手目かを指定して開く（mode: `expand` `factor` `simplify` `solve` `derive`） |
+| `#geometry?demo=circle&t=1.047&tan=1` | 単位円の角度と tan の表示 |
+| `#geometry?demo=deriv&f=x^2&x0=1&h=0.5` | 微分デモの関数・接点・幅（`df=0` で導関数を隠す） |
+| `#geometry?demo=integral&f=sin(x)&a=0&b=3&n=10&m=left` | 積分デモの関数・区間・分割数・方法（`left` `mid` `right` `trap`） |
+| `#theorems?q=bayes&field=prob` | 定理集の検索語と分野 |
+| `#theorems?id=bayes` | その定理までスクロールして開く |
 | `#home?scene=lorenz&t=8` | トップのアニメーションをそのシーン・時刻で止める |
 
 ## 誰のためのアプリか

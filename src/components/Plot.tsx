@@ -29,10 +29,13 @@ export function Plot({
   initial,
   height = 440,
   children,
+  onView,
 }: {
   initial: View
   height?: number
   children: (ctx: PlotCtx) => ReactNode
+  /** 表示範囲が変わったとき */
+  onView?: (v: View) => void
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [svg, setSvg] = useState<SVGSVGElement | null>(null)
@@ -40,6 +43,13 @@ export function Plot({
   const [view, setView] = useState(initial)
   const drag = useRef<{ x: number; y: number; view: View } | null>(null)
   const h = height
+  const onViewRef = useRef(onView)
+  useEffect(() => {
+    onViewRef.current = onView
+  })
+  useEffect(() => {
+    onViewRef.current?.(view)
+  }, [view])
 
   useEffect(() => {
     const el = wrapRef.current!

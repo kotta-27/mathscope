@@ -4,6 +4,7 @@ import { readHash } from './lib/route'
 import { HomeBackground } from './hero/HomeBackground'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Loader } from './components/Loader'
+import { CopyLink } from './components/CopyLink'
 
 // ホーム以外は開いたときに読み込む（数式ライブラリ mathjs をトップで読み込まないため）
 const GraphTab = lazy(() => import('./tabs/GraphTab').then((m) => ({ default: m.GraphTab })))
@@ -57,19 +58,25 @@ export default function App() {
             <p>{current.desc}</p>
           </div>
         </a>
-        <nav className="tabs">
-          {TABS.filter((t) => t.id !== 'home').map((t) => (
-            <button
-              key={t.id}
-              className={`tab ${tab === t.id ? 'on' : ''}`}
-              aria-current={tab === t.id ? 'page' : undefined}
-              // ハッシュを変えて履歴に残す（ブラウザの戻る・進むで行き来できる）
-              onClick={() => (location.hash = t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
+        <div className="header-nav">
+          <nav className="tabs">
+            {TABS.filter((t) => t.id !== 'home').map((t) => (
+              <button
+                key={t.id}
+                className={`tab ${tab === t.id ? 'on' : ''}`}
+                aria-current={tab === t.id ? 'page' : undefined}
+                // ハッシュを変えて履歴に残す（ブラウザの戻る・進むで行き来できる）
+                onClick={() => {
+                  // いまのタブを押しても、触った状態を消さない
+                  if (t.id !== tab) location.hash = t.id
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          {tab !== 'home' && <CopyLink />}
+        </div>
       </header>
       <main key={`${tab}|${hash}`}>
         <ErrorBoundary label="このページ">
