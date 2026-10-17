@@ -1,4 +1,4 @@
-import { ConstantNode, isOperatorNode, simplify, type MathNode } from 'mathjs'
+import { ConstantNode, isOperatorNode, isParenthesisNode, simplify, type MathNode } from 'mathjs'
 import { freeSymbols, texOf } from '../math'
 import { expand } from './expand'
 import { degree, polyDiv, polyGcd, polyOf, polyStr, polyTex, toIntPoly, type Poly } from './poly'
@@ -24,9 +24,14 @@ export function tidy(node: MathNode): TransformResult {
   if (!r || !r.numerator) return { ok: false, error: 'この式は整理できませんでした' }
   const num = r.numerator
   const den = r.denominator ?? new ConstantNode(1)
-  const moves: Move[] = [{ label: '分母をそろえて 1 つの分数にする（通分）', tex: hot(`\\frac{${texOf(num)}}{${texOf(den)}}`) }]
   const P = polyOf(num)
   const Q = polyOf(den)
+  // 1 変数なら多項式の書き方（3·x ではなく 3x）で見せる
+  const same = P && Q && (P.v === Q.v || degree(P.poly) === 0 || degree(Q.poly) === 0)
+  const pv = P && Q ? (degree(P.poly) > 0 ? P.v : Q.v) : 'x'
+  const numTex = same ? polyTex(P.poly, pv) : texOf(num)
+  const denTex = same ? polyTex(Q.poly, pv) : texOf(den)
+  const moves: Move[] = [{ label: '分母をそろえて 1 つの分数にする（通分）', tex: hot(`\\frac{${numTex}}{${denTex}}`) }]
   let result = `(${num.toString()}) / (${den.toString()})`
   if (P && Q && (P.v === Q.v || degree(P.poly) === 0 || degree(Q.poly) === 0)) {
     const v = degree(P.poly) > 0 ? P.v : Q.v
@@ -45,5 +50,9 @@ export function tidy(node: MathNode): TransformResult {
       result = `(${polyStr(n2, v)}) / (${polyStr(d2, v)})`
     }
   }
-  return { ok: true, start: texOf(node), moves, result }
+  // 分数の分子・分母を囲む括弧は、分数の線があれば要らないので外して見せる
+  const plain = node.transform((x, _path, parent) =>
+    isParenthesisNode(x) && parent && isOperatorNode(parent) && parent.fn === 'divide' ? x.content : x,
+  )
+  return { ok: true, start: texOf(plain), moves, result }
 }

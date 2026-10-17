@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { derivative, parse } from 'mathjs'
+import katex from 'katex'
 import { normalizeExpr } from '../normalize'
 import { MODES } from '.'
 
@@ -61,9 +62,9 @@ describe('方程式を解く', () => {
     expect(roots.length).toBe(expected.length)
     roots.forEach((x, i) => expect(x).toBeCloseTo(expected[i], 9))
     // 解を代入すると両辺が等しい
-    const [l, rr] = normalizeExpr(src.split('=')[0])
-      ? [parse(normalizeExpr(src.split('=')[0])).compile(), parse(normalizeExpr(src.split('=')[1])).compile()]
-      : []
+    const [left, right] = src.split('=')
+    const l = parse(normalizeExpr(left)).compile()
+    const rr = parse(normalizeExpr(right)).compile()
     for (const x of roots) expect(l.evaluate({ x })).toBeCloseTo(rr.evaluate({ x }), 6)
     return r
   }
@@ -127,8 +128,26 @@ describe('微分', () => {
     const a = mode('derive').run('x^2 sin x')
     const b = mode('derive').run('(3x + 1)^5')
     if (!a.ok || !b.ok) throw new Error()
-    expect(a.moves[0].label).toBe('積の微分 (fg)′ = f′g + fg′')
-    expect(b.moves[0].label).toBe('合成関数の微分: 外側（□ⁿ）を微分 × 内側を微分')
+    expect(a.moves[0].label).toBe("積の微分: (fg)' = f'g + fg'")
+    expect(b.moves[0].label).toBe('合成関数の微分: 外側（□ の n 乗）を微分 × 内側を微分')
+    // x^1 のような形を残さない
+    expect(a.moves.map((m) => m.tex).join(' ')).not.toContain('^{1}')
+  })
+})
+
+describe('TeX', () => {
+  it('どのモードのどの手も KaTeX でエラーなく描ける', () => {
+    for (const m of MODES) {
+      for (const src of m.presets) {
+        const r = m.run(src)
+        if (!r.ok) throw new Error(`${m.id} ${src}: ${r.error}`)
+        for (const tex of [r.start, ...r.moves.flatMap((x) => [x.tex, x.sub ?? ''])]) {
+          expect(() => katex.renderToString(tex, { throwOnError: true, strict: 'ignore' }), `${m.id} ${src}: ${tex}`).not.toThrow()
+          // JS の文字列で \f や \t になった崩れも見つける
+          expect(/[\f\t\v\b]/.test(tex), `${m.id} ${src}: 制御文字 ${JSON.stringify(tex)}`).toBe(false)
+        }
+      }
+    }
   })
 })
 

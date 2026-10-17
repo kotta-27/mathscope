@@ -25,8 +25,8 @@ export function splitQuadratic(q: Poly, v: string) {
   const D = b * b - 4 * a * c
   const s = Math.sqrt(D)
   if (!(D >= 0 && isInt(s) && q.every(isInt))) return { D, parts: null }
-  const r1 = (-b + s) / (2 * a)
-  const r2 = (-b - s) / (2 * a)
+  // 解は小さい順（因数も (x−2)(x−3) のように並ぶ）
+  const [r1, r2] = [(-b + s) / (2 * a), (-b - s) / (2 * a)].sort((p, q) => p - q)
   const f1 = linearFactor(r1, v)
   const f2 = linearFactor(r2, v)
   const rest = a / (f1.scale * f2.scale)

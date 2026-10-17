@@ -26,11 +26,11 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
     art: <PartsArt />,
   },
   {
-    verb: '展開する',
-    tab: '変形',
-    text: <><Tex tex="(a+b)^2" /> の展開を 1 手ずつ再生し、どこが書き換わったかを色で追う</>,
-    href: hrefTo('steps', { f: '(a+b)^2' }),
-    art: <ExpandArt />,
+    verb: '式変形を追う',
+    tab: '式変形',
+    text: <>展開・因数分解・方程式・微分を 1 手ずつ再生し、どこが書き換わったかを色で追う</>,
+    href: hrefTo('steps', { mode: 'solve', f: 'x^2 - 5x + 6 = 0' }),
+    art: <TransformArt />,
   },
   {
     verb: '体感する',
@@ -170,13 +170,13 @@ function PartsArt() {
   )
 }
 
-/** 展開の途中を 3 行で */
-function ExpandArt() {
+/** 方程式を解く途中を 3 行で（式変形の例） */
+function TransformArt() {
   return (
     <div className="feature-tex steps-mini">
-      <Tex tex="(a+b)^2" />
-      <Tex tex={`=\\textcolor{${PALETTE.green}}{(a+b)(a+b)}`} />
-      <Tex tex={`=\\textcolor{${PALETTE.green}}{a^2+2ab+b^2}`} />
+      <Tex tex="x^2-5x+6=0" />
+      <Tex tex={`\\textcolor{${PALETTE.green}}{(x-2)(x-3)}=0`} />
+      <Tex tex={`x=\\textcolor{${PALETTE.green}}{2},\\ \\textcolor{${PALETTE.green}}{3}`} />
     </div>
   )
 }

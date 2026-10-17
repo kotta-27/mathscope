@@ -33,20 +33,23 @@ function rule(u: MathNode, v: string): Rule {
       case 'multiply':
         if (!dep(a)) return { label: '定数倍は外に出す', to: mul(a, D(b, v)) }
         if (!dep(b)) return { label: '定数倍は外に出す', to: mul(b, D(a, v)) }
-        return { label: '積の微分 (fg)′ = f′g + fg′', to: op('+', 'add', [mul(D(a, v), b), mul(a, D(b, v))]) }
+        return { label: "積の微分: (fg)' = f'g + fg'", to: op('+', 'add', [mul(D(a, v), b), mul(a, D(b, v))]) }
       case 'divide':
         if (!dep(b)) return { label: '定数で割るのはそのまま', to: op('/', 'divide', [D(a, v), wrap(b)]) }
         return {
-          label: '商の微分 (f/g)′ = (f′g − fg′) / g²',
+          label: "商の微分: (f/g)' = (f'g − fg') / g²",
           to: op('/', 'divide', [new ParenthesisNode(op('-', 'subtract', [mul(D(a, v), b), mul(a, D(b, v))])), op('^', 'pow', [wrap(b), num(2)])]),
         }
       case 'pow': {
         if (!dep(b)) {
           const n1 = isConstantNode(b) ? num(Number(b.value) - 1) : simplify(op('-', 'subtract', [b, num(1)]))
-          const outer = mul(wrap(b), op('^', 'pow', [wrap(a), wrap(n1)]))
+          // 指数が 1 なら x、0 なら 1 にして、x^1 のような形を残さない
+          const n1v = isConstantNode(n1) ? Number(n1.value) : NaN
+          const powPart = n1v === 1 ? a : n1v === 0 ? null : op('^', 'pow', [wrap(a), wrap(n1)])
+          const outer = powPart ? mul(wrap(b), powPart) : b
           const base = unwrap(a)
-          if (isSymbolNode(base) && base.name === v) return { label: `べき乗の微分 (${v}ⁿ)′ = n${v}ⁿ⁻¹`, to: outer }
-          return { label: '合成関数の微分: 外側（□ⁿ）を微分 × 内側を微分', to: mul(outer, D(a, v)) }
+          if (isSymbolNode(base) && base.name === v) return { label: 'べき乗の微分: 指数を前に出して、指数を 1 減らす', to: outer }
+          return { label: '合成関数の微分: 外側（□ の n 乗）を微分 × 内側を微分', to: mul(outer, D(a, v)) }
         }
         if (!dep(a)) {
           const e = isSymbolNode(unwrap(a)) && (unwrap(a) as SymbolNode).name === 'e'
@@ -101,7 +104,7 @@ export function differentiate(node: MathNode): TransformResult {
       moves.push({
         label: a.label,
         tex: texOf(next, new Map([[a.to, HOT]])),
-        sub: `\\textcolor{${HOT_BEFORE}}{${texOf(target)}}\;\\Rightarrow\;\\textcolor{${HOT}}{${texOf(a.to)}}`,
+        sub: `\\textcolor{${HOT_BEFORE}}{${texOf(target)}}\\;\\Rightarrow\\;\\textcolor{${HOT}}{${texOf(a.to)}}`,
       })
       cur = next
     }

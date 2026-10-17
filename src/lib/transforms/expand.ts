@@ -9,7 +9,7 @@ export function expand(node: MathNode): TransformResult {
   const moves: Move[] = steps.map((s) => ({
     label: s.label,
     tex: texOf(s.after, s.whole ? undefined : new Map([[s.replacement, HOT]])),
-    sub: s.whole ? undefined : `\\textcolor{${HOT_BEFORE}}{${texOf(s.target)}}\;\\Rightarrow\;\\textcolor{${HOT}}{${texOf(s.replacement)}}`,
+    sub: s.whole ? undefined : `\\textcolor{${HOT_BEFORE}}{${texOf(s.target)}}\\;\\Rightarrow\\;\\textcolor{${HOT}}{${texOf(s.replacement)}}`,
   }))
   const first = steps[0]
   return {

@@ -1,4 +1,4 @@
-import { OperatorNode } from 'mathjs'
+import { OperatorNode, isConstantNode } from 'mathjs'
 import { parseExpr, texOf } from '../math'
 import {
   commonFactor,
@@ -55,7 +55,9 @@ export function solve(src: string): TransformResult {
     return { ok: true, start, moves, roots: [-b / a] }
   }
 
-  moves.push({ label: '移項して右辺を 0 にする', tex: `${polyTex(p, v)} = 0` })
+  // 右辺がもともと 0 なら移項の手は要らない
+  const rightIsZero = isConstantNode(R.node) && Number(R.node.value) === 0
+  if (!rightIsZero) moves.push({ label: '移項して右辺を 0 にする', tex: `${polyTex(p, v)} = 0` })
   const { g, k } = commonFactor(p)
   if (k === 0 && Math.abs(g) !== 1) {
     p = p.map((c) => c / g)
