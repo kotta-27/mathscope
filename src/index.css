@@ -567,3 +567,12 @@ body { overflow-x: clip; }
 .copy-link span { display: inline-block; min-width: 8em; text-align: center; }
 .icon-tool span { display: inline-block; min-width: 3em; text-align: center; }
 @media (max-width: 640px) { .copy-link span { min-width: 0; } }
+
+/* 定理カード: ひとことで・動かしてみよう・つながる定理 */
+.theorem-gist { margin: 6px 0 0; font-size: 15px; color: var(--text); line-height: 1.7; }
+.theorem-try { margin: 4px 0 10px; padding: 10px 14px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 0 10px 10px 0; font-size: 14px; }
+.theorem-try ul { margin: 6px 0 0; padding-left: 1.2em; }
+.theorem-try li + li { margin-top: 4px; }
+.theorem-related { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 13px; }
+.theorem-related a { color: var(--accent); text-decoration: none; }
+.theorem-related a:hover { text-decoration: underline; }
