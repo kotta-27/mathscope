@@ -153,7 +153,7 @@ export function BayesFig() {
             <rect x={x} y={Y0 + BH - hA} width={w} height={hA} fill={col} opacity={sel === i ? 0.75 : 0.45} />
             <rect x={x} y={Y0} width={w} height={BH} fill="none" stroke={col} strokeWidth={sel === i ? 3 : 1.2} />
             {w > 34 && <TexAt x={x + w / 2} y={Y0 + 18} tex={name(i)} color={col} />}
-            {w > 34 && <TexAt x={x + w / 2} y={Y0 + 40} tex={`${r2(s.prior[i] * 100, 1)}\\%`} color="var(--muted)" size={12} />}
+            {w > 34 && <TexAt x={x + w / 2} y={Y0 + 40} tex={`\\text{${r2(s.prior[i] * 100, 1)}\\%}`} color="var(--muted)" size={12} />}
             {w > (s.a.length + s.names[i].length) * 15 + 20 && hA > 24 && <TexAt x={x + w / 2} y={Y0 + BH - hA / 2} tex={`${aTex}\\cap ${name(i)}`} color="#fff" size={13} />}
           </g>
         )
@@ -164,7 +164,7 @@ export function BayesFig() {
       {post.map((p, i) => (
         <g key={i} onClick={() => setSel(i)} style={{ cursor: 'pointer' }}>
           <rect x={BAR} y={barYs[i]} width={60} height={Math.max(0, p * BH)} fill={SERIES[i]} opacity={sel === i ? 0.85 : 0.5} stroke="var(--surface)" />
-          {p * BH > 16 && <TexAt x={BAR + 66} y={barYs[i] + (p * BH) / 2} tex={`${r2(p * 100, 1)}\\%`} color={SERIES[i]} anchor="start" size={13} />}
+          {p * BH > 16 && <TexAt x={BAR + 66} y={barYs[i] + (p * BH) / 2} tex={`\\text{${r2(p * 100, 1)}\\%}`} color={SERIES[i]} anchor="start" size={13} />}
         </g>
       ))}
       <rect x={BAR} y={Y0} width={60} height={BH} fill="none" stroke="var(--text)" strokeWidth={1.5} />
