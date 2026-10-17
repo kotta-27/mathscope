@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseExpr } from './math'
+import { parseExpr, texOf } from './math'
 
 const err = (src: string) => {
   const p = parseExpr(src)
@@ -49,5 +49,12 @@ describe('parseExpr', () => {
     const e = err('foo(x)')
     expect(e.error).toBe('「foo」という関数はありません')
     expect(e.pos).toBe(0)
+  })
+})
+
+describe('指数の括弧', () => {
+  it('指数を囲む括弧は描かない', () => {
+    const p = parseExpr('x^(n+1) + sqrt(x^(2)+1)')
+    expect(p.ok && texOf(p.node)).not.toMatch(/\\left\(2\\right\)|\^\{\\left\(/)
   })
 })

@@ -290,6 +290,12 @@ function latex(s: string): string {
       } else if (GREEK.includes(cmd)) out += ` ${cmd.replace(/^var/, '')} `
       else if (LATEX_FUNCS[cmd]) out += ` ${LATEX_FUNCS[cmd]} `
       else out += cmd
+    } else if (c === '^' && s[i + 1] === '{') {
+      // 指数 x^{2} → x^2（1 つの数や文字なら括弧を付けない）、x^{n+1} → x^(n+1)
+      const [a, j] = group(s, i + 1)
+      i = j
+      const e = latex(a).trim()
+      out += /^[A-Za-z0-9.]+$/.test(e) ? `^${e}` : `^(${e})`
     } else if (c === '_' && s[i + 1] === '{') {
       // 添字 x_{1} → x_1
       const [a, j] = group(s, i + 1)
