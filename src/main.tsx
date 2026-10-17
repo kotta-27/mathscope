@@ -9,3 +9,6 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+// フォントは最初の描画のあとで読み込む（届くまではシステムのフォントで表示される）
+void import('./fonts')
