@@ -72,6 +72,16 @@ npm run e2e     # クリック操作の検証。開発サーバーと手元の C
 - PR と main への push で CI（lint・テスト・ビルド）が走る
 - main に入ると GitHub Actions で GitHub Pages にデプロイされる
 
+### アクセス解析（任意）
+
+Cookie を使わない [GoatCounter](https://www.goatcounter.com/) で、画面ごとの閲覧数と、図を触った・リンクをコピーした・検索が 0 件だった、などの出来事を数える。数える内容は [docs/personas.md](docs/personas.md) の「検証の方法」にある。
+
+1. GoatCounter でサイトを作る（例: `mathscope`）
+2. GitHub のリポジトリの Settings → Secrets and variables → Actions → Variables に `GOATCOUNTER_URL` を追加する（値の例: `https://mathscope.goatcounter.com/count`）
+3. main に push すると、次のデプロイから有効になる
+
+変数がないときは、解析のコードはビルドに含まれない。
+
 ## 構成
 
 | パス | 内容 |

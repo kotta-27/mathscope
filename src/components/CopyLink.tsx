@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { flushHash } from '../lib/route'
+import { track } from '../lib/analytics'
 
 /** いまの画面の状態をそのまま開けるリンクを、クリップボードにコピーする */
 export function CopyLink() {
@@ -11,6 +12,7 @@ export function CopyLink() {
   }, [done])
   const copy = async () => {
     flushHash()
+    track('copy-link')
     const url = location.href
     try {
       await navigator.clipboard.writeText(url)

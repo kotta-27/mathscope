@@ -8,6 +8,8 @@ import { BayesArt, ParabolaArt, PartsArt, TangentArt, TransformArt } from '../he
 
 
 const QUAD = '(-b + sqrt(b^2 - 4*a*c)) / (2*a)'
+/** 「グラフを触ってみる」で開くグラフ。開いた瞬間から波が動いている */
+const FIRST_GRAPH = hrefTo('graph', { f: ['sin(x)', 'sin(k*x)', 'sin(x) + sin(k*x)'], k: 1.5, play: 'k' })
 
 /** 初めての人向けに、具体的な使い方を「動詞＋例」で見せる。href はその例を入れた状態のタブ */
 const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art: ReactNode }[] = [
@@ -123,7 +125,7 @@ export function HomeTab() {
             式を入れるとグラフになり、文字を動かせば形が変わる。定理も図で確かめられる。見て、触って、わかるための数学の道具。
           </p>
           <div className="hero-cta">
-            <a className="btn primary" href="#graph">グラフを触ってみる</a>
+            <a className="btn primary" href={FIRST_GRAPH}>グラフを触ってみる</a>
             <a className="btn" href="#theorems">定理集を見る</a>
           </div>
           <form
@@ -207,6 +209,7 @@ export function HomeTab() {
               <span className="pick-tex">
                 <Tex tex={tex} />
               </span>
+              <span className="pick-go">図を動かす →</span>
             </a>
           ))}
         </div>
@@ -217,7 +220,7 @@ export function HomeTab() {
           <h2>まずは、式をひとつ入れてみる。</h2>
           <p>グラフにするところから始めても、定理を眺めるところから始めてもいい。</p>
           <div className="hero-cta">
-            <a className="btn primary" href="#graph">グラフを触ってみる</a>
+            <a className="btn primary" href={FIRST_GRAPH}>グラフを触ってみる</a>
             <a className="btn" href="#theorems">定理集を見る</a>
           </div>
         </div>

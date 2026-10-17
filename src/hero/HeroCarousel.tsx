@@ -1,21 +1,22 @@
 import { useRef, useState } from 'react'
 import { Tex } from '../components/Tex'
-import { readHash } from '../lib/route'
+import { hrefTo, readHash } from '../lib/route'
 import { useRaf } from '../lib/useRaf'
 import { useVisible } from '../lib/useVisible'
 import { HeroCanvas } from './HeroCanvas'
 import { epicycles, fern, flowField, harmonograph, lorenz, phyllotaxis, timesTable, type AnyScene } from './canvasScenes'
 
-type Scene = { id: string; field: string; title: string; tex: string; duration: number; scene: AnyScene }
+/** link: その絵の数学を、アプリのどこで触れるか */
+type Scene = { id: string; field: string; title: string; tex: string; duration: number; scene: AnyScene; link: { label: string; href: string } }
 
 const SCENES: Scene[] = [
-  { id: 'phyllotaxis', field: '数列', title: '黄金角のヒマワリ', tex: 'r_n=c\\sqrt n,\\ \\ \\theta_n=n\\cdot 137.5^\\circ', duration: 10, scene: phyllotaxis },
-  { id: 'times', field: '整数', title: '円周上の掛け算表', tex: 'i\\ \\mapsto\\ k\\,i \\bmod N', duration: 12, scene: timesTable },
-  { id: 'lorenz', field: '微分方程式', title: 'ローレンツ・アトラクタ', tex: '\\dot x=\\sigma(y-x),\\ \\dot y=x(\\rho-z)-y,\\ \\dot z=xy-\\beta z', duration: 12, scene: lorenz },
-  { id: 'epicycles', field: '複素数', title: '回る円が描くハート', tex: 'z(t)=\\sum_{m} c_m\\,e^{2\\pi i m t}', duration: 10, scene: epicycles },
-  { id: 'harmonograph', field: '三角関数', title: 'ハーモノグラフ', tex: 'x(t)=\\sum_k A_k\\sin(f_k t+\\varphi_k)\\,e^{-d t}', duration: 11, scene: harmonograph },
-  { id: 'fern', field: '確率', title: 'バーンズリーのシダ', tex: '\\vec x\\ \\mapsto\\ A_i\\vec x+\\vec b_i\\quad(\\text{確率 } p_i)', duration: 10, scene: fern },
-  { id: 'flow', field: 'ベクトル場', title: '流れの中の粒子', tex: '\\frac{d\\vec x}{dt}=\\vec v(\\vec x,t)', duration: 11, scene: flowField },
+  { id: 'phyllotaxis', field: '数列', title: '黄金角のヒマワリ', tex: 'r_n=c\\sqrt n,\\ \\ \\theta_n=n\\cdot 137.5^\\circ', duration: 10, scene: phyllotaxis, link: { label: '√n で広がる半径をグラフで見る', href: hrefTo('graph', { f: 'c*sqrt(x)', c: 1 }) } },
+  { id: 'times', field: '整数', title: '円周上の掛け算表', tex: 'i\\ \\mapsto\\ k\\,i \\bmod N', duration: 12, scene: timesTable, link: { label: '余り（mod）が回る様子をフェルマーの小定理で見る', href: hrefTo('theorems', { id: 'fermat-little' }) } },
+  { id: 'lorenz', field: '微分方程式', title: 'ローレンツ・アトラクタ', tex: '\\dot x=\\sigma(y-x),\\ \\dot y=x(\\rho-z)-y,\\ \\dot z=xy-\\beta z', duration: 12, scene: lorenz, link: { label: '微分＝接線の傾きを見る', href: hrefTo('geometry', { demo: 'deriv' }) } },
+  { id: 'epicycles', field: '複素数', title: '回る円が描くハート', tex: 'z(t)=\\sum_{m} c_m\\,e^{2\\pi i m t}', duration: 10, scene: epicycles, link: { label: '回る円をオイラーの公式で見る', href: hrefTo('theorems', { id: 'euler-formula' }) } },
+  { id: 'harmonograph', field: '三角関数', title: 'ハーモノグラフ', tex: 'x(t)=\\sum_k A_k\\sin(f_k t+\\varphi_k)\\,e^{-d t}', duration: 11, scene: harmonograph, link: { label: '波の重ね合わせをグラフで動かす', href: hrefTo('graph', { f: ['sin(x)', 'sin(k*x)', 'sin(x) + sin(k*x)'], k: 1.5, play: 'k' }) } },
+  { id: 'fern', field: '確率', title: 'バーンズリーのシダ', tex: '\\vec x\\ \\mapsto\\ A_i\\vec x+\\vec b_i\\quad(\\text{確率 } p_i)', duration: 10, scene: fern, link: { label: '行列で平面を移す様子を見る', href: hrefTo('theorems', { id: 'inverse-matrix' }) } },
+  { id: 'flow', field: 'ベクトル場', title: '流れの中の粒子', tex: '\\frac{d\\vec x}{dt}=\\vec v(\\vec x,t)', duration: 11, scene: flowField, link: { label: '速度を積分すると位置になる（微積分の基本定理）', href: hrefTo('theorems', { id: 'ftc' }) } },
 ]
 
 const FADE = 0.6
@@ -62,6 +63,10 @@ export function HeroCarousel() {
             <Tex tex={s.tex} />
           </span>
         </div>
+        {/* 絵を押すと、その数学を触れる画面へ */}
+        <a className="hero-link" href={s.link.href} aria-label={s.link.label}>
+          <span>{s.link.label} →</span>
+        </a>
         <button className="hero-nav prev" onClick={() => go(idx - 1)} aria-label="前へ">‹</button>
         <button className="hero-nav next" onClick={() => go(idx + 1)} aria-label="次へ">›</button>
       </div>

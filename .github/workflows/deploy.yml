@@ -35,6 +35,9 @@ jobs:
       - if: steps.nm.outputs.cache-hit != 'true'
         run: npm ci
       - run: npm run build
+        env:
+          # リポジトリの変数 GOATCOUNTER_URL があればアクセス解析を有効にする
+          VITE_GOATCOUNTER_URL: ${{ vars.GOATCOUNTER_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
