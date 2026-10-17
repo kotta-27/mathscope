@@ -3,7 +3,7 @@ import { parse } from 'mathjs'
 import { normalizeExpr } from './normalize'
 
 /** 暗黙の掛け算も * で表示して比べる */
-const show = (s: string) => parse(s).toString({ implicit: 'show' })
+const show = (s: string) => parse(s).toString({ implicit: 'show', parenthesis: 'auto' })
 
 /** 正規化した結果を mathjs で読み、期待する式と同じ木になるか比べる */
 const same = (input: string, expected: string) =>
@@ -91,6 +91,27 @@ describe('normalizeExpr', () => {
     same('x_1 + x_2', 'x_1 + x_2')
     same('x2', 'x2')
     same('2pix', '2*pi*x')
+  })
+
+  it('LaTeX の書き方', () => {
+    same('\\frac{1}{x+1}', '1/(x+1)')
+    same('\\dfrac{x^{2}-1}{x-1}', '(x^2-1)/(x-1)')
+    same('\\frac12 x', '(1/2) x')
+    same('\\sqrt{x^2+1}', 'sqrt(x^2+1)')
+    same('\\sqrt[3]{x}', 'nthRoot(x, 3)')
+    same('2\\cdot x + 3 \\times y', '2*x + 3*y')
+    same('a \\div b', 'a/b')
+    same('\\sin x + \\cos^2 x', 'sin(x) + cos(x)^2')
+    same('\\sin\\left(2x\\right)', 'sin(2x)')
+    same('\\ln x', 'log(x)')
+    same('e^{-x^2}', 'e^(-x^2)')
+    same('\\pi r^2', 'pi*r^2')
+    same('\\theta + \\alpha', 'theta + alpha')
+    same('x_{1} + x_{2}', 'x_1 + x_2')
+    same('\\left|x-1\\right|', 'abs(x-1)')
+    same('\\mathrm{e}^{x}', 'e^x')
+    same('a\\,b', 'a*b')
+    same('y = \\frac{1}{2}x^{2}', '(1/2) x^2')
   })
 
   it('先頭の y = や f(x) = を取り除く', () => {

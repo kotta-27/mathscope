@@ -72,6 +72,35 @@ await b.evaluate(`document.querySelectorAll('.bayes-row:not(.head):not(.foot)')[
 await sleep(300)
 const ask = await b.evaluate(`return document.querySelector('.bayes-ask').textContent`)
 check('ベイズ: 行を押すと結果が切り替わる', ask.includes('工場3'), ask.slice(0, 20))
+// トップの入力欄: 開いた直後は数式ライブラリを読まず、節が見えたら読み込んで使える
+// （# 以降だけの移動ではページが読み直されないので、空のページを挟んで読み直す）
+await b.goto('about:blank')
+await b.goto(BASE + '#home')
+await sleep(500)
+const before0 = await b.evaluate(`return performance.getEntriesByType('resource').some((r) => /MathInput/.test(r.name))`)
+await b.evaluate(`document.querySelector('.input-section').scrollIntoView(); return 1`)
+await b.waitFor(`document.querySelector('.input-demo input')`)
+await b.evaluate(`
+  const i = document.querySelector('.input-demo input')
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+  set.call(i, 'sin 2x'); i.dispatchEvent(new Event('input', { bubbles: true }))
+`)
+await sleep(300)
+const reread = await b.evaluate(`return document.querySelector('.input-demo .mi-note code')?.textContent`)
+const href = decodeURIComponent(await b.evaluate(`return document.querySelector('.input-demo a.btn').getAttribute('href')`)).replace(/\+/g, ' ')
+// LaTeX でも入れられる
+const latexSrc = '\\frac{1}{x+1}'
+await b.evaluate(`
+  const i = document.querySelector('.input-demo input')
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+  set.call(i, ${JSON.stringify(latexSrc)}); i.dispatchEvent(new Event('input', { bubbles: true }))
+`)
+await sleep(300)
+const latexErr = await b.evaluate(`return !!document.querySelector('.input-demo .mi-error')`)
+const latexPreview = await b.evaluate(`return document.querySelector('.input-demo .mi-preview')?.textContent ?? ''`)
+check('トップの入力欄: LaTeX（\\frac）も読める', !latexErr && latexPreview.includes('x+1'), latexPreview.slice(0, 30))
+check('トップの入力欄: 後から読み込み、読み取りとリンクが出る', !before0 && reread === 'sin(2x)' && href.startsWith('#graph?f=sin 2x'), `初期に読込=${before0} / ${reread} / ${href}`)
+
 // 式変形: 種類を切り替えて最後の手まで進む
 await b.goto(BASE + '#steps')
 await b.waitFor(`document.querySelector('.mode-chips')`)

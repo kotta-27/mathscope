@@ -73,7 +73,7 @@ export function GraphTab() {
     <div className="layout">
       <aside className="panel">
         <h2>式</h2>
-        <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。x²・√x・sin 2x・|x| のような書き方もそのまま使える。</p>
+        <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。x²・√x・sin 2x・|x| のような書き方も、LaTeX もそのまま使える。</p>
         {rows.map((r, i) => {
           const p = parsed[i]
           const color = PALETTE[i % PALETTE.length]

@@ -397,3 +397,16 @@ body { overflow-x: clip; }
 /* 数式の中の文章（\text{}）は本文と同じゴシック体にする。
    KaTeX の数式用フォントには日本語の字がなく、明朝体で代わりに描かれてしまうため */
 .katex .text { font-family: var(--font); font-size: 0.86em; }
+
+/* トップ: 数式の書き方 */
+.input-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .input-grid { grid-template-columns: minmax(0, 1fr); } }
+.input-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; font-size: 14px; }
+.input-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface-2); padding: 8px 14px; }
+.input-table td { padding: 9px 14px; border-top: 1px solid var(--border); }
+.input-table code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; }
+.input-demo-wrap { min-height: 220px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+.input-demo { display: flex; flex-direction: column; gap: 12px; }
+.input-demo .mi-preview { font-size: 1.25em; padding: 6px 4px; }
+.input-demo .btn { align-self: flex-start; }
+.btn.disabled { opacity: 0.4; pointer-events: none; }
