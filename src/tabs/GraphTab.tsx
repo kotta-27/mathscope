@@ -4,7 +4,9 @@ import { Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
 import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
-import { PALETTE, evalNum, parseExpr, texOf } from '../lib/math'
+import { PALETTE, evalNum, texOf } from '../lib/math'
+import { holds, readGraphExpr } from '../lib/graphExpr'
+import { contour, paramPath, region } from '../lib/contour'
 import { useRaf } from '../lib/useRaf'
 import { useMedia } from '../lib/useMedia'
 import { usePresent } from '../lib/display'
@@ -21,7 +23,13 @@ const PRESETS: { label: string; rows: string[] }[] = [
   { label: '正規分布', rows: ['exp(-(x - m)^2 / (2*s^2)) / (s*sqrt(2*pi))'] },
   { label: '指数と対数', rows: ['a^x', 'log(x) / log(a)'] },
   { label: '波の重ね合わせ', rows: ['sin(x)', 'sin(k*x)', 'sin(x) + sin(k*x)'] },
+  { label: '円', rows: ['(x - a)^2 + (y - b)^2 = r^2'] },
+  { label: '楕円・双曲線', rows: ['x^2/a^2 + y^2/b^2 = 1', 'x^2/a^2 - y^2/b^2 = 1'] },
+  { label: '不等式の領域', rows: ['y > x^2 - 2', 'x^2 + y^2 < r^2'] },
+  { label: '媒介変数（リサジュー）', rows: ['(sin(a*t), sin(b*t))'] },
+  { label: '極座標（バラ曲線）', rows: ['r = cos(k*θ)'] },
 ]
+const TAU = 2 * Math.PI
 
 const RANGE = { min: -5, max: 5 }
 const VIEW: View = { xMin: -8, xMax: 8, yMin: -5, yMax: 5 }
@@ -73,12 +81,12 @@ export function GraphTab() {
   const [view, setView] = useState(initialView)
   const dirs = useRef<Record<string, number>>({})
 
-  const parsed = useMemo(() => rows.map((r) => parseExpr(r.src)), [rows])
+  const exprs = useMemo(() => rows.map((r) => readGraphExpr(r.src)), [rows])
   const names = useMemo(() => {
     const s = new Set<string>()
-    parsed.forEach((p) => p.ok && p.symbols.forEach((n) => n !== 'x' && s.add(n)))
+    exprs.forEach((e) => e.ok && e.symbols.forEach((n) => s.add(n)))
     return [...s].sort()
-  }, [parsed])
+  }, [exprs])
   const scope = Object.fromEntries(names.map((n) => [n, params[n] ?? 1]))
   const active = names.filter((n) => playing[n])
   const narrow = useMedia('(max-width: 900px)')
@@ -91,7 +99,11 @@ export function GraphTab() {
   }
 
   // 式・パラメータの値・表示範囲・再生中のパラメータを URL に残す
-  const sameView = (Object.keys(VIEW) as (keyof View)[]).every((k) => Math.abs(view[k] - VIEW[k]) < 1e-9)
+  // y の範囲は横幅に合わせて決まるので、x の範囲と y の中心だけで比べる
+  const sameView =
+    Math.abs(view.xMin - VIEW.xMin) < 1e-9 &&
+    Math.abs(view.xMax - VIEW.xMax) < 1e-9 &&
+    Math.abs((view.yMin + view.yMax) / 2 - (VIEW.yMin + VIEW.yMax) / 2) < 1e-9
   useSyncHash('graph', {
     f: rows.map((r) => r.src),
     ...Object.fromEntries(names.filter((n) => !RESERVED.has(n)).map((n) => [n, scope[n]])),
@@ -125,16 +137,16 @@ export function GraphTab() {
     <div className="layout graph-layout">
       <aside className="panel">
         <h2>式</h2>
-        <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。x²・√x・sin 2x・|x| のような書き方も、LaTeX もそのまま使える。</p>
+        <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。x²・√x・sin 2x・|x| のような書き方も、LaTeX もそのまま使える。円 x² + y² = 4、領域 y {'>'} x²、媒介変数 (cos t, sin t)、極座標 r = 1 + cos θ も描ける。</p>
         {rows.map((r, i) => {
-          const p = parsed[i]
+          const e = exprs[i]
           const color = PALETTE[i % PALETTE.length]
           return (
             <div key={r.id} className="expr-row">
               <MathInput
                 value={r.src}
                 onChange={(v) => setRow(r.id, v)}
-                parsed={p}
+                parsed={e.parsed}
                 before={<span className="swatch" style={{ background: color }} />}
                 after={
                   rows.length > 1 && (
@@ -144,12 +156,10 @@ export function GraphTab() {
                   )
                 }
               />
-              {p.ok && (
+              {e.ok && (
                 <div className="expr-tex">
-                  <Tex tex={`y = ${texOf(p.node)}`} />
-                  {names.some((n) => p.symbols.includes(n)) && (
-                    <Tex className="sub" tex={`= ${texOf(substitute(p.node, scope))}`} />
-                  )}
+                  <Tex tex={e.join(e.parts.map((n) => texOf(n)))} />
+                  {e.symbols.length > 0 && <Tex className="sub" tex={`\\to\\ ${e.join(e.parts.map((n) => texOf(substitute(n, scope))))}`} />}
                 </div>
               )}
             </div>
@@ -191,16 +201,39 @@ export function GraphTab() {
       </aside>
 
       <section className="stage">
-        <Plot initial={initialView} height={plotH} onView={setView}>
+        <Plot initial={initialView} height={plotH} onView={setView} equal>
           {(ctx) => {
-            const fns = parsed.map((p) => (p.ok ? (x: number) => evalNum(p.code, { ...scope, x }) : null))
-            const ok = fns.flatMap((f, i) => (f ? [{ f, i }] : []))
+            // y = f(x) の式（頂点・交点の印の対象）
+            const ok = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' ? [{ f: ((c) => (x: number) => evalNum(c, { ...scope, x }))(e.curve.f.code), i }] : []))
             const feats = showPts ? findFeatures(ok.map((o) => o.f), ctx.view.xMin, ctx.view.xMax, ctx.view.yMax - ctx.view.yMin) : []
+            const { view: v, w, h } = ctx
+            const wx = (px: number) => v.xMin + (px / w) * (v.xMax - v.xMin)
+            const wy = (py: number) => v.yMax - (py / h) * (v.yMax - v.yMin)
+            const step = Math.max(3, Math.round(Math.min(w, h) / 120))
             return (
               <>
-                {ok.map(({ f, i }) => (
-                  <path key={rows[i].id} d={ctx.path(f)} stroke={PALETTE[i % PALETTE.length]} className="curve" />
-                ))}
+                {exprs.map((e, i) => {
+                  if (!e.ok) return null
+                  const color = PALETTE[i % PALETTE.length]
+                  const c = e.curve
+                  const key = rows[i].id
+                  if (c.kind === 'fn') return <path key={key} d={ctx.path((x) => evalNum(c.f.code, { ...scope, x }))} stroke={color} className="curve" />
+                  if (c.kind === 'param' || c.kind === 'polar') {
+                    const X = c.kind === 'param' ? (t: number) => evalNum(c.x.code, { ...scope, t }) : (t: number) => evalNum(c.r.code, { ...scope, theta: t }) * Math.cos(t)
+                    const Y = c.kind === 'param' ? (t: number) => evalNum(c.y.code, { ...scope, t }) : (t: number) => evalNum(c.r.code, { ...scope, theta: t }) * Math.sin(t)
+                    return <path key={key} d={paramPath(X, Y, 0, TAU, ctx.sx, ctx.sy, h, 1200)} stroke={color} className="curve" />
+                  }
+                  const F = (x: number, y: number) => evalNum(c.F.code, { ...scope, x, y })
+                  const line = contour({ w, h, step, wx, wy, F })
+                  if (c.kind === 'implicit') return <path key={key} d={line} stroke={color} className="curve" />
+                  const strict = c.op === '<' || c.op === '>'
+                  return (
+                    <g key={key}>
+                      <path d={region({ w, h, step, wx, wy, F, test: (val) => holds(val, c.op) })} fill={color} opacity={0.2} />
+                      <path d={line} stroke={color} className="curve" strokeDasharray={strict ? '7 5' : undefined} />
+                    </g>
+                  )
+                })}
                 {feats.map((pts, k) => {
                   const { f, i } = ok[k]
                   const quad = isQuadratic(f)

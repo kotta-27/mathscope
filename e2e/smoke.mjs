@@ -140,6 +140,14 @@ await b.waitFor(`document.querySelector('path.curve')`)
 await sleep(300)
 check('リンクを開くと同じ状態', (await b.evaluate(`return document.querySelector('path.curve').getAttribute('d').slice(0, 120)`)) === curve)
 check('グラフに頂点の印と座標', await b.evaluate(`return [...document.querySelectorAll('.pt-label')].some(t => t.textContent === '頂点 (2, 1)')`), await b.evaluate(`return [...document.querySelectorAll('.pt-label')].map(t => t.textContent).join(' / ')`))
+// グラフ: 円（x と y の関係式）・領域・極座標も描ける
+await b.goto('about:blank')
+await b.goto(BASE + '#graph?f=' + encodeURIComponent('x^2 + y^2 = 4') + '&f=' + encodeURIComponent('y > x^2') + '&f=' + encodeURIComponent('r = 1 + cos θ'))
+await b.waitFor(`document.querySelectorAll('path.curve').length >= 3`)
+const circle = await b.evaluate(`
+  const p = document.querySelectorAll('path.curve')[0].getBBox()
+  return [Math.round(p.width), Math.round(p.height), document.querySelectorAll('.mi-error').length]`)
+check('グラフ: 円が円に見える・領域・極座標', Math.abs(circle[0] - circle[1]) <= 3 && circle[0] > 50 && circle[2] === 0, JSON.stringify(circle))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')
