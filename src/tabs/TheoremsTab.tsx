@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { hrefTo, readHash, useSyncHash } from '../lib/route'
 import { COURSES, TOPICS } from '../lib/courses'
 import { matches, norm } from '../lib/search'
+import { track } from '../lib/analytics'
 import { MathText } from '../components/MathText'
 import { Tex } from '../components/Tex'
 import { FIELDS, THEOREMS, type FieldId, type Theorem } from '../lib/theorems'
@@ -92,6 +93,12 @@ function HashSync({ q, field }: { q: string; field: FieldId | 'all' }) {
 /** 見つからなかったときに、ほかのタブで扱っている話題やグラフへ案内する */
 function NoHits({ q, clear }: { q: string; clear: () => void }) {
   const n = norm(q)
+  // 打ち終わってから 1.5 秒たっても 0 件なら、見つからなかった言葉として数える
+  useEffect(() => {
+    if (n.length < 2) return
+    const t = setTimeout(() => track(`search-none/${n}`, true), 1500)
+    return () => clearTimeout(t)
+  }, [n])
   const topics = TOPICS.filter((x) => x.words.some((w) => n.includes(norm(w)) || (n.length >= 2 && norm(w).includes(n))))
   // x を含む式のように見えるなら、グラフで描けるようにする
   const formula = /x/i.test(q) && /[0-9+\-*/^²³√()=]/.test(q) && !/[ぁ-んァ-ン一-龥]/.test(q)

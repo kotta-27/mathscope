@@ -1,4 +1,5 @@
 import { setPresent, setTheme, usePresent, useTheme } from '../lib/display'
+import { track } from '../lib/analytics'
 
 const icon = { viewBox: '0 0 24 24', width: 16, height: 16, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true }
 
@@ -26,7 +27,10 @@ export function ThemeButton() {
 export function PresentButton() {
   const on = usePresent()
   return (
-    <button className={`icon-tool ${on ? 'on' : ''}`} onClick={() => setPresent(!on)} title={on ? '発表モードを終える（Esc）' : '発表モード（文字を大きくして全画面）'} aria-pressed={on}>
+    <button className={`icon-tool ${on ? 'on' : ''}`} onClick={() => {
+        if (!on) track('present')
+        setPresent(!on)
+      }} title={on ? '発表モードを終える（Esc）' : '発表モード（文字を大きくして全画面）'} aria-pressed={on}>
       <svg {...icon}>
         <rect x="3" y="4" width="18" height="12" rx="1.5" />
         <path d="M12 16v4M8 20h8" />

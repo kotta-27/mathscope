@@ -541,3 +541,11 @@ body { overflow-x: clip; }
 .no-hits-links li { margin: 4px 0; }
 .no-hits-links a { color: var(--accent); }
 .link-btn { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; font-size: inherit; }
+
+/* トップの絵: 押すと、その数学を触れる画面へ */
+.hero-link { position: absolute; inset: 0; z-index: 1; display: flex; align-items: flex-start; justify-content: flex-end; padding: 12px; text-decoration: none; }
+.hero-link span { font-size: 12px; color: var(--text); background: color-mix(in srgb, var(--surface) 85%, transparent); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; opacity: 0; transform: translateY(-4px); transition: opacity 0.2s, transform 0.2s; }
+.hero-stage:hover .hero-link span, .hero-link:focus-visible span { opacity: 1; transform: none; }
+@media (hover: none) { .hero-link span { opacity: 0.9; transform: none; } }
+.hero-nav { z-index: 2; }
+.pick-go { margin-top: auto; padding-top: 4px; font-size: 12px; color: var(--accent); }
