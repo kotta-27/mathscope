@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { hrefTo, readHash, useSyncHash } from '../lib/route'
+import { flushHash, hrefTo, readHash, useSyncHash } from '../lib/route'
 import { COURSES, TOPICS } from '../lib/courses'
 import { GUIDE } from '../lib/guide'
 import { matches, norm } from '../lib/search'
@@ -12,32 +12,38 @@ import { figStore } from '../figures/state'
 import { FigScope } from '../figures/FigScope'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 
+/** 一覧のスクロール位置（定理のページから戻ったときに元の位置へ戻す） */
+let listScroll: { hash: string; y: number } | null = null
+
 export function TheoremsTab() {
+  const id = readHash().params.get('id')
+  const t = id ? THEOREMS.find((x) => x.id === id) : undefined
+  return t ? <TheoremPage t={t} /> : <TheoremList />
+}
+
+/** 定理の一覧: 分野ごとに、名前・単元・ひとことだけを並べる */
+function TheoremList() {
   const [field, setField] = useState<FieldId | 'all'>(() => {
     const f = readHash().params.get('field')
     return FIELDS.find((x) => x.id === f)?.id ?? 'all'
   })
   const [q, setQ] = useState(() => readHash().params.get('q') ?? '')
-  // URL にある図の状態（#theorems?id=bayes&v.s=0.9）を、図を描く前に読み込む
-  useState(() => {
-    const p = readHash().params
-    const vals: Record<string, string> = {}
-    p.forEach((v, k) => {
-      if (k.startsWith('v.')) vals[k.slice(2)] = v
-    })
-    figStore.load(p.get('id'), vals)
-  })
   const hits = useMemo(() => THEOREMS.filter((t) => matches(t, q)), [q])
   const count = (f: FieldId) => hits.filter((t) => t.field === f).length
-  useEffect(() => {
-    const id = readHash().params.get('id')
-    if (id) document.getElementById(id)?.scrollIntoView({ block: 'start' })
-  }, [])
   const groups = FIELDS.filter((f) => (field === 'all' || f.id === field) && count(f.id) > 0)
+  useSyncHash('theorems', { q: q || null, field: field === 'all' ? null : field })
+  // 定理のページから「戻る」で来たら、前のスクロール位置へ
+  useEffect(() => {
+    if (listScroll && listScroll.hash === location.hash) window.scrollTo(0, listScroll.y)
+    listScroll = null
+  }, [])
+  const remember = () => {
+    flushHash()
+    listScroll = { hash: location.hash, y: window.scrollY }
+  }
 
   return (
     <div className="layout theorems-layout">
-      <HashSync q={q} field={field} />
       <aside className="panel sticky theorems-side">
         <h2>検索</h2>
         <input className="wide" placeholder="定理名・単元名・英語で検索" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -64,11 +70,26 @@ export function TheoremsTab() {
         {groups.map((f) => (
           <div key={f.id} className="field-group">
             <h2 className="field-title">{f.label}</h2>
-            {hits
-              .filter((t) => t.field === f.id)
-              .map((t) => (
-                <TheoremCard key={t.id} t={t} />
-              ))}
+            <div className="theorem-grid">
+              {hits
+                .filter((t) => t.field === f.id)
+                .map((t) => {
+                  const c = COURSES[t.id]
+                  return (
+                    <a key={t.id} className="theorem-item" href={hrefTo('theorems', { id: t.id })} onClick={remember}>
+                      <span className="theorem-item-head">
+                        <span className="theorem-item-name">{t.name}</span>
+                        {c && <span className="course">{c.course}</span>}
+                      </span>
+                      {GUIDE[t.id] && (
+                        <span className="theorem-item-gist">
+                          <MathText text={GUIDE[t.id].gist} />
+                        </span>
+                      )}
+                    </a>
+                  )
+                })}
+            </div>
           </div>
         ))}
       </section>
@@ -76,17 +97,66 @@ export function TheoremsTab() {
   )
 }
 
+/** 1 つの定理のページ。上に分野への道、下に同じ分野の前後の定理 */
+function TheoremPage({ t }: { t: Theorem }) {
+  const f = FIELDS.find((x) => x.id === t.field)!
+  const same = THEOREMS.filter((x) => x.field === t.field)
+  const k = same.indexOf(t)
+  const prev = same[k - 1]
+  const next = same[k + 1]
+  // URL にある図の状態（#theorems?id=bayes&v.s=0.9）を、図を描く前に読み込む
+  useState(() => {
+    const vals: Record<string, string> = {}
+    readHash().params.forEach((v, key) => {
+      if (key.startsWith('v.')) vals[key.slice(2)] = v
+    })
+    figStore.load(t.id, vals)
+  })
+  useEffect(() => {
+    document.title = `${t.name} | Mathscope`
+  }, [t])
+  return (
+    <div className="theorem-page">
+      <HashSync id={t.id} />
+      <nav className="crumbs" aria-label="現在地">
+        <a href={hrefTo('theorems')}>定理集</a>
+        <span aria-hidden>›</span>
+        <a href={hrefTo('theorems', { field: f.id })}>{f.label}</a>
+        <span aria-hidden>›</span>
+        <span>{t.name}</span>
+      </nav>
+      <TheoremCard t={t} />
+      <nav className="theorem-pager" aria-label="同じ分野の定理">
+        {prev ? (
+          <a className="prev" href={hrefTo('theorems', { id: prev.id })}>
+            <span>← 前の定理</span>
+            <strong>{prev.name}</strong>
+          </a>
+        ) : (
+          <span />
+        )}
+        {next ? (
+          <a className="next" href={hrefTo('theorems', { id: next.id })}>
+            <span>次の定理 →</span>
+            <strong>{next.name}</strong>
+          </a>
+        ) : (
+          <span />
+        )}
+      </nav>
+    </div>
+  )
+}
+
 /**
- * 検索語・分野と、最後に触った図の状態を URL に残す。
- * 図を動かすたびに定理の一覧ごと描き直さないよう、小さな部品に分けている。
+ * 定理のページの URL に、図の状態を残す（#theorems?id=bayes&v.s=0.9）。
+ * 図を動かすたびにページ全体を描き直さないよう、小さな部品に分けている。
  */
-function HashSync({ q, field }: { q: string; field: FieldId | 'all' }) {
+function HashSync({ id }: { id: string }) {
   const fig = useSyncExternalStore(figStore.subscribe, figStore.get)
   useSyncHash('theorems', {
-    q: q || null,
-    field: field === 'all' ? null : field,
-    id: fig.id,
-    ...Object.fromEntries(Object.entries(fig.vals).map(([k, v]) => [`v.${k}`, v])),
+    id,
+    ...(fig.id === id ? Object.fromEntries(Object.entries(fig.vals).map(([k, v]) => [`v.${k}`, v])) : {}),
   })
   return null
 }

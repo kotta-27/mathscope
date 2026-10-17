@@ -576,3 +576,28 @@ body { overflow-x: clip; }
 .theorem-related { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 13px; }
 .theorem-related a { color: var(--accent); text-decoration: none; }
 .theorem-related a:hover { text-decoration: underline; }
+
+/* 定理の一覧: 名前・単元・ひとことだけの小さなカード */
+.theorem-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 10px; }
+.theorem-item { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: inherit; text-decoration: none; transition: border-color 0.15s, transform 0.15s; }
+.theorem-item:hover { border-color: var(--accent); transform: translateY(-1px); }
+.theorem-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.theorem-item-name { font-weight: 600; }
+.theorem-item-gist { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.field-group + .field-group { margin-top: 24px; }
+
+/* 定理のページ */
+.theorem-page { max-width: 880px; margin: 0 auto; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+.crumbs a { color: var(--accent); text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+.theorem-page .theorem { padding: 22px 26px; }
+.theorem-page .theorem-head h3 { font-size: 26px; margin: 0; }
+.theorem-page .theorem-gist { font-size: 16px; }
+.theorem-page .permalink { display: none; }
+.theorem-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.theorem-pager a { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: inherit; text-decoration: none; }
+.theorem-pager a:hover { border-color: var(--accent); }
+.theorem-pager a span { font-size: 12px; color: var(--muted); }
+.theorem-pager .next { text-align: right; }
+@media (max-width: 640px) { .theorem-page .theorem { padding: 14px 12px; } .theorem-page .theorem-head h3 { font-size: 21px; } }

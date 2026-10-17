@@ -45,8 +45,10 @@ export default function App() {
   }, [])
   const current = TABS.find((t) => t.id === tab)!
   useEffect(() => {
+    // 定理のページ（#theorems?id=...）は、そのページが定理の名前を書く
+    if (tab === 'theorems' && readHash().params.get('id')) return
     document.title = tab === 'home' ? 'Mathscope | 数式が、景色になる。' : `${current.label} | Mathscope`
-  }, [tab, current])
+  }, [tab, current, hash])
   return (
     <>
     {tab === 'home' && <HomeBackground />}

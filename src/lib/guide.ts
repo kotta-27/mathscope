@@ -389,7 +389,7 @@ export const GUIDE: Record<string, Guide> = {
   },
   bayes: {
     gist: '結果（陽性など）から原因の確率を、元の割合を使って見直す。',
-    try: ['事前確率を小さくすると、検査が正確でも「陽性なら病気」の確率は意外に低くなる。'],
+    try: ['「病気の検査」を選び、病気の人の割合（事前確率）を小さくすると、検査が正確でも「陽性なら病気」の確率は意外に低くなる。'],
     related: ['conditional', 'inclusion-exclusion'],
   },
   'linearity-expectation': {
