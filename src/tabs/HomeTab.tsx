@@ -141,7 +141,7 @@ export function HomeTab() {
       </section>
 
       <section className="input-section">
-        <h2 className="usecases-title">普段の書き方でも、LaTeX でも。</h2>
+        <h2 className="usecases-title">数式をかんたんに入力</h2>
         <p className="usecases-lead">x²、√x、sin 2x、全角の文字も、\frac や \sqrt を使った LaTeX も、そのまま入れられる。読み方が違うときは「読み取り」で教えてくれる。</p>
         <div className="input-grid">
           <table className="input-table">
