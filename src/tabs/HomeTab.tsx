@@ -32,7 +32,7 @@ export function HomeTab() {
             <span className="nowrap">景色になる。</span>
           </h2>
           <p className="hero-lead">
-            見て・触って・わかる、数学の道具。式を入れるとグラフになり、文字を動かすと形が変わる。定理は図で確かめられる。
+            式を入れるとグラフになり、文字を動かせば形が変わる。定理も図で確かめられる。見て、触って、わかるための数学の道具。
           </p>
           <div className="hero-cta">
             <a className="btn primary" href="#graph">グラフを触ってみる</a>
