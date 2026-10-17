@@ -30,29 +30,40 @@ export function Plot({
   height = 440,
   children,
   onView,
+  equal = false,
 }: {
   initial: View
   height?: number
   children: (ctx: PlotCtx) => ReactNode
   /** 表示範囲が変わったとき */
   onView?: (v: View) => void
+  /** x と y の 1 目盛りを同じ長さにする（円が円に見えるように）。y の範囲は中心を保って合わせる */
+  equal?: boolean
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [svg, setSvg] = useState<SVGSVGElement | null>(null)
   const [w, setW] = useState(640)
-  const [view, setView] = useState(initial)
+  const [rawView, setView] = useState(initial)
   const drag = useRef<{ x: number; y: number; view: View } | null>(null)
   // 2 本の指で拡大縮小するときの、指の位置と始めの表示範囲
   const touches = useRef(new Map<number, { x: number; y: number }>())
   const pinch = useRef<{ d: number; cx: number; cy: number; view: View } | null>(null)
   const h = height
+  const view: View = equal
+    ? (() => {
+        const yc = (rawView.yMin + rawView.yMax) / 2
+        const half = ((rawView.xMax - rawView.xMin) * h) / w / 2
+        return { ...rawView, yMin: yc - half, yMax: yc + half }
+      })()
+    : rawView
   const onViewRef = useRef(onView)
   useEffect(() => {
     onViewRef.current = onView
   })
   useEffect(() => {
     onViewRef.current?.(view)
-  }, [view])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 値が変わったときだけ知らせる（equal では毎回新しいオブジェクトになるため）
+  }, [view.xMin, view.xMax, view.yMin, view.yMax])
 
   useEffect(() => {
     const el = wrapRef.current!
