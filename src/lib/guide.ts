@@ -538,4 +538,104 @@ export const GUIDE: Record<string, Guide> = {
     try: ['c を大きくして判別式を負にすると、実軸の上の 2 点が、上下に対称な 2 点に分かれる。'],
     related: ['quadratic-formula', 'vieta', 'fundamental-algebra'],
   },
+  'abs-value': {
+    gist: '絶対値は 0 からの距離。グラフでは、x 軸より下の部分を上に折り返す。',
+    try: ['c を下げて放物線が x 軸より下に出るようにすると、その部分が上に折り返される。'],
+    related: ['quadratic-inequality', 'triangle-inequality', 'completing-square'],
+  },
+  'telescoping': {
+    gist: '1 項を「差」に分けると、隣どうしが打ち消し合い、最初と最後だけが残る。',
+    try: ['n を増やしても、残りの白い部分はいつも 1/(n+1)。和は 1 に近づくが 1 にはならない。'],
+    related: ['arithmetic-sum', 'power-sums', 'geometric-sum'],
+  },
+  'fibonacci-golden': {
+    gist: '隣どうしを足していく数列の、隣り合う項の比は黄金比 1.618… に近づく。',
+    try: ['n を増やすと、比は黄金比の線の上と下を交互にはさみながら近づく。'],
+    related: ['recurrence', 'monotone-convergence', 'ptolemy'],
+  },
+  'unit-circle-def': {
+    gist: '三角関数は、単位円の上の点の座標そのもの。だから鈍角でも負の角でも決まる。',
+    try: ['θ を 90° より大きくすると cos θ が負になり、180° を超えると sin θ も負になる。'],
+    related: ['pythagorean-identity', 'radian', 'addition-formula'],
+  },
+  'similar-ratio': {
+    gist: '長さが k 倍になると、面積は k² 倍、体積は k³ 倍になる。',
+    try: ['k を 2 や 3 にすると、元の三角形がちょうど k² 個敷き詰められる。'],
+    related: ['triangle-area', 'pythagoras', 'centroid'],
+  },
+  'incenter': {
+    gist: '3 つの角の二等分線は 1 点で交わり、そこが 3 辺に接する円の中心。',
+    try: ['頂点をドラッグして三角形を細長くすると、内接円は小さくなる（面積が減るので）。'],
+    related: ['angle-bisector', 'heron', 'centroid'],
+  },
+  'euler-line': {
+    gist: '外心・重心・垂心の 3 点は、いつも一直線に 1:2 の間隔で並ぶ。',
+    try: ['どの頂点を動かしても、O と G と H は紫の線の上にあり、GH はいつも OG の 2 倍。'],
+    related: ['centroid', 'incenter', 'section-formula'],
+  },
+  'projection': {
+    gist: 'あるベクトルを別の方向に垂直に落とした影は、内積で求まる。',
+    try: ['b を a と直角にすると影（緑）が消え、内積も 0 になる。'],
+    related: ['dot-product', 'point-line-distance', 'cauchy-schwarz'],
+  },
+  'vector-line': {
+    gist: '直線は「1 点から、決まった向きに t 倍だけ進んだ点」の集まり。',
+    try: ['t を負にすると、点 P は d と反対の向きに進む。', '青い点（通る点）と橙の点（向き）をドラッグして直線を動かす。'],
+    related: ['section-formula', 'projection', 'linear-independence'],
+  },
+  'linear-independence': {
+    gist: '平行でない 2 本のベクトルがあれば、その組み合わせで平面のすべての点を表せる。',
+    try: ['b を a と同じ向きにそろえると、網目がつぶれて 1 本の直線になる（一次従属）。'],
+    related: ['vector-line', 'cross-area', 'rank-nullity'],
+  },
+  'inverse-derivative': {
+    gist: '逆関数のグラフは y = x で折り返した形。だから接線の傾きは逆数になる。',
+    try: ['a を動かすと、青の接線の傾きと赤の接線の傾きの積が、いつも 1 になる。'],
+    related: ['chain-rule', 'tangent-line', 'log-properties'],
+  },
+  'arc-length': {
+    gist: '曲線を細かい折れ線で近似し、折れ線の長さの和を極限にとったもの。',
+    try: ['折れ線の本数を増やすと、折れ線の長さが積分の値に下から近づく。'],
+    related: ['riemann-sum', 'pythagoras', 'ftc'],
+  },
+  'odd-even-integral': {
+    gist: '左右対称なら半分を 2 倍、原点について対称なら正と負が打ち消して 0。',
+    try: ['奇関数に切り替えると、左（赤）と右（青）の面積がちょうど打ち消し合う。'],
+    related: ['riemann-sum', 'ftc', 'area-between'],
+  },
+  'monty-hall': {
+    gist: '選び直すと当たる確率は 2/3。最初の選択が外れである確率と同じだから。',
+    try: ['回数を増やすと、赤（変える）が 2/3、青（変えない）が 1/3 に落ち着く。'],
+    related: ['conditional', 'bayes', 'lln'],
+  },
+  'poisson': {
+    gist: 'めったに起きないことの回数は、平均 λ だけで決まる分布に従う。',
+    try: ['二項分布の回数 n を増やすと、橙の棒（二項分布）が青の棒（ポアソン分布）にそろっていく。'],
+    related: ['binomial-dist', 'variance', 'taylor'],
+  },
+  'mod-arithmetic': {
+    gist: '余りの世界では、足し算・掛け算をする前に余りに置き換えてもよい。',
+    try: ['a や b を m だけ増やしても、和と積の余り（緑と赤）は変わらない。'],
+    related: ['fermat-little', 'divisibility', 'crt'],
+  },
+  'wilson': {
+    gist: '素数 p では、1 から p − 1 まで全部掛けると、p で割った余りが p − 1 になる。',
+    try: ['p を変えても、2 から p − 2 までは必ず 2 つずつ組になり、1 と p − 1 だけが残る。'],
+    related: ['fermat-little', 'mod-arithmetic', 'euler-totient'],
+  },
+  'divisibility': {
+    gist: '9 の倍数かどうかは、各位の数を足すだけで分かる。10 を 9 で割ると余り 1 だから。',
+    try: ['n を 1 ずつ動かすと、3 と 9 の判定は各位の和が 3（9）の倍数になるたびに ✓ になる。'],
+    related: ['mod-arithmetic', 'fundamental-arithmetic', 'euclid-algorithm'],
+  },
+  'power-mean': {
+    gist: '同じ 2 数でも、平均の取り方によって値が違い、その大小はいつも決まっている。',
+    try: ['a と b を等しくすると、4 本の棒がすべて同じ高さになる。'],
+    related: ['am-gm', 'jensen', 'cauchy-schwarz'],
+  },
+  'complex-locus': {
+    gist: '複素数の絶対値は距離。だから距離の条件で、円や直線が描ける。',
+    try: ['α と β をドラッグすると、赤い直線はいつも 2 点を結ぶ線分の真ん中を直角に通る。'],
+    related: ['polar-product', 'triangle-inequality', 'roots-of-unity'],
+  },
 }
