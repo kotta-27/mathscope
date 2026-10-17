@@ -351,3 +351,308 @@ export const flowField = scene({
     ctx.globalCompositeOperation = 'source-over'
   },
 })
+
+/* ---------- 整数：ウラムのらせん（素数だけに点を打つと斜めの線が浮かぶ） ---------- */
+
+function sieve(n: number) {
+  const p = new Uint8Array(n + 1).fill(1)
+  p[0] = p[1] = 0
+  for (let i = 2; i * i <= n; i++) if (p[i]) for (let j = i * i; j <= n; j += i) p[j] = 0
+  return p
+}
+
+export const ulam = scene({
+  init: (c) => {
+    const cell = Math.max(4, Math.round(Math.min(c.w, c.h) / 64))
+    const side = Math.floor(Math.min(c.w, c.h) / cell)
+    const N = side * side
+    // 1 から順に、中心から外へ四角くらせんを描く位置
+    const pos: [number, number][] = [[0, 0]]
+    let x = 0
+    let y = 0
+    let d = 0
+    const dirs = [[1, 0], [0, -1], [-1, 0], [0, 1]]
+    for (let len = 1; pos.length < N; len++)
+      for (let rep = 0; rep < 2 && pos.length < N; rep++) {
+        for (let k = 0; k < len && pos.length < N; k++) {
+          x += dirs[d][0]
+          y += dirs[d][1]
+          pos.push([x, y])
+        }
+        d = (d + 1) % 4
+      }
+    return { cell, N, pos, prime: sieve(N + 1) }
+  },
+  frame(c, s, t, _dt, render) {
+    if (!render) return
+    const { ctx, w, h } = c
+    clear(c)
+    const n = Math.min(s.N, Math.floor(60 + t * t * 260))
+    glow(c)
+    for (let i = 0; i < n; i++) {
+      if (!s.prime[i + 1]) continue
+      const [px, py] = s.pos[i]
+      const r = Math.hypot(px, py) / Math.sqrt(s.N)
+      ctx.fillStyle = hsl(200 + r * 160 + t * 6, 80, light(c, 62), 0.95)
+      ctx.beginPath()
+      ctx.arc(w / 2 + px * s.cell, h * 0.45 + py * s.cell, s.cell * 0.42, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.globalCompositeOperation = 'source-over'
+  },
+})
+
+/* ---------- 二項係数：パスカルの三角形の奇数だけを塗るとシェルピンスキーの三角形 ---------- */
+
+export const pascalMod2 = scene({
+  init: () => ({}),
+  frame(c, _s, t, _dt, render) {
+    if (!render) return
+    const { ctx, w, h } = c
+    clear(c)
+    const ROWS = 128
+    const rows = Math.min(ROWS, Math.floor(4 + t * 14))
+    const size = Math.min((h * 0.86) / ROWS, (w * 0.9) / ROWS)
+    const top = h * 0.07
+    glow(c)
+    for (let r = 0; r < rows; r++) {
+      for (let k = 0; k <= r; k++) {
+        // C(r, k) が奇数 ⇔ k と r − k の 2 進数に同じ位の 1 がない（ルカの定理）
+        if ((k & (r - k)) !== 0) continue
+        const x = w / 2 + (k - r / 2) * size
+        const y = top + r * size * 0.92
+        ctx.fillStyle = hsl(330 - (r / ROWS) * 140 + t * 4, 80, light(c, 60), 0.92)
+        ctx.beginPath()
+        ctx.moveTo(x, y - size * 0.5)
+        ctx.lineTo(x + size * 0.55, y + size * 0.45)
+        ctx.lineTo(x - size * 0.55, y + size * 0.45)
+        ctx.fill()
+      }
+    }
+    ctx.globalCompositeOperation = 'source-over'
+  },
+})
+
+/* ---------- 複素数：マンデルブロ集合（z → z² + c をくり返しても発散しない c） ---------- */
+
+export const mandelbrot = scene({
+  init(c) {
+    const W = Math.round(c.w)
+    const H = Math.round(c.h)
+    const off = document.createElement('canvas')
+    off.width = W
+    off.height = H
+    const octx = off.getContext('2d')!
+    // 背景色で塗っておき、上から 1 行ずつ描き足す
+    octx.fillStyle = c.bg
+    octx.fillRect(0, 0, W, H)
+    // 背景の色（RGB）を読んでおき、集合の外をそれになじませる
+    const px = octx.getImageData(0, 0, 1, 1).data
+    return { off, octx, W, H, row: 0, bg: [px[0], px[1], px[2]] as [number, number, number] }
+  },
+  frame(c, s, t, dt) {
+    const { ctx } = c
+    const { W, H, octx } = s
+    const scale = 3.1 / W
+    const cx0 = -0.62
+    const MAX = 90
+    // 1 秒におよそ画面 1 枚の 1/2.5 を描く
+    const rowsNow = Math.min(H, Math.ceil(s.row + Math.max(1, (H / 2.5) * dt)))
+    for (; s.row < rowsNow; s.row++) {
+      const img = octx.createImageData(W, 1)
+      const ci = (s.row - H / 2) * scale
+      for (let x = 0; x < W; x++) {
+        const cr = cx0 + (x - W / 2) * scale
+        let zr = 0
+        let zi = 0
+        let n = 0
+        while (n < MAX && zr * zr + zi * zi < 16) {
+          const nzr = zr * zr - zi * zi + cr
+          zi = 2 * zr * zi + ci
+          zr = nzr
+          n++
+        }
+        const o = x * 4
+        let rgb: [number, number, number]
+        if (n === MAX) rgb = c.dark ? [6, 8, 14] : [36, 40, 58]
+        else {
+          // 発散の速さで色をなめらかに変える（遠いところは背景の色に近く）
+          const v = n + 1 - Math.log2(Math.log2(zr * zr + zi * zi) / 2)
+          const k = Math.min(1, Math.sqrt(Math.max(0, v) / MAX) * 1.25)
+          const glowRgb: [number, number, number] = [255 * Math.min(1, 1.5 * k * k), 255 * Math.min(1, k * 0.85), 255 * Math.min(1, k * 1.15)]
+          rgb = c.dark ? [s.bg[0] + glowRgb[0] * k, s.bg[1] + glowRgb[1] * k, s.bg[2] + glowRgb[2] * k] : [s.bg[0] - (255 - glowRgb[2] * 0.5) * k * 0.8, s.bg[1] - (255 - glowRgb[1] * 0.4) * k * 0.8, s.bg[2] - (180 - glowRgb[0] * 0.3) * k * 0.6]
+        }
+        img.data[o] = rgb[0]
+        img.data[o + 1] = rgb[1]
+        img.data[o + 2] = rgb[2]
+        img.data[o + 3] = 255
+      }
+      octx.putImageData(img, 0, s.row)
+    }
+    ctx.drawImage(s.off, 0, 0, c.w, c.h)
+    void t
+  },
+})
+
+/* ---------- 三角関数：回る円を足して矩形波を作る（フーリエ級数） ---------- */
+
+export const fourierSquare = scene({
+  init: () => ({ trace: [] as number[] }),
+  frame(c, s, t, dt) {
+    const { ctx, w, h } = c
+    clear(c)
+    const terms = Math.min(12, 1 + Math.floor(t / 0.8))
+    const R = Math.min(w, h) * 0.16
+    const cx = w * 0.24
+    const cy = h * 0.5
+    const ang = t * 1.6
+    let x = cx
+    let y = cy
+    ctx.lineWidth = 1
+    for (let k = 0; k < terms; k++) {
+      const n = 2 * k + 1
+      const r = (R * 4) / (Math.PI * n)
+      ctx.strokeStyle = hsl(190 + k * 14, 60, light(c, 55), 0.45)
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, Math.PI * 2)
+      ctx.stroke()
+      const nx = x + r * Math.cos(n * ang)
+      const ny = y - r * Math.sin(n * ang)
+      ctx.strokeStyle = hsl(190 + k * 14, 80, light(c, 65), 0.9)
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(nx, ny)
+      ctx.stroke()
+      x = nx
+      y = ny
+    }
+    // 最後の点の高さを、右へ流れる波として残す
+    s.trace.unshift(y)
+    const maxLen = Math.floor(w * 0.6)
+    if (s.trace.length > maxLen) s.trace.length = maxLen
+    const x0 = w * 0.42
+    ctx.strokeStyle = hsl(30, 90, light(c, 62), 0.5)
+    ctx.setLineDash([3, 4])
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(x0, y)
+    ctx.stroke()
+    ctx.setLineDash([])
+    glow(c)
+    ctx.strokeStyle = hsl(30, 95, light(c, 62), 0.95)
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    s.trace.forEach((yy, i) => (i ? ctx.lineTo(x0 + i, yy) : ctx.moveTo(x0, yy)))
+    ctx.stroke()
+    ctx.globalCompositeOperation = 'source-over'
+    void dt
+  },
+})
+
+/* ---------- 数列：フィボナッチの正方形と黄金らせん ---------- */
+
+export const goldenSpiral = scene({
+  init: () => ({}),
+  frame(c, _s, t, _dt, render) {
+    if (!render) return
+    const { ctx, w, h } = c
+    clear(c)
+    const F = [1, 1]
+    for (let i = 2; i < 14; i++) F.push(F[i - 1] + F[i - 2])
+    const count = Math.min(F.length, 2 + Math.floor(t * 1.4))
+    // 正方形を時計回りに貼っていく。全体の大きさに合わせて縮める
+    const squares: { x: number; y: number; s: number; dir: number }[] = []
+    let minX = 0
+    let minY = 0
+    let maxX = 1
+    let maxY = 1
+    squares.push({ x: 0, y: 0, s: 1, dir: 0 })
+    for (let i = 1; i < count; i++) {
+      const s = F[i]
+      const d = i % 4
+      let x = 0
+      let y = 0
+      if (d === 1) [x, y] = [maxX, minY]
+      else if (d === 2) [x, y] = [maxX - s, maxY]
+      else if (d === 3) [x, y] = [minX - s, maxY - s]
+      else [x, y] = [minX, minY - s]
+      squares.push({ x, y, s, dir: d })
+      minX = Math.min(minX, x)
+      minY = Math.min(minY, y)
+      maxX = Math.max(maxX, x + s)
+      maxY = Math.max(maxY, y + s)
+    }
+    const k = Math.min((w * 0.86) / (maxX - minX), (h * 0.86) / (maxY - minY))
+    const ox = w / 2 - ((minX + maxX) / 2) * k
+    const oy = h / 2 - ((minY + maxY) / 2) * k
+    squares.forEach((q, i) => {
+      ctx.fillStyle = hsl(40 + i * 23, 70, light(c, 50), 0.16)
+      ctx.strokeStyle = hsl(40 + i * 23, 70, light(c, 60), 0.6)
+      ctx.lineWidth = 1
+      ctx.fillRect(ox + q.x * k, oy + q.y * k, q.s * k, q.s * k)
+      ctx.strokeRect(ox + q.x * k, oy + q.y * k, q.s * k, q.s * k)
+    })
+    // 各正方形に 4 分の 1 円を描くと、らせんになる
+    glow(c)
+    ctx.strokeStyle = hsl(45, 95, light(c, 65), 0.95)
+    ctx.lineWidth = 2.4
+    ctx.beginPath()
+    squares.forEach((q, i) => {
+      const d = i === 0 ? 0 : q.dir
+      const centers = [
+        [q.x + q.s, q.y + q.s, Math.PI, Math.PI * 1.5],
+        [q.x, q.y + q.s, Math.PI * 1.5, Math.PI * 2],
+        [q.x, q.y, 0, Math.PI * 0.5],
+        [q.x + q.s, q.y, Math.PI * 0.5, Math.PI],
+      ][d]
+      ctx.moveTo(ox + (centers[0] + q.s * Math.cos(centers[2])) * k, oy + (centers[1] + q.s * Math.sin(centers[2])) * k)
+      ctx.arc(ox + centers[0] * k, oy + centers[1] * k, q.s * k, centers[2], centers[3])
+    })
+    ctx.stroke()
+    ctx.globalCompositeOperation = 'source-over'
+  },
+})
+
+/* ---------- 再帰：紙を半分に折り続けて開くとドラゴン曲線 ---------- */
+
+export const dragon = scene({
+  init: () => {
+    // 折り目の向き（右折 1 / 左折 -1）を 13 回折った分だけ作る
+    let turns: number[] = []
+    for (let i = 0; i < 13; i++) turns = [...turns, 1, ...turns.map((x) => -x).reverse()]
+    return { turns }
+  },
+  frame(c, s, t, _dt, render) {
+    if (!render) return
+    const { ctx, w, h } = c
+    clear(c)
+    const level = Math.min(13, 1 + Math.floor(t * 1.1))
+    const n = 2 ** level - 1
+    // 回数を増やすと 45° ずつ回るので、向きを戻して同じ向きに見せる
+    let a = (level * Math.PI) / 4
+    const pts: [number, number][] = [[0, 0]]
+    for (let i = 0; i <= n; i++) {
+      const [x, y] = pts[pts.length - 1]
+      pts.push([x + Math.cos(a), y + Math.sin(a)])
+      if (i < n) a += (s.turns[i] * Math.PI) / 2
+    }
+    // 全体が枠に収まるように縮めて、真ん中に置く
+    const xs = pts.map((p) => p[0])
+    const ys = pts.map((p) => p[1])
+    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
+    const k = Math.min((w * 0.84) / Math.max(1, x1 - x0), (h * 0.74) / Math.max(1, y1 - y0))
+    const ox = w / 2 - ((x0 + x1) / 2) * k
+    const oy = h * 0.44 - ((y0 + y1) / 2) * k
+    glow(c)
+    ctx.lineWidth = Math.max(1, Math.min(3, k * 0.4))
+    ctx.lineCap = 'round'
+    for (let i = 0; i < pts.length - 1; i++) {
+      ctx.strokeStyle = hsl(260 + (i / n) * 140, 85, light(c, 60), 0.95)
+      ctx.beginPath()
+      ctx.moveTo(ox + pts[i][0] * k, oy + pts[i][1] * k)
+      ctx.lineTo(ox + pts[i + 1][0] * k, oy + pts[i + 1][1] * k)
+      ctx.stroke()
+    }
+    ctx.globalCompositeOperation = 'source-over'
+  },
+})

@@ -4,7 +4,7 @@ import { hrefTo, readHash } from '../lib/route'
 import { useRaf } from '../lib/useRaf'
 import { useVisible } from '../lib/useVisible'
 import { HeroCanvas } from './HeroCanvas'
-import { epicycles, fern, flowField, harmonograph, lorenz, phyllotaxis, timesTable, type AnyScene } from './canvasScenes'
+import { dragon, epicycles, fern, flowField, fourierSquare, goldenSpiral, harmonograph, lorenz, mandelbrot, pascalMod2, phyllotaxis, timesTable, ulam, type AnyScene } from './canvasScenes'
 
 /** link: その絵の数学を、アプリのどこで触れるか */
 type Scene = { id: string; field: string; title: string; tex: string; duration: number; scene: AnyScene; link: { label: string; href: string } }
@@ -17,6 +17,12 @@ const SCENES: Scene[] = [
   { id: 'harmonograph', field: '三角関数', title: 'ハーモノグラフ', tex: 'x(t)=\\sum_k A_k\\sin(f_k t+\\varphi_k)\\,e^{-d t}', duration: 11, scene: harmonograph, link: { label: '波の重ね合わせをグラフで動かす', href: hrefTo('graph', { f: ['sin(x)', 'sin(k*x)', 'sin(x) + sin(k*x)'], k: 1.5, play: 'k' }) } },
   { id: 'fern', field: '確率', title: 'バーンズリーのシダ', tex: '\\vec x\\ \\mapsto\\ A_i\\vec x+\\vec b_i\\quad(\\text{確率 } p_i)', duration: 10, scene: fern, link: { label: '行列で平面を移す様子を見る', href: hrefTo('theorems', { id: 'inverse-matrix' }) } },
   { id: 'flow', field: 'ベクトル場', title: '流れの中の粒子', tex: '\\frac{d\\vec x}{dt}=\\vec v(\\vec x,t)', duration: 11, scene: flowField, link: { label: '速度を積分すると位置になる（微積分の基本定理）', href: hrefTo('theorems', { id: 'ftc' }) } },
+  { id: 'ulam', field: '素数', title: 'ウラムのらせん', tex: '1, 2, 3, \\ldots\\ \\text{をらせんに並べ、素数だけを塗る}', duration: 11, scene: ulam, link: { label: '素数は無数にある', href: hrefTo('theorems', { id: 'infinite-primes' }) } },
+  { id: 'pascal', field: '二項係数', title: 'パスカルの三角形の奇数', tex: '\\binom{n}{k}\\ \\text{が奇数のところだけ}', duration: 10, scene: pascalMod2, link: { label: '二項定理で見る', href: hrefTo('theorems', { id: 'binomial' }) } },
+  { id: 'mandelbrot', field: '複素数', title: 'マンデルブロ集合', tex: 'z_{n+1}=z_n^{\\,2}+c\\ \\text{が発散しない}\\ c', duration: 12, scene: mandelbrot, link: { label: '複素数の掛け算＝拡大と回転', href: hrefTo('theorems', { id: 'polar-product' }) } },
+  { id: 'fourier', field: '三角関数', title: '円を足して作る矩形波', tex: '\\frac4\\pi\\left(\\sin x+\\frac{\\sin3x}{3}+\\frac{\\sin5x}{5}+\\cdots\\right)', duration: 12, scene: fourierSquare, link: { label: 'グラフで項を足してみる', href: hrefTo('graph', { f: ['4/pi*(sin(x) + sin(3x)/3 + sin(5x)/5 + sin(7x)/7)'] }) } },
+  { id: 'golden', field: '数列', title: 'フィボナッチと黄金らせん', tex: 'F_{n+2}=F_{n+1}+F_n,\\ \\ \\frac{F_{n+1}}{F_n}\\to\\frac{1+\\sqrt5}{2}', duration: 11, scene: goldenSpiral, link: { label: '漸化式で見る', href: hrefTo('theorems', { id: 'recurrence' }) } },
+  { id: 'dragon', field: '再帰', title: 'ドラゴン曲線', tex: '\\text{紙を半分に折り続けて、直角に開く}', duration: 13, scene: dragon, link: { label: '90° の回転を行列で見る', href: hrefTo('theorems', { id: 'rotation-matrix' }) } },
 ]
 
 const FADE = 0.6
