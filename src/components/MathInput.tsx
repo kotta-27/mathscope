@@ -1,9 +1,27 @@
-import type { ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
+import { useMedia } from '../lib/useMedia'
 import type { Parsed } from '../lib/math'
 import { texOf } from '../lib/math'
 import { Tex } from './Tex'
 
 const squash = (s: string) => s.replace(/\s+/g, '')
+
+/** スマホで入力欄を選んだときに出す記号。[表示, 入れる文字, カーソルを戻す数] */
+const KEYS: [string, string, number][] = [
+  ['x', 'x', 0],
+  ['²', '^2', 0],
+  ['^', '^', 0],
+  ['√', 'sqrt()', 1],
+  ['(', '(', 0],
+  [')', ')', 0],
+  ['/', '/', 0],
+  ['*', '*', 0],
+  ['π', 'pi', 0],
+  ['sin', 'sin()', 1],
+  ['cos', 'cos()', 1],
+  ['|x|', 'abs()', 1],
+  ['=', '=', 0],
+]
 
 /**
  * 数式の入力欄。入力を正規化して読み、
@@ -33,12 +51,29 @@ export function MathInput({
   placeholder?: string
 }) {
   const reread = parsed.normalized && squash(parsed.normalized) !== squash(value)
+  const touch = useMedia('(pointer: coarse)')
+  const [focus, setFocus] = useState(false)
+  const ref = useRef<HTMLInputElement>(null)
+  /** カーソルの位置に記号を入れる */
+  const insert = (text: string, back: number) => {
+    const el = ref.current
+    const a = el?.selectionStart ?? value.length
+    const b = el?.selectionEnd ?? value.length
+    onChange(value.slice(0, a) + text + value.slice(b))
+    requestAnimationFrame(() => {
+      const p = a + text.length - back
+      el?.setSelectionRange(p, p)
+    })
+  }
   return (
     <div className="math-input">
       <div className="expr-input">
         {before}
         {label && <Tex tex={label} />}
         <input
+          ref={ref}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
@@ -49,6 +84,21 @@ export function MathInput({
         />
         {after}
       </div>
+      {touch && focus && (
+        <div className="mi-keys" role="toolbar" aria-label="記号を入れる">
+          {KEYS.map(([label, text, back]) => (
+            <button
+              key={label}
+              type="button"
+              // 押しても入力欄からフォーカスを外さない（キーボードを閉じない）
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={() => insert(text, back)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
       {parsed.ok ? (
         <>
           {preview && (
