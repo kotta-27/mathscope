@@ -531,3 +531,13 @@ body { overflow-x: clip; }
 .feature-pt circle { fill: var(--surface); stroke-width: 2.2; }
 .pt-label { font-size: 12px; fill: var(--text); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
 :root[data-present] .pt-label { font-size: 17px; }
+
+/* 定理の科目・単元のタグ */
+.course { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+/* 定理が見つからないとき */
+.no-hits { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.no-hits > p:first-child { margin: 0 0 10px; font-weight: 600; }
+.no-hits-links { margin: 0 0 8px; padding-left: 1.2em; }
+.no-hits-links li { margin: 4px 0; }
+.no-hits-links a { color: var(--accent); }
+.link-btn { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; font-size: inherit; }

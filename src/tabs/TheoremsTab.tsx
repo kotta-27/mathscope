@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { readHash, useSyncHash } from '../lib/route'
+import { hrefTo, readHash, useSyncHash } from '../lib/route'
+import { COURSES, TOPICS } from '../lib/courses'
+import { matches, norm } from '../lib/search'
 import { MathText } from '../components/MathText'
 import { Tex } from '../components/Tex'
 import { FIELDS, THEOREMS, type FieldId, type Theorem } from '../lib/theorems'
@@ -7,14 +9,6 @@ import { FIGURES } from '../figures'
 import { figStore } from '../figures/state'
 import { FigScope } from '../figures/FigScope'
 import { ErrorBoundary } from '../components/ErrorBoundary'
-
-const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '')
-
-function matches(t: Theorem, q: string) {
-  if (!q) return true
-  const hay = norm([t.id, t.name, t.aka ?? '', t.conditions ?? '', ...t.usage].join(' '))
-  return hay.includes(norm(q))
-}
 
 export function TheoremsTab() {
   const [field, setField] = useState<FieldId | 'all'>(() => {
@@ -44,7 +38,7 @@ export function TheoremsTab() {
       <HashSync q={q} field={field} />
       <aside className="panel sticky theorems-side">
         <h2>検索</h2>
-        <input className="wide" placeholder="定理名・用途で検索" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="wide" placeholder="定理名・単元名・英語で検索" value={q} onChange={(e) => setQ(e.target.value)} />
         <h2>分野</h2>
         <nav className="field-list">
           <button className={`field-item ${field === 'all' ? 'on' : ''}`} onClick={() => setField('all')}>
@@ -64,7 +58,7 @@ export function TheoremsTab() {
       </aside>
 
       <section className="theorems">
-        {groups.length === 0 && <p className="hint">該当する定理がない。</p>}
+        {groups.length === 0 && <NoHits q={q} clear={() => setQ('')} />}
         {groups.map((f) => (
           <div key={f.id} className="field-group">
             <h2 className="field-title">{f.label}</h2>
@@ -95,13 +89,52 @@ function HashSync({ q, field }: { q: string; field: FieldId | 'all' }) {
   return null
 }
 
+/** 見つからなかったときに、ほかのタブで扱っている話題やグラフへ案内する */
+function NoHits({ q, clear }: { q: string; clear: () => void }) {
+  const n = norm(q)
+  const topics = TOPICS.filter((x) => x.words.some((w) => n.includes(norm(w)) || (n.length >= 2 && norm(w).includes(n))))
+  // x を含む式のように見えるなら、グラフで描けるようにする
+  const formula = /x/i.test(q) && /[0-9+\-*/^²³√()=]/.test(q) && !/[ぁ-んァ-ン一-龥]/.test(q)
+  return (
+    <div className="no-hits">
+      <p>「{q}」に当てはまる定理は見つからなかった。</p>
+      {(topics.length > 0 || formula) && (
+        <ul className="no-hits-links">
+          {formula && (
+            <li>
+              <a href={hrefTo('graph', { f: q.replace(/^\s*y\s*=/, '') })}>グラフで y = {q.replace(/^\s*y\s*=/, '')} を描く →</a>
+            </li>
+          )}
+          {topics.map((x) => (
+            <li key={x.href}>
+              <a href={x.href}>{x.label} →</a>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="hint">
+        定理名（例: 加法定理）・単元名（例: 数列、図形と計量）・英語（例: eigenvalue）でも探せる。{' '}
+        <button className="link-btn" onClick={clear}>
+          検索をやめてすべて表示
+        </button>
+      </p>
+    </div>
+  )
+}
+
 function TheoremCard({ t }: { t: Theorem }) {
+  const c = COURSES[t.id]
   const Figure = FIGURES[t.id]
   return (
     <article className="theorem" id={t.id}>
       <header className="theorem-head">
         <h3>{t.name}</h3>
         {t.aka && <span className="aka">{t.aka}</span>}
+        {c && (
+          <span className="course" title={c.en}>
+            {c.course}・{c.unit}
+          </span>
+        )}
         <a className="permalink" href={`#theorems?id=${t.id}`} title="この定理へのリンク">#</a>
       </header>
       <div className="theorem-statement">

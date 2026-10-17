@@ -133,7 +133,7 @@ export function HomeTab() {
               location.hash = hrefTo('theorems', q.trim() ? { q: q.trim() } : {})
             }}
           >
-            <input className="wide" placeholder="定理を探す（例：ベイズ、最大値、角度）" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input className="wide" placeholder="定理を探す（例：ベイズ、数列、eigenvalue）" value={q} onChange={(e) => setQ(e.target.value)} />
             <button className="btn" type="submit">検索</button>
           </form>
         </div>
