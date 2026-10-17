@@ -16,7 +16,7 @@ function useCardTime<T extends Element>() {
   const visible = useVisible(ref)
   const [fixed] = useState(() => {
     const v = Number(readHash().params.get('t'))
-    return Number.isFinite(v) && v > 0 ? v : reducedMotion() ? 2 : null
+    return Number.isFinite(v) && v > 0 ? v : reducedMotion() ? 4.5 : null
   })
   const [t, setT] = useState(fixed ?? 0)
   useRaf(fixed === null && visible, (dt) => setT((v) => v + dt))

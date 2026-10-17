@@ -76,6 +76,16 @@ export default function App() {
           <Suspense fallback={<Loader />}>{current.el()}</Suspense>
         </ErrorBoundary>
       </main>
+      <footer className="site-footer">
+        <a className="site-footer-brand" href="#home">
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={22} height={22} />
+          <span>Mathscope</span>
+        </a>
+        <span>数式が、景色になる。</span>
+        <a href="https://github.com/kotta-27/mathscope" target="_blank" rel="noreferrer">
+          GitHub
+        </a>
+      </footer>
     </div>
     </>
   )

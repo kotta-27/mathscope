@@ -86,12 +86,25 @@ function LazyInputDemo() {
   )
 }
 
-const PICKS = ['bayes', 'pythagoras', 'euler-formula', 'clt', 'ftc', 'diagonalization', 'euclid-algorithm', 'am-gm']
+/** トップで見せる定理と、カードに収まる短い代表式 */
+const PICKS: [string, string][] = [
+  ['bayes', 'P(A\\mid B)=\\frac{P(B\\mid A)\\,P(A)}{P(B)}'],
+  ['pythagoras', 'a^2+b^2=c^2'],
+  ['euler-formula', 'e^{i\\pi}+1=0'],
+  ['clt', '\\bar X_n\\ \\to\\ N\\!\\left(\\mu,\\ \\tfrac{\\sigma^2}{n}\\right)'],
+  ['ftc', '\\frac{d}{dx}\\int_a^x f(t)\\,dt=f(x)'],
+  ['diagonalization', 'A\\vec v=\\lambda\\vec v'],
+  ['euclid-algorithm', '\\gcd(a,b)=\\gcd(b,\\ a \\bmod b)'],
+  ['am-gm', '\\frac{a+b}{2}\\ge\\sqrt{ab}'],
+]
 
 export function HomeTab() {
   const [q, setQ] = useState('')
   const figCount = FIGURE_IDS.length
-  const picks = PICKS.map((id) => THEOREMS.find((t) => t.id === id)!).filter(Boolean)
+  const picks = PICKS.flatMap(([id, tex]) => {
+    const t = THEOREMS.find((x) => x.id === id)
+    return t ? [{ t, tex }] : []
+  })
   return (
     <div className="home">
       <section className="hero">
@@ -124,8 +137,7 @@ export function HomeTab() {
       </section>
 
       <section className="usecases">
-        <h2 className="usecases-title">Mathscope でできること</h2>
-        <p className="usecases-lead">気になるものを押すと、例の式が入った状態で開く。</p>
+        <SectionHead eyebrow="Features" title="Mathscope でできること" lead="気になるものを押すと、例の式が入った状態で開く。" />
         <div className="features">
           {USECASES.map((u) => (
             <a key={u.verb} className="feature" href={u.href}>
@@ -142,9 +154,13 @@ export function HomeTab() {
       </section>
 
       <section className="input-section">
-        <h2 className="usecases-title">数式をかんたんに入力</h2>
-        <p className="usecases-lead">x²、√x、sin 2x、全角の文字も、\frac や \sqrt を使った LaTeX も、そのまま入れられる。読み方が違うときは「読み取り」で教えてくれる。</p>
+        <SectionHead
+          eyebrow="Input"
+          title="数式をかんたんに入力"
+          lead="x²、√x、sin 2x、全角の文字も、\frac や \sqrt を使った LaTeX も、そのまま入れられる。読み方が違うときは「読み取り」で教えてくれる。"
+        />
         <div className="input-grid">
+          <LazyInputDemo />
           <table className="input-table">
             <thead>
               <tr>
@@ -165,31 +181,59 @@ export function HomeTab() {
               ))}
             </tbody>
           </table>
-          <LazyInputDemo />
         </div>
       </section>
 
       <section>
-        <h2 className="section-title">図で見る定理から</h2>
+        <SectionHead
+          eyebrow="Theorems"
+          title="図で見る定理"
+          lead={`${THEOREMS.length} 個の定理のうち ${figCount} 個は、動かせる図つき。気になるものから開いてみる。`}
+          link={{ href: '#theorems', label: '定理集をすべて見る →' }}
+        />
         <div className="picks">
-          {picks.map((t) => (
+          {picks.map(({ t, tex }) => (
             <a key={t.id} className="pick" href={hrefTo('theorems', { q: t.id })}>
               <span className="pick-field">{FIELDS.find((f) => f.id === t.field)?.label}</span>
               <span className="pick-name">{t.name}</span>
               <span className="pick-tex">
-                <Tex tex={t.statement} />
+                <Tex tex={tex} />
               </span>
             </a>
           ))}
         </div>
       </section>
 
-      <section className="stats">
-        <div><strong>5</strong><span>つの見方</span></div>
-        <div><strong>{FIELDS.length}</strong><span>分野</span></div>
-        <div><strong>{THEOREMS.length}</strong><span>個の定理</span></div>
-        <div><strong>{figCount}</strong><span>個の動く図</span></div>
+      <section className="closing">
+        <div className="closing-text">
+          <h2>まずは、式をひとつ入れてみる。</h2>
+          <p>グラフにするところから始めても、定理を眺めるところから始めてもいい。</p>
+          <div className="hero-cta">
+            <a className="btn primary" href="#graph">グラフを触ってみる</a>
+            <a className="btn" href="#theorems">定理集を見る</a>
+          </div>
+        </div>
+        <dl className="closing-stats">
+          <div><dt>見方</dt><dd>5</dd></div>
+          <div><dt>分野</dt><dd>{FIELDS.length}</dd></div>
+          <div><dt>定理</dt><dd>{THEOREMS.length}</dd></div>
+          <div><dt>動く図</dt><dd>{figCount}</dd></div>
+        </dl>
       </section>
     </div>
+  )
+}
+
+/** セクションの見出し: 小さな英字ラベル → 見出し → 説明 */
+function SectionHead({ eyebrow, title, lead, link }: { eyebrow: string; title: string; lead: string; link?: { href: string; label: string } }) {
+  return (
+    <header className="section-head">
+      <p className="eyebrow">{eyebrow}</p>
+      <div className="section-head-row">
+        <h2>{title}</h2>
+        {link && <a href={link.href}>{link.label}</a>}
+      </div>
+      <p className="section-lead">{lead}</p>
+    </header>
   )
 }
