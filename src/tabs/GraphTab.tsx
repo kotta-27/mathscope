@@ -6,6 +6,7 @@ import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, texOf } from '../lib/math'
 import { readGraphExpr } from '../lib/graphExpr'
+import { PRESET_GROUPS, type Preset } from '../lib/graphPresets'
 import { Curves, Ghosts } from '../components/GraphCurves'
 import { useRaf } from '../lib/useRaf'
 import { useMedia } from '../lib/useMedia'
@@ -18,19 +19,6 @@ import type { PlotCtx, View } from '../components/Plot'
 type Row = { id: number; src: string; hidden?: boolean; deriv?: boolean; area?: [number, number] }
 type Range = { min: number; max: number; step: number }
 
-const PRESETS: { label: string; rows: string[] }[] = [
-  { label: '正弦波', rows: ['a*sin(b*x + c)'] },
-  { label: '放物線（頂点形）', rows: ['a*(x - p)^2 + q'] },
-  { label: '3次関数', rows: ['x^3 + a*x^2 + b*x'] },
-  { label: '正規分布', rows: ['exp(-(x - m)^2 / (2*s^2)) / (s*sqrt(2*pi))'] },
-  { label: '指数と対数', rows: ['a^x', 'log(x) / log(a)'] },
-  { label: '波の重ね合わせ', rows: ['sin(x)', 'sin(k*x)', 'sin(x) + sin(k*x)'] },
-  { label: '円', rows: ['(x - a)^2 + (y - b)^2 = r^2'] },
-  { label: '楕円・双曲線', rows: ['x^2/a^2 + y^2/b^2 = 1', 'x^2/a^2 - y^2/b^2 = 1'] },
-  { label: '不等式の領域', rows: ['y > x^2 - 2', 'x^2 + y^2 < r^2'] },
-  { label: '媒介変数（リサジュー）', rows: ['(sin(a*t), sin(b*t))'] },
-  { label: '極座標（バラ曲線）', rows: ['r = cos(k*θ)'] },
-]
 
 const RANGE = { min: -5, max: 5 }
 const VIEW: View = { xMin: -8, xMax: 8, yMin: -5, yMax: 5 }
@@ -254,9 +242,12 @@ export function GraphTab() {
 
   const setRow = (id: number, src: string) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, src } : r)))
   const patchRow = (id: number, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...p } : r)))
-  const loadPreset = (srcs: string[]) => {
-    setRows(srcs.map((src) => ({ id: nextId.current++, src })))
-    setPlaying({})
+  const loadPreset = (p: Preset) => {
+    setRows(p.rows.map((x) => (typeof x === 'string' ? { id: nextId.current++, src: x } : { id: nextId.current++, ...x })))
+    if (p.params) setParams((o) => ({ ...o, ...p.params }))
+    setPlaying(p.play ? { [p.play]: true } : {})
+    setTrail(!!p.trail)
+    clearTrail()
   }
 
   return (
@@ -382,14 +373,19 @@ export function GraphTab() {
           </button>
         )}
 
-        <h2>例</h2>
-        <div className="chips">
-          {PRESETS.map((p) => (
-            <button key={p.label} className="chip" onClick={() => loadPreset(p.rows)}>
-              {p.label}
-            </button>
-          ))}
-        </div>
+        <h2>例（単元ごと）</h2>
+        {PRESET_GROUPS.map((g) => (
+          <div key={g.unit} className="preset-group">
+            <span className="preset-unit">{g.unit}</span>
+            <div className="chips">
+              {g.items.map((p) => (
+                <button key={p.label} className="chip" onClick={() => loadPreset(p)}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </aside>
 
       <section className="stage">

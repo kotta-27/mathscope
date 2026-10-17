@@ -617,3 +617,7 @@ body { overflow-x: clip; }
 .range-edit input { width: 62px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--text); }
 .curve.deriv { stroke-dasharray: 7 5; stroke-width: 2; opacity: 0.85; }
 .trace-drop { stroke: var(--muted); stroke-dasharray: 3 3; }
+
+/* グラフの例（単元ごと） */
+.preset-group { margin: 0 0 10px; }
+.preset-unit { display: block; font-size: 12px; color: var(--muted); margin: 0 0 4px; }
