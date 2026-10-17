@@ -392,3 +392,7 @@ body { overflow-x: clip; }
 .bayes-ask { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--muted); min-width: 0; }
 .bayes-ask .katex { font-size: 1em; color: var(--text); opacity: 0.85; }
 .bayes-result > strong { font-size: 30px; color: var(--c); font-variant-numeric: tabular-nums; }
+
+/* 数式の中の文章（\text{}）は本文と同じゴシック体にする。
+   KaTeX の数式用フォントには日本語の字がなく、明朝体で代わりに描かれてしまうため */
+.katex .text { font-family: system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif; font-size: 0.86em; }
