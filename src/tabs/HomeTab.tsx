@@ -7,12 +7,45 @@ import { HeroCarousel } from '../hero/HeroCarousel'
 
 const PALETTE = { blue: '#2e86ab', red: '#e4572e', green: '#3bb273', orange: '#f2a541', purple: '#a259ff' }
 
-const FEATURES: { tab: string; title: string; desc: string; art: ReactNode }[] = [
-  { tab: 'graph', title: 'グラフ', desc: '式の中の文字がスライダーになる。動かすと形がどう変わるかがすぐ分かる。', art: <GraphArt /> },
-  { tab: 'structure', title: '構造', desc: '式を部品に分けて、それぞれの役割と値を木の形で見る。', art: <TreeArt /> },
-  { tab: 'geometry', title: '図形', desc: '単位円・接線・面積で、三角関数と微分積分を目で追う。', art: <CircleArt /> },
-  { tab: 'steps', title: '変形', desc: '(a+b)² のような展開を 1 手ずつ再生。どこが変わったか色で分かる。', art: <StepsArt /> },
-  { tab: 'theorems', title: '定理集', desc: `${FIELDS.length} 分野・${THEOREMS.length} 個の定理を、使いどころと動く図つきで。`, art: <BayesArt /> },
+const QUAD = '(-b + sqrt(b^2 - 4*a*c)) / (2*a)'
+
+/** 初めての人向けに、具体的な使い方を「動詞＋例」で見せる。href はその例を入れた状態のタブ */
+const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art: ReactNode }[] = [
+  {
+    verb: '動かす',
+    tab: 'グラフ',
+    text: <>放物線 <Tex tex="a(x-p)^2+q" /> の <Tex tex="a,p,q" /> をスライダーで動かし、形の変わり方を見る</>,
+    href: hrefTo('graph', { f: 'a*(x - p)^2 + q' }),
+    art: <ParabolaArt />,
+  },
+  {
+    verb: '分解する',
+    tab: '構造',
+    text: <>解の公式を部品に分け、どこが分子・分母・判別式かと、それぞれの値を見る</>,
+    href: hrefTo('structure', { f: QUAD }),
+    art: <PartsArt />,
+  },
+  {
+    verb: '展開する',
+    tab: '変形',
+    text: <><Tex tex="(a+b)^2" /> の展開を 1 手ずつ再生し、どこが書き換わったかを色で追う</>,
+    href: hrefTo('steps', { f: '(a+b)^2' }),
+    art: <ExpandArt />,
+  },
+  {
+    verb: '体感する',
+    tab: '図形',
+    text: <>幅 <Tex tex="h" /> を縮めて、割線が接線に重なっていく＝微分を目で見る</>,
+    href: hrefTo('geometry', { demo: 'deriv' }),
+    art: <TangentArt />,
+  },
+  {
+    verb: '確かめる',
+    tab: '定理集',
+    text: <>ベイズの定理を面積の図で確かめる。ほかにも {THEOREMS.length} 個の定理を図つきで</>,
+    href: hrefTo('theorems', { q: 'bayes' }),
+    art: <BayesArt />,
+  },
 ]
 
 const PICKS = ['bayes', 'pythagoras', 'euler-formula', 'clt', 'ftc', 'diagonalization', 'euclid-algorithm', 'am-gm']
@@ -52,21 +85,19 @@ export function HomeTab() {
         <HeroCarousel />
       </section>
 
-      <section className="stats">
-        <div><strong>5</strong><span>つの見方</span></div>
-        <div><strong>{FIELDS.length}</strong><span>分野</span></div>
-        <div><strong>{THEOREMS.length}</strong><span>個の定理</span></div>
-        <div><strong>{figCount}</strong><span>個の動く図</span></div>
-      </section>
-
-      <section>
-        <h2 className="section-title">できること</h2>
+      <section className="usecases">
+        <h2 className="usecases-title">Mathscope でできること</h2>
+        <p className="usecases-lead">気になるものを押すと、例の式が入った状態で開く。</p>
         <div className="features">
-          {FEATURES.map((f) => (
-            <a key={f.tab} className="feature" href={`#${f.tab}`}>
-              <div className="feature-art">{f.art}</div>
-              <h3>{f.title} →</h3>
-              <p>{f.desc}</p>
+          {USECASES.map((u) => (
+            <a key={u.verb} className="feature" href={u.href}>
+              <div className="feature-art">{u.art}</div>
+              <div className="feature-head">
+                <h3>{u.verb}</h3>
+                <span className="feature-tab">{u.tab}</span>
+              </div>
+              <p>{u.text}</p>
+              <span className="feature-go">試す →</span>
             </a>
           ))}
         </div>
@@ -86,102 +117,92 @@ export function HomeTab() {
           ))}
         </div>
       </section>
+
+      <section className="stats">
+        <div><strong>5</strong><span>つの見方</span></div>
+        <div><strong>{FIELDS.length}</strong><span>分野</span></div>
+        <div><strong>{THEOREMS.length}</strong><span>個の定理</span></div>
+        <div><strong>{figCount}</strong><span>個の動く図</span></div>
+      </section>
     </div>
   )
 }
 
-/* ---------- 機能カードの小さな絵 ---------- */
+/* ---------- 使い方カードの小さな絵 ---------- */
 
-function GraphArt() {
-  const curve = (a: number, b: number) => {
+/** a を変えた放物線を重ねる */
+function ParabolaArt() {
+  const curve = (a: number, col: string, op: number) => {
     let d = ''
     for (let i = 0; i <= 60; i++) {
-      const x = (i / 60) * 200
-      d += `${i ? 'L' : 'M'}${x},${60 - a * Math.sin((x / 200) * Math.PI * 2 * b) * 32}`
+      const x = -2 + (4 * i) / 60
+      const y = a * (x - 0.3) ** 2 - 1.2
+      d += `${i ? 'L' : 'M'}${(100 + x * 45).toFixed(1)},${(70 - y * 22).toFixed(1)}`
     }
-    return d
+    return <path d={d} stroke={col} strokeWidth={2.2} fill="none" opacity={op} />
   }
   return (
     <svg viewBox="0 0 200 120">
-      <line x1={0} x2={200} y1={60} y2={60} className="fig-axis" />
-      <path d={curve(0.4, 1)} stroke={PALETTE.blue} strokeWidth={2} fill="none" opacity={0.4} />
-      <path d={curve(0.7, 1.5)} stroke={PALETTE.blue} strokeWidth={2} fill="none" opacity={0.7} />
-      <path d={curve(1, 2)} stroke={PALETTE.red} strokeWidth={2.5} fill="none" />
-      <line x1={30} x2={170} y1={108} y2={108} stroke="var(--border)" strokeWidth={4} strokeLinecap="round" />
-      <circle cx={120} cy={108} r={7} fill={PALETTE.blue} />
+      <line x1={0} x2={200} y1={70} y2={70} className="fig-axis" />
+      <line x1={100} x2={100} y1={0} y2={120} className="fig-axis" />
+      {curve(0.35, PALETTE.blue, 0.35)}
+      {curve(0.7, PALETTE.blue, 0.6)}
+      {curve(1.4, PALETTE.red, 1)}
+      <line x1={30} x2={170} y1={110} y2={110} stroke="var(--border)" strokeWidth={4} strokeLinecap="round" />
+      <circle cx={130} cy={110} r={6} fill={PALETTE.blue} />
     </svg>
   )
 }
 
-function TreeArt() {
-  const nodes: [number, number, string][] = [
-    [100, 18, PALETTE.blue],
-    [55, 60, PALETTE.red],
-    [145, 60, PALETTE.green],
-    [30, 102, PALETTE.orange],
-    [80, 102, PALETTE.orange],
-    [125, 102, PALETTE.purple],
-    [170, 102, PALETTE.purple],
-  ]
-  const edges = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]]
+/** 解の公式を色分けして見せる */
+function PartsArt() {
   return (
-    <svg viewBox="0 0 200 120">
-      {edges.map(([a, b]) => (
-        <line key={`${a}-${b}`} x1={nodes[a][0]} y1={nodes[a][1]} x2={nodes[b][0]} y2={nodes[b][1]} className="fig-thin" />
-      ))}
-      {nodes.map(([x, y, c], i) => (
-        <circle key={i} cx={x} cy={y} r={11} fill={c} opacity={0.85} />
-      ))}
-      {['+', '×', '÷'].map((s, i) => (
-        <text key={s} x={nodes[i][0]} y={nodes[i][1] + 5} textAnchor="middle" fill="#fff" fontSize={14} fontWeight={700}>
-          {s}
-        </text>
-      ))}
-    </svg>
+    <div className="feature-tex">
+      <Tex
+        block
+        tex={`\\frac{\\textcolor{${PALETTE.red}}{-b}\\pm\\sqrt{\\textcolor{${PALETTE.green}}{b^2-4ac}}}{\\textcolor{${PALETTE.blue}}{2a}}`}
+      />
+      <div className="feature-legend">
+        <span style={{ color: PALETTE.green }}>判別式</span>
+        <span style={{ color: PALETTE.blue }}>分母</span>
+      </div>
+    </div>
   )
 }
 
-function CircleArt() {
-  const th = 0.8
-  const cx = 60
-  const cy = 62
-  const r = 44
-  const px = cx + r * Math.cos(th)
-  const py = cy - r * Math.sin(th)
-  let wave = ''
+/** 展開の途中を 3 行で */
+function ExpandArt() {
+  return (
+    <div className="feature-tex steps-mini">
+      <Tex tex="(a+b)^2" />
+      <Tex tex={`=\\textcolor{${PALETTE.green}}{(a+b)(a+b)}`} />
+      <Tex tex={`=\\textcolor{${PALETTE.green}}{a^2+2ab+b^2}`} />
+    </div>
+  )
+}
+
+/** h を縮めると割線が接線に近づく */
+function TangentArt() {
+  const f = (x: number) => 0.18 * x ** 3 - 0.9 * x
+  const X = (x: number) => 100 + x * 38
+  const Y = (y: number) => 60 - y * 30
+  const x0 = 1.2
+  let d = ''
   for (let i = 0; i <= 60; i++) {
-    const a = (i / 60) * Math.PI * 2
-    wave += `${i ? 'L' : 'M'}${115 + (a / (Math.PI * 2)) * 80},${cy - r * Math.sin(a)}`
+    const x = -2.6 + (5.2 * i) / 60
+    d += `${i ? 'L' : 'M'}${X(x).toFixed(1)},${Y(f(x)).toFixed(1)}`
   }
-  return (
-    <svg viewBox="0 0 200 120">
-      <circle cx={cx} cy={cy} r={r} className="fig-thin" />
-      <line x1={cx} y1={cy} x2={px} y2={cy} stroke={PALETTE.blue} strokeWidth={3} />
-      <line x1={px} y1={cy} x2={px} y2={py} stroke={PALETTE.red} strokeWidth={3} />
-      <line x1={cx} y1={cy} x2={px} y2={py} stroke="currentColor" strokeWidth={1.5} />
-      <path d={wave} stroke={PALETTE.red} strokeWidth={2} fill="none" />
-      <line x1={px} y1={py} x2={115 + (th / (Math.PI * 2)) * 80} y2={py} className="fig-dash" />
-      <circle cx={px} cy={py} r={4} fill="currentColor" />
-    </svg>
+  const line = (m: number, col: string, op: number) => (
+    <line x1={X(x0 - 2.4)} y1={Y(f(x0) - m * 2.4)} x2={X(x0 + 2.4)} y2={Y(f(x0) + m * 2.4)} stroke={col} strokeWidth={1.6} opacity={op} />
   )
-}
-
-function StepsArt() {
-  const rows = [
-    { w: 70, c: 'var(--muted)' },
-    { w: 110, c: 'var(--muted)' },
-    { w: 150, c: PALETTE.green },
-    { w: 120, c: 'var(--muted)' },
-  ]
+  const sec = (h: number) => (f(x0 + h) - f(x0)) / h
   return (
     <svg viewBox="0 0 200 120">
-      {rows.map((r, i) => (
-        <g key={i}>
-          <rect x={20} y={12 + i * 26} width={r.w} height={16} rx={5} fill={r.c} opacity={i === 2 ? 0.8 : 0.3} />
-          {i === 2 && <rect x={60} y={12 + i * 26} width={50} height={16} rx={5} fill={PALETTE.red} opacity={0.8} />}
-        </g>
-      ))}
-      <text x={180} y={78} textAnchor="end" fontSize={16} fill={PALETTE.green}>▶</text>
+      <path d={d} stroke={PALETTE.blue} strokeWidth={2.2} fill="none" />
+      {line(sec(1.4), PALETTE.orange, 0.35)}
+      {line(sec(0.8), PALETTE.orange, 0.6)}
+      {line(0.54 * x0 * x0 - 0.9, PALETTE.green, 1)}
+      <circle cx={X(x0)} cy={Y(f(x0))} r={4} fill={PALETTE.green} />
     </svg>
   )
 }
