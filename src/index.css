@@ -559,3 +559,11 @@ body { overflow-x: clip; }
 .theme-in-header, .theme-in-footer { display: contents; }
 .theme-in-footer { display: none; }
 @media (max-width: 640px) { .theme-in-header { display: none; } .theme-in-footer { display: contents; } }
+
+/* ヘッダーの道具（リンクのコピー・発表）。ホームでは見えなくするが、幅は残す */
+.header-tools { display: flex; align-items: center; gap: 8px; }
+.header-tools[data-hidden] { visibility: hidden; }
+/* 押したあとに文字が変わっても、ボタンの幅を変えない */
+.copy-link span { display: inline-block; min-width: 8em; text-align: center; }
+.icon-tool span { display: inline-block; min-width: 3em; text-align: center; }
+@media (max-width: 640px) { .copy-link span { min-width: 0; } }

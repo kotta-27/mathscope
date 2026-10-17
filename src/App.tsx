@@ -76,8 +76,11 @@ export default function App() {
               </button>
             ))}
           </nav>
-          {tab !== 'home' && <CopyLink />}
-          {tab !== 'home' && <PresentButton />}
+          {/* ホームでは使わないが、場所は取っておく（タブの位置がページごとにずれないように） */}
+          <span className="header-tools" inert={tab === 'home'} data-hidden={tab === 'home' || undefined}>
+            <CopyLink />
+            <PresentButton />
+          </span>
           <span className="theme-in-header">
             <ThemeButton />
           </span>
