@@ -8,6 +8,7 @@ import { PALETTE, evalNum, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
 import { useMedia } from '../lib/useMedia'
 import { usePresent } from '../lib/display'
+import { findFeatures, type Feature } from '../lib/features'
 import { num, readHash, useSyncHash } from '../lib/route'
 import type { View } from '../components/Plot'
 
@@ -25,7 +26,17 @@ const PRESETS: { label: string; rows: string[] }[] = [
 const RANGE = { min: -5, max: 5 }
 const VIEW: View = { xMin: -8, xMax: 8, yMin: -5, yMax: 5 }
 /** パラメータ以外に使う URL のキー */
-const RESERVED = new Set(['f', 'view', 'play'])
+const RESERVED = new Set(['f', 'view', 'play', 'pts'])
+
+/** 2 次関数か（2 階差分が一定で 0 でない）。極値を「頂点」と呼ぶため */
+function isQuadratic(f: (x: number) => number) {
+  const d2 = (x: number) => f(x + 1) - 2 * f(x) + f(x - 1)
+  const a = d2(0.3)
+  return Number.isFinite(a) && Math.abs(a) > 1e-9 && [-2.1, 1.7, 4.2].every((x) => Math.abs(d2(x) - a) < 1e-6 * Math.max(1, Math.abs(a)))
+}
+
+const fmtPt = (v: number) => String(Number(v.toFixed(2)) || 0)
+const LABEL: Record<Feature['kind'], string> = { root: '', yint: '', max: '極大', min: '極小', cross: '交点' }
 
 function readView(s: string | null): View {
   const v = (s ?? '').split(',').map(Number)
@@ -58,6 +69,7 @@ export function GraphTab() {
     Object.fromEntries((hp.get('play') ?? '').split(',').filter(Boolean).map((k) => [k, true])),
   )
   const [initialView] = useState(() => readView(hp.get('view')))
+  const [showPts, setShowPts] = useState(() => hp.get('pts') !== '0')
   const [view, setView] = useState(initialView)
   const dirs = useRef<Record<string, number>>({})
 
@@ -85,6 +97,7 @@ export function GraphTab() {
     ...Object.fromEntries(names.filter((n) => !RESERVED.has(n)).map((n) => [n, scope[n]])),
     view: sameView ? null : [view.xMin, view.xMax, view.yMin, view.yMax].map(num).join(','),
     play: active.length ? active.join(',') : null,
+    pts: showPts ? null : '0',
   })
 
   useRaf(active.length > 0, (dt) => {
@@ -163,6 +176,10 @@ export function GraphTab() {
           </>
         )}
 
+        <label className="check">
+          <input type="checkbox" checked={showPts} onChange={(e) => setShowPts(e.target.checked)} /> 頂点・極値・交点に印をつける
+        </label>
+
         <h2>例</h2>
         <div className="chips">
           {PRESETS.map((p) => (
@@ -175,18 +192,43 @@ export function GraphTab() {
 
       <section className="stage">
         <Plot initial={initialView} height={plotH} onView={setView}>
-          {(ctx) =>
-            parsed.map((p, i) =>
-              p.ok ? (
-                <path
-                  key={rows[i].id}
-                  d={ctx.path((x) => evalNum(p.code, { ...scope, x }))}
-                  stroke={PALETTE[i % PALETTE.length]}
-                  className="curve"
-                />
-              ) : null,
+          {(ctx) => {
+            const fns = parsed.map((p) => (p.ok ? (x: number) => evalNum(p.code, { ...scope, x }) : null))
+            const ok = fns.flatMap((f, i) => (f ? [{ f, i }] : []))
+            const feats = showPts ? findFeatures(ok.map((o) => o.f), ctx.view.xMin, ctx.view.xMax, ctx.view.yMax - ctx.view.yMin) : []
+            return (
+              <>
+                {ok.map(({ f, i }) => (
+                  <path key={rows[i].id} d={ctx.path(f)} stroke={PALETTE[i % PALETTE.length]} className="curve" />
+                ))}
+                {feats.map((pts, k) => {
+                  const { f, i } = ok[k]
+                  const quad = isQuadratic(f)
+                  // 点が多すぎるとき（sin など）は、座標を書かずに印だけにする
+                  const labels = pts.length <= 8
+                  return pts
+                    .filter((p) => p.y >= ctx.view.yMin && p.y <= ctx.view.yMax)
+                    .map((p) => {
+                      const name = quad && (p.kind === 'max' || p.kind === 'min') ? '頂点' : LABEL[p.kind]
+                      const text = `${name ? `${name} ` : ''}(${fmtPt(p.x)}, ${fmtPt(p.y)})`
+                      const below = p.kind === 'min'
+                      return (
+                        <g key={`${rows[i].id}-${p.kind}-${p.x.toFixed(4)}`} className="feature-pt">
+                          <circle cx={ctx.sx(p.x)} cy={ctx.sy(p.y)} r={4.5} stroke={PALETTE[i % PALETTE.length]}>
+                            <title>{text}</title>
+                          </circle>
+                          {labels && (
+                            <text x={ctx.sx(p.x) + 7} y={ctx.sy(p.y) + (below ? 18 : -9)} className="pt-label">
+                              {text}
+                            </text>
+                          )}
+                        </g>
+                      )
+                    })
+                })}
+              </>
             )
-          }
+          }}
         </Plot>
         <p className="hint">{narrow ? 'ドラッグで移動、2 本の指で拡大縮小。' : 'ドラッグで移動、ホイールで拡大縮小。'}</p>
       </section>

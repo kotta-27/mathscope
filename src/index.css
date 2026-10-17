@@ -526,3 +526,8 @@ body { overflow-x: clip; }
 :root[data-present] .katex { font-size: 1.3em; }
 :root[data-present] .hero-tex .katex { font-size: 1.6em; }
 :root[data-present] .slider-num { font-size: 18px; }
+
+/* グラフの目印の点（頂点・極値・交点） */
+.feature-pt circle { fill: var(--surface); stroke-width: 2.2; }
+.pt-label { font-size: 12px; fill: var(--text); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+:root[data-present] .pt-label { font-size: 17px; }

@@ -139,6 +139,7 @@ await b.goto(shared)
 await b.waitFor(`document.querySelector('path.curve')`)
 await sleep(300)
 check('リンクを開くと同じ状態', (await b.evaluate(`return document.querySelector('path.curve').getAttribute('d').slice(0, 120)`)) === curve)
+check('グラフに頂点の印と座標', await b.evaluate(`return [...document.querySelectorAll('.pt-label')].some(t => t.textContent === '頂点 (2, 1)')`), await b.evaluate(`return [...document.querySelectorAll('.pt-label')].map(t => t.textContent).join(' / ')`))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?q=binomial-dist')
