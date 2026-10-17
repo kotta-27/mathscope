@@ -618,6 +618,10 @@ body { overflow-x: clip; }
 .curve.deriv { stroke-dasharray: 7 5; stroke-width: 2; opacity: 0.85; }
 .trace-drop { stroke: var(--muted); stroke-dasharray: 3 3; }
 
-/* グラフの例（単元ごと） */
-.preset-group { margin: 0 0 10px; }
-.preset-unit { display: block; font-size: 12px; color: var(--muted); margin: 0 0 4px; }
+
+/* グラフのパネルを短く */
+.howto { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.howto summary { cursor: pointer; }
+.howto .hint { margin: 6px 0 0; }
+.graph-toggles { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 4px; }
+.preset-select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 14px; }

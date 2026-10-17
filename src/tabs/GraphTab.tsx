@@ -254,7 +254,10 @@ export function GraphTab() {
     <div className="layout graph-layout">
       <aside className="panel">
         <h2>式</h2>
-        <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。x²・√x・sin 2x・|x| のような書き方も、LaTeX もそのまま使える。円 x² + y² = 4、領域 y {'>'} x²、媒介変数 (cos t, sin t)、極座標 r = 1 + cos θ も描ける。</p>
+        <details className="howto">
+          <summary>x 以外の文字はスライダーになる。書き方の例</summary>
+          <p className="hint">x²・√x・sin 2x・|x| のようなふだんの書き方も、LaTeX も使える。円 x² + y² = 4、領域 y {'>'} x²、媒介変数 (cos t, sin t)、極座標 r = 1 + cos θ も描ける。</p>
+        </details>
         {rows.map((r, i) => {
           const e = exprs[i]
           const color = PALETTE[i % PALETTE.length]
@@ -353,39 +356,50 @@ export function GraphTab() {
           </>
         )}
 
-        <label className="check">
-          <input type="checkbox" checked={showPts} onChange={(e) => setShowPts(e.target.checked)} /> 頂点・極値・交点に印をつける
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={trail}
-            onChange={(e) => {
-              setTrail(e.target.checked)
+        <div className="graph-toggles">
+          <button className={`chip ${showPts ? 'on' : ''}`} aria-pressed={showPts} onClick={() => setShowPts(!showPts)} title="頂点・極値・交点に印と座標をつける">
+            頂点・交点の印
+          </button>
+          <button
+            className={`chip ${trail ? 'on' : ''}`}
+            aria-pressed={trail}
+            onClick={() => {
+              setTrail(!trail)
               clearTrail()
             }}
-          />{' '}
-          動かした跡を残す（前の形と、頂点などが動いた跡）
-        </label>
-        {trail && (snaps.length > 0 || trailPts.length > 0) && (
-          <button className="chip" onClick={clearTrail}>
-            跡を消す
+            title="動かしたときの前の形と、頂点などが動いた跡を残す"
+          >
+            動かした跡
           </button>
-        )}
+          {trail && (snaps.length > 0 || trailPts.length > 0) && (
+            <button className="chip" onClick={clearTrail}>
+              跡を消す
+            </button>
+          )}
+        </div>
 
-        <h2>例（単元ごと）</h2>
-        {PRESET_GROUPS.map((g) => (
-          <div key={g.unit} className="preset-group">
-            <span className="preset-unit">{g.unit}</span>
-            <div className="chips">
-              {g.items.map((p) => (
-                <button key={p.label} className="chip" onClick={() => loadPreset(p)}>
+        <h2>例</h2>
+        <select
+          className="preset-select"
+          value=""
+          aria-label="例を選ぶ"
+          onChange={(e) => {
+            const [g, k] = e.target.value.split(':').map(Number)
+            const p = PRESET_GROUPS[g]?.items[k]
+            if (p) loadPreset(p)
+          }}
+        >
+          <option value="">例を選ぶ（単元ごと）…</option>
+          {PRESET_GROUPS.map((g, gi) => (
+            <optgroup key={g.unit} label={g.unit}>
+              {g.items.map((p, k) => (
+                <option key={p.label} value={`${gi}:${k}`}>
                   {p.label}
-                </button>
+                </option>
               ))}
-            </div>
-          </div>
-        ))}
+            </optgroup>
+          ))}
+        </select>
       </aside>
 
       <section className="stage">
