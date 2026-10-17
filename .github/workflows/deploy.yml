@@ -22,8 +22,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
+      # CI と同じキャッシュ（同じ鍵）を使い、lockfile が同じならインストールを省く
+      - name: Restore node_modules
+        id: nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            !node_modules/.tmp
+            !node_modules/.vite
+          key: nm-${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
+      - if: steps.nm.outputs.cache-hit != 'true'
+        run: npm ci
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
