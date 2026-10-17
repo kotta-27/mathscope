@@ -52,11 +52,13 @@ export function Plot({
   const touches = useRef(new Map<number, { x: number; y: number }>())
   const pinch = useRef<{ d: number; cx: number; cy: number; view: View } | null>(null)
   const h = height
+  // equal: 1 目盛りを縦横同じ長さにし、指定した範囲がすべて入るように広げる
   const view: View = equal
     ? (() => {
+        const k = Math.max((rawView.xMax - rawView.xMin) / w, (rawView.yMax - rawView.yMin) / h)
+        const xc = (rawView.xMin + rawView.xMax) / 2
         const yc = (rawView.yMin + rawView.yMax) / 2
-        const half = ((rawView.xMax - rawView.xMin) * h) / w / 2
-        return { ...rawView, yMin: yc - half, yMax: yc + half }
+        return { xMin: xc - (k * w) / 2, xMax: xc + (k * w) / 2, yMin: yc - (k * h) / 2, yMax: yc + (k * h) / 2 }
       })()
     : rawView
   const onViewRef = useRef(onView)
