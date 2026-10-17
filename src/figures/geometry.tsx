@@ -548,11 +548,23 @@ export function HarmonicFig() {
       <AngleArc v={O} p={[O[0] + 10, O[1]]} q={Y} r={30} color={C.red} label="\alpha" />
       <TexAt x={(O[0] + X[0]) / 2} y={O[1] + 16} tex="a" color={C.blue} />
       <TexAt x={X[0] + 10} y={(X[1] + Y[1]) / 2} tex="b" color={C.orange} anchor="start" />
-      <TexAt x={(O[0] + Y[0]) / 2 - 12} y={(O[1] + Y[1]) / 2 - 8} tex="\sqrt{a^2+b^2}" color={C.green} anchor="end" size={13} />
+      {(() => {
+        // 斜辺に重ならないよう、斜辺の外側（三角形と反対側）に置く
+        const dx = Y[0] - O[0]
+        const dy = Y[1] - O[1]
+        const L = Math.hypot(dx, dy) || 1
+        const s = b * a >= 0 ? 1 : -1
+        const nx = (s * dy) / L
+        const ny = (-s * dx) / L
+        return <TexAt x={(O[0] + Y[0]) / 2 + nx * 22} y={(O[1] + Y[1]) / 2 + ny * 22} tex="\sqrt{a^2+b^2}" color={C.green} anchor={nx < 0 ? 'end' : 'start'} size={13} />
+      })()}
       <line x1={W0} x2={W0 + 220} y1={170} y2={170} className="fig-axis" />
       <path d={wave((t) => a * Math.sin(t))} stroke={C.blue} strokeWidth={1.5} fill="none" opacity={0.6} />
       <path d={wave((t) => b * Math.cos(t))} stroke={C.orange} strokeWidth={1.5} fill="none" opacity={0.6} />
       <path d={wave((t) => a * Math.sin(t) + b * Math.cos(t))} stroke={C.green} strokeWidth={3} fill="none" />
+      <TexAt x={W0} y={40} tex={`\\textcolor{${C.blue}}{a\\sin\\theta}`} anchor="start" size={13} />
+      <TexAt x={W0 + 80} y={40} tex={`\\textcolor{${C.orange}}{b\\cos\\theta}`} anchor="start" size={13} />
+      <TexAt x={W0 + 160} y={40} tex={`\\textcolor{${C.green}}{\\text{和}}`} anchor="start" size={13} />
       <text x={W0} y={300} className="fig-muted">2 つの波の和も同じ周期の波</text>
     </Fig>
   )
