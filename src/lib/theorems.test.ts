@@ -32,3 +32,20 @@ describe('定理のデータ', () => {
     expect(bad).toEqual([])
   })
 })
+
+describe('定理の手引き', () => {
+  it('すべての定理に「ひとことで」「図の見どころ」「つながる定理」がある', async () => {
+    const { GUIDE } = await import('./guide')
+    const lack = THEOREMS.filter((t) => !GUIDE[t.id] || !GUIDE[t.id].gist || !GUIDE[t.id].try.length || !GUIDE[t.id].related.length).map((t) => t.id)
+    expect(lack).toEqual([])
+    const ids = new Set(THEOREMS.map((t) => t.id))
+    const bad = Object.entries(GUIDE).flatMap(([id, g]) => [...(ids.has(id) ? [] : [`${id}（定理がない）`]), ...g.related.filter((x) => !ids.has(x) || x === id).map((x) => `${id} → ${x}`)])
+    expect(bad).toEqual([])
+  })
+  it('手引きの数式が KaTeX で描ける', async () => {
+    const { GUIDE } = await import('./guide')
+    const bad: string[] = []
+    for (const [id, g] of Object.entries(GUIDE)) for (const s of [g.gist, ...g.try]) for (const x of inline(s)) if (ok(x) !== true) bad.push(`${id}: ${x}`)
+    expect(bad).toEqual([])
+  })
+})

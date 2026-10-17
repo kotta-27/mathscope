@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { hrefTo, readHash, useSyncHash } from '../lib/route'
 import { COURSES, TOPICS } from '../lib/courses'
+import { GUIDE } from '../lib/guide'
 import { matches, norm } from '../lib/search'
 import { track } from '../lib/analytics'
 import { MathText } from '../components/MathText'
@@ -131,6 +132,7 @@ function NoHits({ q, clear }: { q: string; clear: () => void }) {
 
 function TheoremCard({ t }: { t: Theorem }) {
   const c = COURSES[t.id]
+  const g = GUIDE[t.id]
   const Figure = FIGURES[t.id]
   return (
     <article className="theorem" id={t.id}>
@@ -144,6 +146,11 @@ function TheoremCard({ t }: { t: Theorem }) {
         )}
         <a className="permalink" href={`#theorems?id=${t.id}`} title="この定理へのリンク">#</a>
       </header>
+      {g && (
+        <p className="theorem-gist">
+          <MathText text={g.gist} />
+        </p>
+      )}
       <div className="theorem-statement">
         <Tex block tex={t.statement} />
       </div>
@@ -153,6 +160,18 @@ function TheoremCard({ t }: { t: Theorem }) {
             <Figure />
           </FigScope>
         </ErrorBoundary>
+      )}
+      {g && g.try.length > 0 && (
+        <div className="theorem-try">
+          <span className="tag">動かしてみよう</span>
+          <ul>
+            {g.try.map((x, i) => (
+              <li key={i}>
+                <MathText text={x} />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {t.conditions && (
         <p className="theorem-cond">
@@ -189,6 +208,19 @@ function TheoremCard({ t }: { t: Theorem }) {
             </a>
           ))}
         </div>
+      )}
+      {g && g.related.length > 0 && (
+        <nav className="theorem-related" aria-label="つながる定理">
+          <span className="tag">つながる定理</span>
+          {g.related.map((id) => {
+            const r = THEOREMS.find((x) => x.id === id)
+            return r ? (
+              <a key={id} href={hrefTo('theorems', { id })}>
+                {r.name}
+              </a>
+            ) : null
+          })}
+        </nav>
       )}
     </article>
   )
