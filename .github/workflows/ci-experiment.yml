@@ -1,0 +1,76 @@
+# CI 高速化の実験（dev/ci-speed ブランチでだけ動く。結論が出たら消す）
+name: CI experiment
+
+on:
+  push:
+    branches: [dev/ci-speed]
+
+jobs:
+  # A: 今の CI / B: npm ci のオプション / C: node_modules をキャッシュ / E: A + tsbuildinfo のキャッシュ
+  single:
+    name: single (${{ matrix.variant }}, ${{ matrix.rep }})
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [A, B, C, E]
+        rep: [1, 2, 3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: ${{ matrix.variant != 'C' && 'npm' || '' }}
+      - name: restore node_modules
+        if: matrix.variant == 'C'
+        id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
+      - name: install
+        run: |
+          s=$(date +%s.%N)
+          case "${{ matrix.variant }}" in
+            A|E) npm ci ;;
+            B) npm ci --prefer-offline --no-audit --no-fund ;;
+            C) if [ "${{ steps.nm.outputs.cache-hit }}" != "true" ]; then npm ci --prefer-offline --no-audit --no-fund; else echo "cache hit"; fi ;;
+          esac
+          echo "TIMING ${{ matrix.variant }} install $(awk "BEGIN{print $(date +%s.%N) - $s}")"
+      - name: restore tsbuildinfo
+        if: matrix.variant == 'E'
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.tmp
+          key: tsbuild-${{ github.sha }}-${{ matrix.rep }}
+          restore-keys: tsbuild-
+      - name: lint
+        run: |
+          s=$(date +%s.%N); npm run lint
+          echo "TIMING ${{ matrix.variant }} lint $(awk "BEGIN{print $(date +%s.%N) - $s}")"
+      - name: test
+        run: |
+          s=$(date +%s.%N); npm test
+          echo "TIMING ${{ matrix.variant }} test $(awk "BEGIN{print $(date +%s.%N) - $s}")"
+      - name: build
+        run: |
+          s=$(date +%s.%N); npm run build
+          echo "TIMING ${{ matrix.variant }} build $(awk "BEGIN{print $(date +%s.%N) - $s}")"
+
+  # D: lint・テスト・ビルドを別ジョブで並列に（壁時計時間を比べる）
+  parallel:
+    name: parallel (${{ matrix.task }}, ${{ matrix.rep }})
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [lint, test, build]
+        rep: [1, 2, 3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run ${{ matrix.task }}
