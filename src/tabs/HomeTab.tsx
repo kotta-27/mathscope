@@ -27,13 +27,12 @@ export function HomeTab() {
         <div className="hero-text">
           <p className="eyebrow">Mathscope</p>
           <h2 className="hero-title">
-            <span className="nowrap">数式を、</span>
+            <span className="nowrap">数式が、</span>
             <br />
-            <span className="nowrap">見て・触って・わかる。</span>
+            <span className="nowrap">景色になる。</span>
           </h2>
           <p className="hero-lead">
-            式を入れるとグラフになり、文字を動かすと形が変わる。定理は図で確かめられる。
-            暗記ではなく「なぜそうなるか」を目で追うための道具。
+            式を入れるとグラフになり、文字を動かせば形が変わる。定理も図で確かめられる。見て、触って、わかるための数学の道具。
           </p>
           <div className="hero-cta">
             <a className="btn primary" href="#graph">グラフを触ってみる</a>
