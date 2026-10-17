@@ -42,7 +42,7 @@ body {
 }
 button, input { font: inherit; color: inherit; }
 
-.app { max-width: 1320px; margin: 0 auto; padding: 20px 20px 48px; }
+.app { position: relative; z-index: 1; max-width: 1320px; margin: 0 auto; padding: 20px 20px 48px; }
 .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand h1 { font-size: 20px; margin: 0; letter-spacing: 0.02em; }
@@ -278,3 +278,25 @@ a.btn.primary { color: var(--accent-ink); }
 .hero-dot { position: relative; overflow: hidden; border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
 .hero-dot.on { color: var(--text); border-color: var(--accent); }
 .hero-progress { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); }
+
+/* home background */
+body { overflow-x: clip; }
+.home-bg {
+  position: absolute; inset: 0 0 auto 0; height: 900px; overflow: hidden; pointer-events: none; z-index: 0;
+  /* 左上にだけ見せて、外側へ薄れる */
+  -webkit-mask-image: radial-gradient(ellipse 65% 75% at 0% 0%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 65% 75% at 0% 0%, #000 35%, transparent 100%);
+}
+.home-bg-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bg-grid-minor { stroke: var(--text); stroke-opacity: 0.04; stroke-width: 1; }
+.bg-grid-major { stroke: var(--text); stroke-opacity: 0.08; stroke-width: 1; }
+.bg-axis line { stroke: var(--text); stroke-opacity: 0.16; stroke-width: 1.2; }
+.bg-curve { fill: none; stroke-width: 2.4; opacity: 0.6; stroke-dasharray: 4000; stroke-dashoffset: 4000; animation: bg-draw 3.5s ease-out var(--delay, 0s) forwards; }
+.bg-curve.sub { stroke: #3bb273; stroke-width: 1.6; opacity: 0.4; }
+.bg-drift { animation: bg-drift 40s linear infinite; }
+.bg-drift.slow { animation-duration: 70s; }
+@keyframes bg-draw { to { stroke-dashoffset: 0; } }
+@keyframes bg-drift { to { transform: translateX(-1600px); } }
+@media (prefers-reduced-motion: reduce) {
+  .bg-curve, .bg-drift { animation: none; stroke-dashoffset: 0; }
+}
