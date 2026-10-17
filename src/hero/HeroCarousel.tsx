@@ -65,14 +65,6 @@ export function HeroCarousel() {
         <button className="hero-nav prev" onClick={() => go(idx - 1)} aria-label="前へ">‹</button>
         <button className="hero-nav next" onClick={() => go(idx + 1)} aria-label="次へ">›</button>
       </div>
-      <div className="hero-dots" role="tablist">
-        {SCENES.map((sc, i) => (
-          <button key={sc.id} role="tab" aria-selected={i === idx} className={`hero-dot ${i === idx ? 'on' : ''}`} onClick={() => go(i)} title={sc.title}>
-            {sc.field}
-            {i === idx && !still && <span className="hero-progress" style={{ width: `${Math.min(100, (t / sc.duration) * 100)}%` }} />}
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

@@ -274,10 +274,6 @@ a.btn.primary { color: var(--accent-ink); }
 .hero-nav.next { right: 10px; }
 .hero-carousel:hover .hero-nav, .hero-nav:focus-visible { opacity: 0.85; }
 @media (hover: none) { .hero-nav { opacity: 0.7; } }
-.hero-dots { display: flex; flex-wrap: wrap; gap: 6px; }
-.hero-dot { position: relative; overflow: hidden; border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
-.hero-dot.on { color: var(--text); border-color: var(--accent); }
-.hero-progress { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); }
 
 /* home background */
 body { overflow-x: clip; }
