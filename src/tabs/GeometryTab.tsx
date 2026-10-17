@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type PointerEvent } from 'react'
 import { derivative, simplify } from 'mathjs'
 import { DragPoint, Dot, Line, Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
+import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { evalNum, fmt, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
@@ -203,11 +204,7 @@ function Derivative() {
     <div className="layout">
       <aside className="panel">
         <h2>関数</h2>
-        <div className="expr-input">
-          <Tex tex="f(x) =" />
-          <input value={src} onChange={(e) => setSrc(e.target.value)} spellCheck={false} />
-        </div>
-        {!fn.ok && <div className="error">{fn.error}</div>}
+        <MathInput label="f(x) =" value={src} onChange={setSrc} parsed={fn} />
         {d && (
           <div className="expr-tex">
             <Tex tex={`f'(x) = ${texOf(d.node)}`} />
@@ -311,11 +308,7 @@ function Integral() {
     <div className="layout">
       <aside className="panel">
         <h2>関数</h2>
-        <div className="expr-input">
-          <Tex tex="f(x) =" />
-          <input value={src} onChange={(e) => setSrc(e.target.value)} spellCheck={false} />
-        </div>
-        {!fn.ok && <div className="error">{fn.error}</div>}
+        <MathInput label="f(x) =" value={src} onChange={setSrc} parsed={fn} />
         <Slider name="a" value={a} min={-5} max={5} onChange={(v) => setA(Math.min(v, b - 0.1))} />
         <Slider name="b" value={b} min={-5} max={5} onChange={(v) => setB(Math.max(v, a + 0.1))} />
         <Slider name="n" value={n} min={1} max={100} step={1} onChange={setN} playing={play} onTogglePlay={() => {

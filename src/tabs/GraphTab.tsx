@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { ConstantNode, ParenthesisNode, isSymbolNode, type MathNode } from 'mathjs'
 import { Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
+import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
@@ -72,30 +73,32 @@ export function GraphTab() {
     <div className="layout">
       <aside className="panel">
         <h2>式</h2>
-        <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。</p>
+        <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。x²・√x・sin 2x・|x| のような書き方もそのまま使える。</p>
         {rows.map((r, i) => {
           const p = parsed[i]
           const color = PALETTE[i % PALETTE.length]
           return (
             <div key={r.id} className="expr-row">
-              <div className="expr-input">
-                <span className="swatch" style={{ background: color }} />
-                <input value={r.src} onChange={(e) => setRow(r.id, e.target.value)} spellCheck={false} />
-                {rows.length > 1 && (
-                  <button className="icon-btn" onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} title="削除">
-                    ×
-                  </button>
-                )}
-              </div>
-              {p.ok ? (
+              <MathInput
+                value={r.src}
+                onChange={(v) => setRow(r.id, v)}
+                parsed={p}
+                before={<span className="swatch" style={{ background: color }} />}
+                after={
+                  rows.length > 1 && (
+                    <button className="icon-btn" onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} title="削除">
+                      ×
+                    </button>
+                  )
+                }
+              />
+              {p.ok && (
                 <div className="expr-tex">
                   <Tex tex={`y = ${texOf(p.node)}`} />
                   {names.some((n) => p.symbols.includes(n)) && (
                     <Tex className="sub" tex={`= ${texOf(substitute(p.node, scope))}`} />
                   )}
                 </div>
-              ) : (
-                <div className="error">{p.error}</div>
               )}
             </div>
           )
