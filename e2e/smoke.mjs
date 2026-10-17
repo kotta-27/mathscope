@@ -46,7 +46,7 @@ await sleep(500)
 check('全角入力の読み取り', (await b.evaluate(`return document.querySelector('.mi-note code')?.textContent`)) === 'x^2 +1', await b.evaluate(`return document.querySelector('.mi-note code')?.textContent`))
 
 // ホームの使い方カード
-for (const [i, expect] of [[0, ['#graph', 'a*(x - p)^2 + q']], [1, ['#structure', '(-b + sqrt']], [2, ['#steps', '(a+b)^2']], [3, ['#geometry', null]], [4, ['#theorems', null]]]) {
+for (const [i, expect] of [[0, ['#graph', 'a*(x - p)^2 + q']], [1, ['#structure', '(-b + sqrt']], [2, ['#steps', 'x^2 - 5x + 6 = 0']], [3, ['#geometry', null]], [4, ['#theorems', null]]]) {
   await b.goto(BASE + '#home')
   await b.evaluate(`document.querySelectorAll('.usecases .feature')[${i}].click()`)
   // 開いた先のタブの読み込みを待つ（式の入力欄か定理のカードが出るまで）
@@ -72,6 +72,22 @@ await b.evaluate(`document.querySelectorAll('.bayes-row:not(.head):not(.foot)')[
 await sleep(300)
 const ask = await b.evaluate(`return document.querySelector('.bayes-ask').textContent`)
 check('ベイズ: 行を押すと結果が切り替わる', ask.includes('工場3'), ask.slice(0, 20))
+// 式変形: 種類を切り替えて最後の手まで進む
+await b.goto(BASE + '#steps')
+await b.waitFor(`document.querySelector('.mode-chips')`)
+await b.evaluate(`[...document.querySelectorAll('.mode-chips .chip')].find((c) => c.textContent === '因数分解').click()`)
+await sleep(300)
+const factorInput = await b.evaluate(`return document.querySelector('.math-input input').value`)
+await b.evaluate(`document.querySelector('button[aria-label="最後へ"]').click()`)
+await sleep(300)
+const factorLast = await b.evaluate(`return document.querySelector('.hero-step').textContent`)
+check('式変形: 因数分解に切り替えて最後まで進む', factorInput === 'x^2 - 5x + 6' && factorLast.includes('(x + m)(x + n)'), `${factorInput} / ${factorLast}`)
+await b.goto(BASE + '#steps?mode=solve&f=' + encodeURIComponent('x^2 = 5x - 6'))
+await b.waitFor(`document.querySelector('button[aria-label="最後へ"]')`)
+await b.evaluate(`document.querySelector('button[aria-label="最後へ"]').click()`)
+await sleep(300)
+const solveLast = await b.evaluate(`return document.querySelector('.hero-tex').textContent`)
+check('式変形: 方程式の解が出る', /x=2,\s*3/.test(solveLast.replace(/\s+/g, '')) || solveLast.includes('x=2,3'), solveLast.slice(0, 40))
 b.close()
 
 // スマホ幅の定理集

@@ -79,6 +79,12 @@ export function texOf(node: MathNode, colors?: Map<MathNode, string>): string {
   const active = new Set<MathNode>()
   const handler = (n: MathNode, options: object): string | undefined => {
     const c = colors?.get(n)
+    // 微分の途中に置く印 D(u, x) は d/dx(u) と描く
+    if (isFunctionNode(n) && n.fn.name === 'D' && n.args.length === 2) {
+      const v = isSymbolNode(n.args[1]) ? n.args[1].name : 'x'
+      const inner = `\\frac{d}{d${v}}\\left(${n.args[0].toTex(options)}\\right)`
+      return c ? `\\textcolor{${c}}{${inner}}` : inner
+    }
     if (!c || active.has(n)) return undefined
     active.add(n)
     const inner = n.toTex(options)
