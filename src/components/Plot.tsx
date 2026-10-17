@@ -35,7 +35,7 @@ export function Plot({
   children: (ctx: PlotCtx) => ReactNode
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const svgRef = useRef<SVGSVGElement>(null)
+  const [svg, setSvg] = useState<SVGSVGElement | null>(null)
   const [w, setW] = useState(640)
   const [view, setView] = useState(initial)
   const drag = useRef<{ x: number; y: number; view: View } | null>(null)
@@ -49,7 +49,7 @@ export function Plot({
   }, [])
 
   useEffect(() => {
-    const svg = svgRef.current!
+    if (!svg) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       const r = svg.getBoundingClientRect()
@@ -69,14 +69,14 @@ export function Plot({
     }
     svg.addEventListener('wheel', onWheel, { passive: false })
     return () => svg.removeEventListener('wheel', onWheel)
-  }, [])
+  }, [svg])
 
   const dx = view.xMax - view.xMin
   const dy = view.yMax - view.yMin
   const sx = (x: number) => ((x - view.xMin) / dx) * w
   const sy = (y: number) => h - ((y - view.yMin) / dy) * h
   const toWorld = (cx: number, cy: number) => {
-    const r = svgRef.current!.getBoundingClientRect()
+    const r = svg!.getBoundingClientRect()
     return { x: view.xMin + ((cx - r.left) / r.width) * dx, y: view.yMin + (1 - (cy - r.top) / r.height) * dy }
   }
   const path = (f: (x: number) => number, from = view.xMin, to = view.xMax) => {
@@ -129,7 +129,7 @@ export function Plot({
   return (
     <div className="plot" ref={wrapRef}>
       <svg
-        ref={svgRef}
+        ref={setSvg}
         width={w}
         height={h}
         onPointerDown={(e) => {

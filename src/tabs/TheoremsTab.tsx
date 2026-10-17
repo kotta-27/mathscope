@@ -4,6 +4,7 @@ import { MathText } from '../components/MathText'
 import { Tex } from '../components/Tex'
 import { FIELDS, THEOREMS, type FieldId, type Theorem } from '../lib/theorems'
 import { FIGURES } from '../figures'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '')
 
@@ -80,7 +81,11 @@ function TheoremCard({ t }: { t: Theorem }) {
       <div className="theorem-statement">
         <Tex block tex={t.statement} />
       </div>
-      {Figure && <Figure />}
+      {Figure && (
+        <ErrorBoundary label="この図">
+          <Figure />
+        </ErrorBoundary>
+      )}
       {t.conditions && (
         <p className="theorem-cond">
           <span className="tag">条件</span>

@@ -316,3 +316,13 @@ body { overflow-x: clip; }
 .steps-mini { align-items: flex-start; padding-left: 14%; font-size: 15px; }
 
 .loading { color: var(--muted); padding: 40px 0; text-align: center; }
+
+/* ux polish */
+:where(a, button, input, [tabindex]):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.error-box { border: 1px dashed var(--border); border-radius: 12px; padding: 20px; text-align: center; color: var(--muted); }
+.error-box p { margin: 0 0 10px; }
+/* スマホの定理集: 分野は横にスクロールするチップにして、本文まで近くする */
+@media (max-width: 900px) {
+  .field-list { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 4px; scrollbar-width: none; }
+  .field-item { flex: none; white-space: nowrap; border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; gap: 6px; }
+}
