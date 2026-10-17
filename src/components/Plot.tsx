@@ -42,6 +42,9 @@ export function Plot({
   const [w, setW] = useState(640)
   const [view, setView] = useState(initial)
   const drag = useRef<{ x: number; y: number; view: View } | null>(null)
+  // 2 本の指で拡大縮小するときの、指の位置と始めの表示範囲
+  const touches = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ d: number; cx: number; cy: number; view: View } | null>(null)
   const h = height
   const onViewRef = useRef(onView)
   useEffect(() => {
@@ -143,17 +146,43 @@ export function Plot({
         width={w}
         height={h}
         onPointerDown={(e) => {
-          drag.current = { x: e.clientX, y: e.clientY, view }
           e.currentTarget.setPointerCapture(e.pointerId)
+          touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+          if (touches.current.size === 2) {
+            const [a, b] = [...touches.current.values()]
+            const r = e.currentTarget.getBoundingClientRect()
+            pinch.current = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, cx: ((a.x + b.x) / 2 - r.left) / r.width, cy: 1 - ((a.y + b.y) / 2 - r.top) / r.height, view }
+            drag.current = null
+          } else drag.current = { x: e.clientX, y: e.clientY, view }
         }}
         onPointerMove={(e) => {
+          if (touches.current.has(e.pointerId)) touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+          const p = pinch.current
+          if (p && touches.current.size === 2) {
+            const [a, b] = [...touches.current.values()]
+            const k = p.d / (Math.hypot(a.x - b.x, a.y - b.y) || 1)
+            const v = p.view
+            const fx = v.xMin + p.cx * (v.xMax - v.xMin)
+            const fy = v.yMin + p.cy * (v.yMax - v.yMin)
+            setView({ xMin: fx - (fx - v.xMin) * k, xMax: fx + (v.xMax - fx) * k, yMin: fy - (fy - v.yMin) * k, yMax: fy + (v.yMax - fy) * k })
+            return
+          }
           const d = drag.current
           if (!d) return
           const mx = ((e.clientX - d.x) / w) * dx
           const my = ((e.clientY - d.y) / h) * dy
           setView({ xMin: d.view.xMin - mx, xMax: d.view.xMax - mx, yMin: d.view.yMin + my, yMax: d.view.yMax + my })
         }}
-        onPointerUp={() => (drag.current = null)}
+        onPointerUp={(e) => {
+          touches.current.delete(e.pointerId)
+          pinch.current = null
+          drag.current = null
+        }}
+        onPointerCancel={(e) => {
+          touches.current.delete(e.pointerId)
+          pinch.current = null
+          drag.current = null
+        }}
       >
         {grid}
         <line x1={0} x2={w} y1={sy(0)} y2={sy(0)} className="axis" />

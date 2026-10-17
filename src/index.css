@@ -153,7 +153,8 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; cursor: default; flex-wrap: wrap;
 }
 .tree-row:hover, .tree-row.hot { background: var(--surface-2); }
-.caret { width: 12px; color: var(--muted); font-size: 12px; cursor: pointer; }
+.caret { width: 16px; color: var(--muted); font-size: 12px; cursor: pointer; border: 0; background: none; padding: 0; font-family: inherit; }
+.caret:disabled { cursor: default; }
 .role { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; }
 .kind { font-size: 12px; font-weight: 600; color: var(--accent); }
 .detail { font-size: 12px; color: var(--muted); }
@@ -469,3 +470,26 @@ body { overflow-x: clip; }
 .site-footer-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text) !important; }
 .mini-plot { width: 100%; height: 150px; display: block; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); }
 .mini-plot.empty { display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+
+/* スマホ: グラフを上に固定して、スライダーを動かしても見えるようにする */
+@media (max-width: 900px) {
+  .graph-layout .stage { order: -1; position: sticky; top: 0; z-index: 5; padding: 8px; border-radius: 0 0 14px 14px; }
+  .graph-layout .stage .hint { margin: 4px 0 0; font-size: 12px; }
+}
+/* スマホ: 定理カードと図を幅いっぱいに使う */
+@media (max-width: 640px) {
+  .theorem { padding: 14px 12px; }
+  .theorem .fig { margin-left: -6px; margin-right: -6px; padding: 8px 6px; }
+  .theorem-statement { padding: 2px 10px; font-size: 0.92em; }
+  .home .pick:nth-child(n + 7) { display: none; }
+}
+/* 横にはみ出す式は、右端に影を出して「続きがある」と分かるようにする（端まで送ると影が消える） */
+.theorem-statement {
+  background: linear-gradient(to left, var(--surface-2), var(--surface-2)) local right / 28px 100% no-repeat,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--text) 30%, transparent), transparent) scroll right / 14px 100% no-repeat,
+    var(--surface-2);
+}
+.fig-caption {
+  background: linear-gradient(to left, var(--bg), var(--bg)) local right / 28px 100% no-repeat,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--text) 30%, transparent), transparent) scroll right / 14px 100% no-repeat;
+}
