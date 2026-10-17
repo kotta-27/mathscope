@@ -8,7 +8,7 @@ import { HomeTab } from './tabs/HomeTab'
 import { readHash } from './lib/route'
 
 const TABS = [
-  { id: 'home', label: 'ホーム', desc: '数式を、見て・触って・わかる', el: () => <HomeTab /> },
+  { id: 'home', label: 'ホーム', desc: '数式が、景色になる。', el: () => <HomeTab /> },
   { id: 'graph', label: 'グラフ', desc: 'パラメータを動かして形の変化を見る', el: () => <GraphTab /> },
   { id: 'structure', label: '構造', desc: '式を部品に分けて役割と値を見る', el: () => <StructureTab /> },
   { id: 'geometry', label: '図形', desc: '三角関数・微分・積分を図で見る', el: () => <GeometryTab /> },
