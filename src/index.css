@@ -260,3 +260,21 @@ a.btn.primary { color: var(--accent-ink); }
 .mi-error { font-size: 13px; color: #e4572e; padding: 0 4px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .mi-where { color: var(--text); white-space: pre; }
 .mi-where mark { background: #e4572e; color: #fff; border-radius: 2px; padding: 0 1px; }
+
+/* hero carousel */
+.hero-carousel { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.hero-stage { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); transition: opacity 0.1s linear; }
+.hero-canvas { display: block; width: 100%; }
+.hero-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 16px 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; background: linear-gradient(to top, var(--surface) 30%, transparent); pointer-events: none; }
+.hero-field { font-size: 11px; letter-spacing: 0.1em; color: var(--accent); }
+.hero-title-sm { font-size: 14px; font-weight: 600; }
+.hero-formula { flex-basis: 100%; color: var(--muted); font-size: 13px; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero-nav { position: absolute; top: 45%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+.hero-nav.prev { left: 10px; }
+.hero-nav.next { right: 10px; }
+.hero-carousel:hover .hero-nav, .hero-nav:focus-visible { opacity: 0.85; }
+@media (hover: none) { .hero-nav { opacity: 0.7; } }
+.hero-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+.hero-dot { position: relative; overflow: hidden; border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.hero-dot.on { color: var(--text); border-color: var(--accent); }
+.hero-progress { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); }
