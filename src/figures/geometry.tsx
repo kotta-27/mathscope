@@ -30,8 +30,8 @@ export function PythagorasFig() {
       vb={vb}
       controls={
         <>
-          <Slider name="a" value={a} min={1} max={5} step={0.1} onChange={setA} />
-          <Slider name="b" value={b} min={1} max={5} step={0.1} onChange={setB} />
+          <Slider stack name="a" value={a} min={1} max={5} step={0.1} onChange={setA} />
+          <Slider stack name="b" value={b} min={1} max={5} step={0.1} onChange={setB} />
         </>
       }
       caption={
@@ -75,9 +75,9 @@ export function LawOfCosinesFig() {
       vb={vb}
       controls={
         <>
-          <Slider name="b" value={b} min={1} max={5} step={0.1} onChange={setB} />
-          <Slider name="c" value={c} min={1} max={5} step={0.1} onChange={setC} />
-          <Slider name="A" tex="A\ (^\circ)" value={A} min={5} max={175} step={1} onChange={setAng} />
+          <Slider stack name="b" value={b} min={1} max={5} step={0.1} onChange={setB} />
+          <Slider stack name="c" value={c} min={1} max={5} step={0.1} onChange={setC} />
+          <Slider stack name="A" tex="A\ (^\circ)" value={A} min={5} max={175} step={1} onChange={setAng} />
         </>
       }
       caption={
@@ -250,8 +250,8 @@ export function PowerOfPointFig() {
       h={400}
       controls={
         <>
-          <Slider name="t1" tex="\theta_1" value={t1} min={-90} max={90} step={1} onChange={setT1} />
-          <Slider name="t2" tex="\theta_2" value={t2} min={-90} max={90} step={1} onChange={setT2} />
+          <Slider stack name="t1" tex="\theta_1" value={t1} min={-90} max={90} step={1} onChange={setT1} />
+          <Slider stack name="t2" tex="\theta_2" value={t2} min={-90} max={90} step={1} onChange={setT2} />
         </>
       }
       caption={
@@ -414,9 +414,9 @@ export function TriangleAreaFig() {
       h={330}
       controls={
         <>
-          <Slider name="a" value={a} min={1} max={5} step={0.1} onChange={setA} />
-          <Slider name="b" value={b} min={1} max={6} step={0.1} onChange={setB} />
-          <Slider name="C" tex="C\ (^\circ)" value={Cd} min={5} max={175} step={1} onChange={setCd} />
+          <Slider stack name="a" value={a} min={1} max={5} step={0.1} onChange={setA} />
+          <Slider stack name="b" value={b} min={1} max={6} step={0.1} onChange={setB} />
+          <Slider stack name="C" tex="C\ (^\circ)" value={Cd} min={5} max={175} step={1} onChange={setCd} />
         </>
       }
       caption={<Tex block tex={`S=\\frac12\\times\\underbrace{b}_{\\text{底辺}}\\times\\underbrace{\\textcolor{${C.purple}}{a\\sin C}}_{\\text{高さ}}=\\frac12\\times${r2(b, 1)}\\times${r2(a * Math.sin(t))}=${r2(0.5 * a * b * Math.sin(t))}`} />}
@@ -448,7 +448,7 @@ export function SqueezeFig() {
     <Fig
       w={560}
       h={360}
-      controls={<Slider name="x" value={th} min={0.05} max={1.2} step={0.01} onChange={setTh} />}
+      controls={<Slider stack name="x" value={th} min={0.05} max={1.2} step={0.01} onChange={setTh} />}
       caption={
         <>
           <Tex
@@ -485,7 +485,7 @@ export function TrigIdentityFig() {
     <Fig
       w={560}
       h={380}
-      controls={<Slider name="t" tex="\theta" value={th} min={0} max={2 * Math.PI} step={0.01} onChange={setTh} />}
+      controls={<Slider stack name="t" tex="\theta" value={th} min={0} max={2 * Math.PI} step={0.01} onChange={setTh} />}
       caption={<Tex block tex={`\\textcolor{${C.blue}}{\\cos^2\\theta}+\\textcolor{${C.red}}{\\sin^2\\theta}=${r2(Math.cos(th) ** 2, 3)}+${r2(Math.sin(th) ** 2, 3)}=1^2`} />}
     >
       <line x1={O[0] - R - 20} x2={O[0] + R + 20} y1={O[1]} y2={O[1]} className="fig-axis" />
@@ -532,8 +532,8 @@ export function HarmonicFig() {
       h={320}
       controls={
         <>
-          <Slider name="a" value={a} min={-3} max={3} step={0.1} onChange={setA} />
-          <Slider name="b" value={b} min={-3} max={3} step={0.1} onChange={setB} />
+          <Slider stack name="a" value={a} min={-3} max={3} step={0.1} onChange={setA} />
+          <Slider stack name="b" value={b} min={-3} max={3} step={0.1} onChange={setB} />
         </>
       }
       caption={

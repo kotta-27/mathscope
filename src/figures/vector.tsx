@@ -120,8 +120,8 @@ export function SectionFig() {
       h={360}
       controls={
         <>
-          <Slider name="m" value={m} min={1} max={6} step={1} onChange={setM} />
-          <Slider name="n" value={n} min={1} max={6} step={1} onChange={setN} />
+          <Slider stack name="m" value={m} min={1} max={6} step={1} onChange={setM} />
+          <Slider stack name="n" value={n} min={1} max={6} step={1} onChange={setN} />
         </>
       }
       caption={<Tex block tex={`\\vec p=\\frac{${n}\\,\\vec a+${m}\\,\\vec b}{${m}+${n}}=(${r2(Pp[0])},\\ ${r2(Pp[1])})`} />}
@@ -204,10 +204,10 @@ export function LinearMapFig() {
       h={360}
       controls={
         <>
-          <Slider name="a" value={m.a} min={-2} max={2} step={0.1} onChange={set('a')} />
-          <Slider name="b" value={m.b} min={-2} max={2} step={0.1} onChange={set('b')} />
-          <Slider name="c" value={m.c} min={-2} max={2} step={0.1} onChange={set('c')} />
-          <Slider name="d" value={m.d} min={-2} max={2} step={0.1} onChange={set('d')} />
+          <Slider stack name="a" value={m.a} min={-2} max={2} step={0.1} onChange={set('a')} />
+          <Slider stack name="b" value={m.b} min={-2} max={2} step={0.1} onChange={set('b')} />
+          <Slider stack name="c" value={m.c} min={-2} max={2} step={0.1} onChange={set('c')} />
+          <Slider stack name="d" value={m.d} min={-2} max={2} step={0.1} onChange={set('d')} />
         </>
       }
       caption={
@@ -267,10 +267,10 @@ export function EigenFig({ symmetric = false }: { symmetric?: boolean }) {
       h={380}
       controls={
         <>
-          <Slider name="a" value={m.a} min={-2} max={3} step={0.1} onChange={setK('a')} />
-          <Slider name="b" value={m.b} min={-2} max={2} step={0.1} onChange={setK('b')} />
-          {!symmetric && <Slider name="c" value={m.c} min={-2} max={2} step={0.1} onChange={setK('c')} />}
-          <Slider name="d" value={m.d} min={-2} max={3} step={0.1} onChange={setK('d')} />
+          <Slider stack name="a" value={m.a} min={-2} max={3} step={0.1} onChange={setK('a')} />
+          <Slider stack name="b" value={m.b} min={-2} max={2} step={0.1} onChange={setK('b')} />
+          {!symmetric && <Slider stack name="c" value={m.c} min={-2} max={2} step={0.1} onChange={setK('c')} />}
+          <Slider stack name="d" value={m.d} min={-2} max={3} step={0.1} onChange={setK('d')} />
         </>
       }
       caption={
@@ -400,7 +400,7 @@ export function DeMoivreFig() {
     <Fig
       w={560}
       h={380}
-      controls={<Slider name="n" value={n} min={2} max={12} step={1} onChange={setN} />}
+      controls={<Slider stack name="n" value={n} min={2} max={12} step={1} onChange={setN} />}
       caption={
         <>
           <Tex block tex={`z=${r2(len(z))}\\,e^{i\\,${r2(deg(arg(z)), 1)}^\\circ}\\ \\Rightarrow\\ z^{${n}}=${r2(len(z) ** n)}\\,e^{i\\,${r2(deg(arg(z)) * n, 1)}^\\circ}`} />
@@ -435,7 +435,7 @@ export function EulerFormulaFig() {
     <Fig
       w={560}
       h={360}
-      controls={<Slider name="t" tex="\theta" value={th} min={0} max={2 * Math.PI} step={0.01} onChange={setTh} />}
+      controls={<Slider stack name="t" tex="\theta" value={th} min={0} max={2 * Math.PI} step={0.01} onChange={setTh} />}
       caption={<Tex block tex={`e^{i\\theta}=\\textcolor{${C.blue}}{\\cos\\theta}+i\\,\\textcolor{${C.red}}{\\sin\\theta}=${r2(p[0], 3)}+${r2(p[1], 3)}i`.replace('+-', '-')} />}
     >
       <Axes f={f} grid step={0.5} />

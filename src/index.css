@@ -205,7 +205,6 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .fig-label { fill: var(--text); font-size: 14px; }
 .fig-muted { fill: var(--muted); font-size: 12px; }
 .fig-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 20px; margin-top: 8px; }
-.fig-controls .slider { grid-template-columns: minmax(40px, max-content) 1fr 64px auto; }
 .fig-controls .chips { grid-column: 1 / -1; margin: 4px 0; }
 .fig-caption { font-size: 14px; margin-top: 8px; overflow-x: auto; }
 .fig-caption .katex-display { margin: 6px 0; }
@@ -339,3 +338,46 @@ body { overflow-x: clip; }
   .loader-spiral { stroke-dasharray: none; }
   .loader-dot { display: none; }
 }
+
+/* 2 段組のスライダー（図の操作） */
+.slider.stack { display: flex; flex-direction: column; align-items: stretch; gap: 2px; margin: 8px 0; }
+.slider-top { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+.slider.stack .slider-name { text-align: left; flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slider-label { color: var(--muted); font-size: 12px; }
+.slider-value { display: flex; align-items: baseline; gap: 2px; font-variant-numeric: tabular-nums; }
+.slider.stack .slider-num { width: 64px; text-align: right; border-color: transparent; background: transparent; font-weight: 600; padding: 2px 4px; }
+.slider.stack .slider-num:hover, .slider.stack .slider-num:focus { border-color: var(--border); background: var(--bg); }
+.slider-unit { color: var(--muted); font-size: 12px; }
+.slider.stack input[type='range'] { width: 100%; margin: 0; }
+
+/* ベイズの計算表 */
+.bayes-table-wrap { grid-column: 1 / -1; overflow-x: auto; margin: 4px 0 10px; }
+.bayes-table { min-width: 620px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.bayes-row {
+  display: grid; grid-template-columns: 92px minmax(0, 1fr) 18px minmax(0, 1fr) 18px 70px minmax(120px, 1.1fr);
+  align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); cursor: pointer;
+}
+.bayes-row.head { border-top: 0; background: var(--surface-2); font-size: 12px; color: var(--muted); cursor: default; padding: 8px 14px; }
+.bayes-row.head > span:nth-child(3), .bayes-row.head > span:nth-child(5) { text-align: center; }
+.bayes-row.on { background: color-mix(in srgb, var(--c) 10%, transparent); }
+.bayes-row.foot { background: var(--bg); font-size: 12px; color: var(--muted); cursor: default; }
+.bayes-row.foot strong { color: var(--text); font-size: 14px; }
+.bayes-row.foot .katex { font-size: 1em; }
+.bayes-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.bayes-swatch { width: 12px; height: 12px; border-radius: 3px; background: var(--c); flex: none; }
+.bayes-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bayes-cell input[type='range'] { width: 100%; margin: 0; accent-color: var(--c); }
+.bayes-num, .bayes-joint, .bayes-post strong { font-variant-numeric: tabular-nums; }
+.bayes-num { font-weight: 700; font-size: 14px; }
+.bayes-op { text-align: center; color: var(--muted); }
+.bayes-post { display: flex; align-items: center; gap: 8px; }
+.bayes-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.bayes-bar > span { display: block; height: 100%; background: var(--c); }
+.bayes-post strong { min-width: 48px; text-align: right; }
+.bayes-result {
+  grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  border-radius: 12px; padding: 12px 16px; background: var(--surface-2); border-left: 0;
+}
+.bayes-ask { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--muted); min-width: 0; }
+.bayes-ask .katex { font-size: 1em; color: var(--text); opacity: 0.85; }
+.bayes-result > strong { font-size: 30px; color: var(--c); font-variant-numeric: tabular-nums; }

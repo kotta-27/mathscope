@@ -56,6 +56,22 @@ for (const [i, expect] of [[0, ['#graph', 'a*(x - p)^2 + q']], [1, ['#structure'
   const ok = hash.startsWith(expect[0]) && (expect[1] === null || input.startsWith(expect[1]))
   check(`使い方カード ${i + 1}`, ok, `${hash} / ${input}`)
 }
+// ベイズの計算表: スライダーで結果が変わる・行を押すと結果が切り替わる
+await b.goto(BASE + '#theorems?q=bayes')
+await b.waitFor(`document.querySelector('.bayes-row:not(.head):not(.foot)')`)
+const res0 = await b.evaluate(`return document.querySelector('.bayes-result > strong').textContent`)
+await b.evaluate(`
+  const r = document.querySelector('.bayes-row:not(.head):not(.foot) input[type=range]')
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+  set.call(r, '0.8'); r.dispatchEvent(new Event('input', { bubbles: true }))
+`)
+await sleep(300)
+const res1 = await b.evaluate(`return document.querySelector('.bayes-result > strong').textContent`)
+check('ベイズ: スライダーで結果が変わる', res0 !== res1, `${res0} → ${res1}`)
+await b.evaluate(`document.querySelectorAll('.bayes-row:not(.head):not(.foot)')[2].click()`)
+await sleep(300)
+const ask = await b.evaluate(`return document.querySelector('.bayes-ask').textContent`)
+check('ベイズ: 行を押すと結果が切り替わる', ask.includes('工場3'), ask.slice(0, 20))
 b.close()
 
 // スマホ幅の定理集
