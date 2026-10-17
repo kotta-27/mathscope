@@ -2,6 +2,8 @@
 
 数式を、見て・触って・わかる。式をグラフや図、構造に分解して理解するための Web アプリ。
 
+**https://kotta-27.github.io/mathscope/**
+
 ## 機能
 
 - **グラフ**: 式の中の x 以外の文字が自動でスライダーになり、動かすと形の変化が見える
@@ -20,6 +22,8 @@ npm run dev     # 開発サーバー
 npm run build   # 型チェック + 本番ビルド
 npm run lint
 ```
+
+`main` に push すると GitHub Actions（`.github/workflows/deploy.yml`）で GitHub Pages にデプロイされる。
 
 ## 構成
 

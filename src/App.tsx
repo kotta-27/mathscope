@@ -41,7 +41,7 @@ export default function App() {
     <div className="app">
       <header className="header">
         <a className="brand" href="#home">
-          <img className="logo" src="/favicon.svg" alt="" />
+          <img className="logo" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
           <div>
             <h1>Mathscope</h1>
             <p>{current.desc}</p>
