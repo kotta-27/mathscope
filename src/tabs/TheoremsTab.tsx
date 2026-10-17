@@ -17,8 +17,7 @@ function matches(t: Theorem, q: string) {
 export function TheoremsTab() {
   const [field, setField] = useState<FieldId | 'all'>('all')
   const [q, setQ] = useState(() => readHash().params.get('q') ?? '')
-  const [figOnly, setFigOnly] = useState(false)
-  const hits = useMemo(() => THEOREMS.filter((t) => matches(t, q) && (!figOnly || FIGURES[t.id])), [q, figOnly])
+  const hits = useMemo(() => THEOREMS.filter((t) => matches(t, q)), [q])
   const count = (f: FieldId) => hits.filter((t) => t.field === f).length
   useEffect(() => {
     const id = readHash().params.get('id')
@@ -31,9 +30,6 @@ export function TheoremsTab() {
       <aside className="panel sticky theorems-side">
         <h2>検索</h2>
         <input className="wide" placeholder="定理名・用途で検索" value={q} onChange={(e) => setQ(e.target.value)} />
-        <label className="check">
-          <input type="checkbox" checked={figOnly} onChange={(e) => setFigOnly(e.target.checked)} /> 図がある定理だけ
-        </label>
         <h2>分野</h2>
         <nav className="field-list">
           <button className={`field-item ${field === 'all' ? 'on' : ''}`} onClick={() => setField('all')}>

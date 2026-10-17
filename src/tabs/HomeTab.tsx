@@ -96,6 +96,10 @@ const PICKS: [string, string][] = [
   ['diagonalization', 'A\\vec v=\\lambda\\vec v'],
   ['euclid-algorithm', '\\gcd(a,b)=\\gcd(b,\\ a \\bmod b)'],
   ['am-gm', '\\frac{a+b}{2}\\ge\\sqrt{ab}'],
+  ['taylor', 'e^x=\\sum_{n=0}^{\\infty}\\frac{x^n}{n!}'],
+  ['lln', '\\bar X_n\\ \\to\\ \\mu'],
+  ['euler-polyhedron', 'V-E+F=2'],
+  ['fermat-little', 'a^{p-1}\\equiv1\\pmod p'],
 ]
 
 export function HomeTab() {
@@ -188,7 +192,11 @@ export function HomeTab() {
         <SectionHead
           eyebrow="Theorems"
           title="図で見る定理"
-          lead={`${THEOREMS.length} 個の定理のうち ${figCount} 個は、動かせる図つき。気になるものから開いてみる。`}
+          lead={
+            figCount >= THEOREMS.length
+              ? `${THEOREMS.length} 個の定理すべてに、動かせる図がついている。気になるものから開いてみる。`
+              : `${THEOREMS.length} 個の定理のうち ${figCount} 個は、動かせる図つき。気になるものから開いてみる。`
+          }
           link={{ href: '#theorems', label: '定理集をすべて見る →' }}
         />
         <div className="picks">

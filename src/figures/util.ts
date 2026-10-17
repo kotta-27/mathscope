@@ -32,6 +32,13 @@ export const r2 = (v: number, d = 2) => {
   const s = Number(v.toFixed(d))
   return Object.is(s, -0) ? 0 : s
 }
+/** 係数を符号つきで書く（+1.5 / −1.5）。k を渡すと 1 を省いて「+x」「−x」にする */
+export const sgn = (v: number, k = '') => {
+  const a = r2(Math.abs(v))
+  return `${v < 0 ? '-' : '+'}${k && a === 1 ? '' : a}${k}`
+}
+/** 負の数をかっこで包む */
+export const par = (v: number) => (v < 0 ? `(${r2(v)})` : `${r2(v)}`)
 export const deg = (rad: number) => (rad * 180) / Math.PI
 /** 2 ベクトルのなす角（ラジアン） */
 export const angleBetween = (ax: number, ay: number, bx: number, by: number) =>
