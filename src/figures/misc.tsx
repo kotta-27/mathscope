@@ -3,13 +3,14 @@ import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { Axes, Fig, TexAt } from './common'
 import { C, SERIES, frame, r2 } from './util'
+import { useFig } from './state'
 
 /* ---------- 解の公式 ---------- */
 
 export function QuadraticFig() {
-  const [a, setA] = useState(1)
-  const [b, setB] = useState(-2)
-  const [c, setC] = useState(-3)
+  const [a, setA] = useFig('a', 1)
+  const [b, setB] = useFig('b', -2)
+  const [c, setC] = useFig('c', -3)
   const F = frame([-6, 6], [-6, 6], { x: 0, y: 0, w: 560, h: 360 })
   const ax = -b / (2 * a)
   const D = b * b - 4 * a * c
@@ -55,7 +56,7 @@ export function QuadraticFig() {
 /* ---------- 等差数列の和 ---------- */
 
 export function ArithmeticSumFig() {
-  const [n, setN] = useState(6)
+  const [n, setN] = useFig('n', 6)
   const S = Math.min(36, 300 / (n + 1))
   const x0 = 40
   const y0 = 330
@@ -99,7 +100,7 @@ export function ArithmeticSumFig() {
 /* ---------- 等比級数 ---------- */
 
 export function GeometricSumFig() {
-  const [n, setN] = useState(5)
+  const [n, setN] = useFig('n', 5)
   const L = 300
   const x0 = 130
   const y0 = 20
@@ -144,7 +145,7 @@ export function GeometricSumFig() {
 /* ---------- パスカルの三角形（二項定理） ---------- */
 
 export function PascalFig() {
-  const [n, setN] = useState(5)
+  const [n, setN] = useFig('n', 5)
   const rows: number[][] = [[1]]
   for (let i = 1; i <= 9; i++) rows.push(rows[i - 1].map((v, j) => v + (rows[i - 1][j - 1] ?? 0)).concat(1))
   const dx = 48
@@ -187,8 +188,8 @@ export function PascalFig() {
 /* ---------- ユークリッドの互除法 ---------- */
 
 export function EuclidFig() {
-  const [a, setA] = useState(21)
-  const [b, setB] = useState(8)
+  const [a, setA] = useFig('a', 21)
+  const [b, setB] = useFig('b', 8)
   const big = Math.max(a, b)
   const small = Math.min(a, b)
   const sc = Math.min(500 / big, 280 / small)
@@ -247,8 +248,8 @@ export function EuclidFig() {
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a)
 
 export function CrtFig() {
-  const [m, setM] = useState(3)
-  const [n, setN] = useState(5)
+  const [m, setM] = useFig('m', 3)
+  const [n, setN] = useFig('n', 5)
   const [hi, setHi] = useState<number | null>(null)
   const cells: number[][][] = Array.from({ length: m }, () => Array.from({ length: n }, () => []))
   for (let x = 0; x < m * n; x++) cells[x % m][x % n].push(x)
@@ -315,8 +316,8 @@ export function CrtFig() {
 /* ---------- 約数の個数（素因数分解） ---------- */
 
 export function DivisorGridFig() {
-  const [e2, setE2] = useState(3)
-  const [e3, setE3] = useState(2)
+  const [e2, setE2] = useFig('e2', 3)
+  const [e3, setE3] = useFig('e3', 2)
   const S = Math.min(64, 440 / (e2 + 1), 250 / (e3 + 1))
   const N = 2 ** e2 * 3 ** e3
   return (
@@ -356,8 +357,8 @@ export function DivisorGridFig() {
 /* ---------- 相加平均・相乗平均 ---------- */
 
 export function AmGmFig() {
-  const [a, setA] = useState(5)
-  const [b, setB] = useState(2)
+  const [a, setA] = useFig('a', 5)
+  const [b, setB] = useFig('b', 2)
   const sc = 420 / (a + b)
   const R = ((a + b) / 2) * sc
   const x0 = 70
@@ -399,9 +400,9 @@ export function AmGmFig() {
 /* ---------- イェンセンの不等式 ---------- */
 
 export function JensenFig() {
-  const [x1, setX1] = useState(-2.2)
-  const [x2, setX2] = useState(2.5)
-  const [lam, setLam] = useState(0.4)
+  const [x1, setX1] = useFig('x1', -2.2)
+  const [x2, setX2] = useFig('x2', 2.5)
+  const [lam, setLam] = useFig('lam', 0.4)
   const f = (x: number) => 0.25 * x * x + 0.15 * x + 0.5
   const F = frame([-3.2, 3.2], [0, 3.6], { x: 20, y: 10, w: 520, h: 290 })
   const xm = lam * x1 + (1 - lam) * x2

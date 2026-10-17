@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { Arrow, Axes, Fig, Handle, TexAt } from './common'
 import { C, SERIES, clamp, frame, par, r2, sgn } from './util'
+import { useFig } from './state'
 
 type P = [number, number]
 
@@ -11,8 +12,8 @@ type P = [number, number]
 export function RankSolutionFig() {
   const t1 = (30 * Math.PI) / 180
   const d1 = 0.5
-  const [deg2, setDeg2] = useState(110)
-  const [d2, setD2] = useState(1)
+  const [deg2, setDeg2] = useFig('deg2', 110)
+  const [d2, setD2] = useFig('d2', 1)
   const t2 = (deg2 * Math.PI) / 180
   const F = frame([-3.2, 3.2], [-2, 2], { x: 0, y: 0, w: 560, h: 350 })
   // 直線: x cosθ + y sinθ = d
@@ -56,7 +57,7 @@ export function RankSolutionFig() {
 /* ---------- 次元定理: 潰れる方向（核）と残る方向（像） ---------- */
 
 export function RankNullityFig() {
-  const [s, setS] = useState(1.6)
+  const [s, setS] = useFig('s', 1.6)
   // A = [[1, 2], [0.5, s]]、det = s − 1
   const A = [
     [1, 2],
@@ -113,10 +114,10 @@ export function RankNullityFig() {
 /* ---------- ケーリー・ハミルトンの定理 ---------- */
 
 export function CayleyHamiltonFig() {
-  const [a, setA] = useState(1.2)
-  const [b, setB] = useState(0.6)
-  const [c, setC] = useState(-0.4)
-  const [d, setD] = useState(0.8)
+  const [a, setA] = useFig('a', 1.2)
+  const [b, setB] = useFig('b', 0.6)
+  const [c, setC] = useFig('c', -0.4)
+  const [d, setD] = useFig('d', 0.8)
   const tr = a + d
   const det = a * d - b * c
   const v: P = [1, 0.6]
@@ -170,8 +171,8 @@ export function CayleyHamiltonFig() {
 /* ---------- 期待値の線形性 ---------- */
 
 export function LinearityExpectationFig() {
-  const [a, setA] = useState(1)
-  const [b, setB] = useState(3)
+  const [a, setA] = useFig('a', 1)
+  const [b, setB] = useFig('b', 3)
   // X: さいころの目、Y: 目が偶数なら 1（X と独立ではない）
   const vals = [1, 2, 3, 4, 5, 6].map((x) => a * x + b * (x % 2 === 0 ? 1 : 0))
   const lo = Math.min(0, ...vals) - 1
@@ -214,8 +215,8 @@ export function LinearityExpectationFig() {
 /* ---------- 分散の公式 ---------- */
 
 export function VarianceFig() {
-  const [a, setA] = useState(1)
-  const [b, setB] = useState(0)
+  const [a, setA] = useFig('a', 1)
+  const [b, setB] = useFig('b', 0)
   const xs = [1, 2, 3, 4, 5, 6]
   const ys = xs.map((x) => a * x + b)
   const E = ys.reduce((s, v) => s + v, 0) / 6
@@ -269,9 +270,9 @@ function mulberry(seed: number) {
 }
 
 export function LlnFig() {
-  const [n, setN] = useState(500)
-  const [p, setP] = useState(0.3)
-  const [seed, setSeed] = useState(1)
+  const [n, setN] = useFig('n', 500)
+  const [p, setP] = useFig('p', 0.3)
+  const [seed, setSeed] = useFig('seed', 1)
   const N = 2000
   const flips = useMemo(
     () =>
@@ -347,8 +348,8 @@ const DISTS = {
 }
 
 export function ChebyshevFig() {
-  const [k, setK] = useState(1.5)
-  const [d, setD] = useState<keyof typeof DISTS>('normal')
+  const [k, setK] = useFig('k', 1.5)
+  const [d, setD] = useFig<keyof typeof DISTS>('d', 'normal')
   const D = DISTS[d]
   const F = frame([-4.5, 4.5], [0, 1.05], { x: 0, y: 10, w: 560, h: 240 })
   const tail = D.tail(k)
@@ -405,8 +406,8 @@ function extgcd(a: number, b: number): [number, number] {
 }
 
 export function BezoutFig() {
-  const [a, setA] = useState(12)
-  const [b, setB] = useState(18)
+  const [a, setA] = useFig('a', 12)
+  const [b, setB] = useFig('b', 18)
   const g = gcd(a, b)
   const [x, y] = extgcd(a, b)
   const R = 60
@@ -454,8 +455,8 @@ export function BezoutFig() {
 const PRIMES = [5, 7, 11, 13, 17, 19, 23]
 
 export function FermatLittleFig() {
-  const [p, setP] = useState(13)
-  const [a, setA] = useState(2)
+  const [p, setP] = useFig('p', 13)
+  const [a, setA] = useFig('a', 2)
   const aa = ((a % p) + p) % p || 1
   const pows: number[] = []
   let v = 1
@@ -527,7 +528,7 @@ function factor(n: number): number[] {
 }
 
 export function InfinitePrimesFig() {
-  const [n, setN] = useState(6)
+  const [n, setN] = useFig('n', 6)
   const ps = FIRST_PRIMES.slice(0, n)
   const N = ps.reduce((s, p) => s * p, 1) + 1
   const fs = factor(N)
@@ -561,8 +562,8 @@ export function InfinitePrimesFig() {
 
 export function CauchySchwarzFig() {
   const F = frame([-3.2, 3.2], [-1.6, 2.4], { x: 0, y: 0, w: 560, h: 350 })
-  const [a, setA] = useState<P>([2, 0.5])
-  const [b, setB] = useState<P>([0.8, 1.8])
+  const [a, setA] = useFig<P>('a', [2, 0.5])
+  const [b, setB] = useFig<P>('b', [0.8, 1.8])
   const dot = a[0] * b[0] + a[1] * b[1]
   const na = Math.hypot(...a)
   const nb = Math.hypot(...b)
@@ -606,8 +607,8 @@ export function CauchySchwarzFig() {
 /* ---------- ベルヌーイの不等式 ---------- */
 
 export function BernoulliFig() {
-  const [n, setN] = useState(3)
-  const [x, setX] = useState(0.4)
+  const [n, setN] = useFig('n', 3)
+  const [x, setX] = useFig('x', 0.4)
   const F = frame([-1.3, 1.3], [-2, 5], { x: 0, y: 0, w: 560, h: 300 })
   const f = (t: number) => (t < -1 ? NaN : (1 + t) ** n)
   const g = (t: number) => 1 + n * t
