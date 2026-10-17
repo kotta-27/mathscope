@@ -5,6 +5,7 @@ import { useRaf } from '../lib/useRaf'
 import { useVisible } from '../lib/useVisible'
 import { AngleArc, Axes, Fig, Handle, TexAt } from './common'
 import { C, SERIES, clamp, frame, r2, sgn } from './util'
+import { useFig } from './state'
 
 type P = [number, number]
 const dist = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1])
@@ -13,8 +14,8 @@ const poly = (...ps: P[]) => ps.map((p) => p.join(',')).join(' ')
 /* ---------- 解と係数の関係 ---------- */
 
 export function VietaFig() {
-  const [b, setB] = useState(-1)
-  const [c, setC] = useState(-2)
+  const [b, setB] = useFig('b', -1)
+  const [c, setC] = useFig('c', -2)
   const F = frame([-5, 5], [-6, 6], { x: 0, y: 0, w: 560, h: 320 })
   const D = b * b - 4 * c
   const real = D >= 0
@@ -64,7 +65,7 @@ export function VietaFig() {
 
 /** P(x) = x³ − 6x² + 11x − 6 を x − a で割る */
 export function FactorRemainderFig({ mode }: { mode: 'factor' | 'remainder' }) {
-  const [a, setA] = useState(mode === 'factor' ? 2 : 3.5)
+  const [a, setA] = useFig('a', mode === 'factor' ? 2 : 3.5)
   const P = (x: number) => x ** 3 - 6 * x ** 2 + 11 * x - 6
   const F = frame([-0.5, 4.5], [-3, 6], { x: 0, y: 0, w: 560, h: 300 })
   const r = P(a)
@@ -147,9 +148,9 @@ function roots(n: number, a: number, b: number): Cx[] {
 }
 
 export function FundamentalAlgebraFig() {
-  const [n, setN] = useState(5)
-  const [a, setA] = useState(-1)
-  const [b, setB] = useState(0.5)
+  const [n, setN] = useFig('n', 5)
+  const [a, setA] = useFig('a', -1)
+  const [b, setB] = useFig('b', 0.5)
   const rs = roots(n, a, b)
   const F = frame([-2.2, 2.2], [-1.6, 1.6], { x: 0, y: 0, w: 560, h: 400 })
   const realCount = rs.filter((z) => Math.abs(z[1]) < 1e-6).length
@@ -187,7 +188,7 @@ export function FundamentalAlgebraFig() {
 /* ---------- べき乗和: 1³ + 2³ + … + n³ = (1 + 2 + … + n)² ---------- */
 
 export function PowerSumsFig() {
-  const [n, setN] = useState(5)
+  const [n, setN] = useFig('n', 5)
   const T = (n * (n + 1)) / 2
   const S = Math.min(300 / T, 40)
   const x0 = 40
@@ -227,8 +228,8 @@ export function PowerSumsFig() {
 /* ---------- 数学的帰納法（ドミノ） ---------- */
 
 export function InductionFig() {
-  const [k, setK] = useState(4.5)
-  const [first, setFirst] = useState(true)
+  const [k, setK] = useFig('k', 4.5)
+  const [first, setFirst] = useFig('first', true)
   const N = 9
   return (
     <Fig
@@ -267,7 +268,7 @@ export function InductionFig() {
 /* ---------- 単調収束定理: (1 + 1/n)^n → e ---------- */
 
 export function MonotoneConvergenceFig() {
-  const [N, setN] = useState(25)
+  const [N, setN] = useFig('N', 25)
   const F = frame([0, 61], [1.9, 3.1], { x: 40, y: 10, w: 500, h: 260 })
   const a = (n: number) => (1 + 1 / n) ** n
   return (
@@ -293,8 +294,8 @@ export function MonotoneConvergenceFig() {
 /* ---------- 加法定理（単位円で sin(α+β) を分ける） ---------- */
 
 export function AdditionFormulaFig() {
-  const [al, setAl] = useState(35)
-  const [be, setBe] = useState(30)
+  const [al, setAl] = useFig('al', 35)
+  const [be, setBe] = useFig('be', 30)
   const a = (al * Math.PI) / 180
   const b = (be * Math.PI) / 180
   const O: P = [180, 300]
@@ -344,7 +345,7 @@ export function AdditionFormulaFig() {
 /* ---------- 2 倍角: 円周角を使って sin 2θ = 2 sin θ cos θ ---------- */
 
 export function DoubleAngleFig() {
-  const [td, setTd] = useState(30)
+  const [td, setTd] = useFig('td', 30)
   const t = (td * Math.PI) / 180
   const O: P = [280, 190]
   const R = 140
@@ -381,7 +382,7 @@ export function DoubleAngleFig() {
 /* ---------- 中線定理 ---------- */
 
 export function MedianFig() {
-  const [pts, setPts] = useState<P[]>([[220, 60], [70, 320], [490, 320]])
+  const [pts, setPts] = useFig<P[]>('pts', [[220, 60], [70, 320], [490, 320]])
   const [A, B, Cc] = pts
   const M: P = [(B[0] + Cc[0]) / 2, (B[1] + Cc[1]) / 2]
   const u = 60
@@ -429,8 +430,8 @@ export function MenelausFig() {
   const A: P = [200, 50]
   const B: P = [70, 300]
   const Cc: P = [400, 300]
-  const [l1, setL1] = useState<P>([60, 130])
-  const [l2, setL2] = useState<P>([520, 250])
+  const [l1, setL1] = useFig<P>('l1', [60, 130])
+  const [l2, setL2] = useFig<P>('l2', [520, 250])
   const F = intersect(l1, l2, A, B)
   const D = intersect(l1, l2, B, Cc)
   const E = intersect(l1, l2, Cc, A)
@@ -511,7 +512,7 @@ function edges(v: V3[]): [number, number][] {
 }
 
 export function EulerPolyhedronFig() {
-  const [k, setK] = useState('cube')
+  const [k, setK] = useFig('k', 'cube')
   const [t, setT] = useState(0.6)
   const ref = useRef<HTMLDivElement>(null)
   const visible = useVisible(ref)

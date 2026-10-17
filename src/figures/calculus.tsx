@@ -1,14 +1,14 @@
-import { useState } from 'react'
 import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { Axes, Fig, TexAt } from './common'
 import { C, frame, r2 } from './util'
+import { useFig } from './state'
 
 /* ---------- 平均値の定理 ---------- */
 
 export function MeanValueFig() {
-  const [a, setA] = useState(-2.6)
-  const [b, setB] = useState(2.2)
+  const [a, setA] = useFig('a', -2.6)
+  const [b, setB] = useFig('b', 2.2)
   const f = (x: number) => x ** 3 / 6 - x + 2
   const df = (x: number) => x * x / 2 - 1
   const F = frame([-3.2, 3.2], [-0.5, 5], { x: 10, y: 10, w: 540, h: 300 })
@@ -57,7 +57,7 @@ export function MeanValueFig() {
 /* ---------- 中間値の定理 ---------- */
 
 export function IvtFig() {
-  const [k, setK] = useState(0.5)
+  const [k, setK] = useFig('k', 0.5)
   const f = (x: number) => 0.3 * x ** 3 - x + 0.3 + 0.25 * Math.sin(3 * x)
   const a = -2.4
   const b = 2.4
@@ -107,7 +107,7 @@ export function IvtFig() {
 /* ---------- 微分積分学の基本定理 ---------- */
 
 export function FtcFig() {
-  const [x, setX] = useState(3)
+  const [x, setX] = useFig('x', 3)
   const f = (t: number) => 1 + 0.6 * Math.sin(1.4 * t) + 0.15 * t
   const Fn = (t: number) => {
     // 数値積分（シンプソン）
@@ -164,7 +164,7 @@ export function FtcFig() {
 /* ---------- 部分積分 ---------- */
 
 export function ByPartsFig() {
-  const [t1, setT1] = useState(3)
+  const [t1, setT1] = useFig('t1', 3)
   const t0 = 1
   const u = (t: number) => t
   const v = (t: number) => 0.25 * t * t + 0.5

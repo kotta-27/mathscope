@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { AngleArc, Arrow, Axes, Fig, Handle, TexAt } from './common'
 import { C, angleBetween, deg, frame, r2, type Frame } from './util'
+import { useFig } from './state'
 
 type V = [number, number]
 const snap = (v: number) => Math.round(v * 10) / 10
@@ -23,8 +23,8 @@ const O: V = [0, 0]
 /* ---------- 内積 ---------- */
 
 export function DotProductFig() {
-  const [a, setA] = useState<V>([3, 1])
-  const [b, setB] = useState<V>([1.5, 2.5])
+  const [a, setA] = useFig<V>('a', [3, 1])
+  const [b, setB] = useFig<V>('b', [1.5, 2.5])
   const f = plane()
   const k = dot(a, b) / dot(a, a)
   const proj: V = [a[0] * k, a[1] * k]
@@ -63,9 +63,9 @@ export function DotProductFig() {
 /* ---------- 点と直線の距離 ---------- */
 
 export function PointLineDistanceFig() {
-  const [p1, setP1] = useState<V>([-4, -1])
-  const [p2, setP2] = useState<V>([3, 1.5])
-  const [q, setQ] = useState<V>([-1, 2])
+  const [p1, setP1] = useFig<V>('p1', [-4, -1])
+  const [p2, setP2] = useFig<V>('p2', [3, 1.5])
+  const [q, setQ] = useFig<V>('q', [-1, 2])
   const f = plane()
   // 2 点を通る直線 ax + by + c = 0
   const a = p2[1] - p1[1]
@@ -104,10 +104,10 @@ export function PointLineDistanceFig() {
 /* ---------- 内分点 ---------- */
 
 export function SectionFig() {
-  const [A, setA] = useState<V>([-3, -1.5])
-  const [B, setB] = useState<V>([3.5, 2])
-  const [m, setM] = useState(2)
-  const [n, setN] = useState(1)
+  const [A, setA] = useFig<V>('A', [-3, -1.5])
+  const [B, setB] = useFig<V>('B', [3.5, 2])
+  const [m, setM] = useFig('m', 2)
+  const [n, setN] = useFig('n', 1)
   const f = plane()
   const Pp: V = [(n * A[0] + m * B[0]) / (m + n), (n * A[1] + m * B[1]) / (m + n)]
   const ticks = Array.from({ length: m + n - 1 }, (_, i) => {
@@ -149,8 +149,8 @@ export function SectionFig() {
 /* ---------- 外積・行列式と面積 ---------- */
 
 export function CrossAreaFig() {
-  const [a, setA] = useState<V>([3, 0.5])
-  const [b, setB] = useState<V>([1, 2])
+  const [a, setA] = useFig<V>('a', [3, 0.5])
+  const [b, setB] = useFig<V>('b', [1, 2])
   const f = plane()
   const det = a[0] * b[1] - a[1] * b[0]
   const col = det >= 0 ? C.blue : C.red
@@ -182,7 +182,7 @@ export function CrossAreaFig() {
 /* ---------- 行列による変換（逆行列・行列式） ---------- */
 
 export function LinearMapFig() {
-  const [m, setM] = useState({ a: 1.5, b: 0.5, c: 0.3, d: 1 })
+  const [m, setM] = useFig('m', { a: 1.5, b: 0.5, c: 0.3, d: 1 })
   const f = plane(560, 360, 4.5)
   const map = (v: V): V => [m.a * v[0] + m.b * v[1], m.c * v[0] + m.d * v[1]]
   const det = m.a * m.d - m.b * m.c
@@ -235,8 +235,8 @@ export function LinearMapFig() {
 /* ---------- 固有ベクトル ---------- */
 
 export function EigenFig({ symmetric = false }: { symmetric?: boolean }) {
-  const [m, setM] = useState(symmetric ? { a: 2, b: 1, c: 1, d: 1.5 } : { a: 2, b: 1, c: 0.5, d: 1 })
-  const [x, setX] = useState<V>([1, 1.6])
+  const [m, setM] = useFig('m', symmetric ? { a: 2, b: 1, c: 1, d: 1.5 } : { a: 2, b: 1, c: 0.5, d: 1 })
+  const [x, setX] = useFig<V>('x', [1, 1.6])
   const f = plane(560, 380, 4.5)
   const map = (v: V): V => [m.a * v[0] + m.b * v[1], m.c * v[0] + m.d * v[1]]
   const tr = m.a + m.d
@@ -315,8 +315,8 @@ export function EigenFig({ symmetric = false }: { symmetric?: boolean }) {
 /* ---------- 三角不等式 ---------- */
 
 export function TriangleInequalityFig() {
-  const [a, setA] = useState<V>([2.5, 1])
-  const [b, setB] = useState<V>([0.5, 1.5])
+  const [a, setA] = useFig<V>('a', [2.5, 1])
+  const [b, setB] = useFig<V>('b', [0.5, 1.5])
   const f = plane()
   const ab: V = [a[0] + b[0], a[1] + b[1]]
   return (
@@ -349,8 +349,8 @@ const cmul = (a: V, b: V): V => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] *
 const arg = (z: V) => Math.atan2(z[1], z[0])
 
 export function PolarProductFig() {
-  const [z1, setZ1] = useState<V>([1.5, 0.6])
-  const [z2, setZ2] = useState<V>([0.8, 1])
+  const [z1, setZ1] = useFig<V>('z1', [1.5, 0.6])
+  const [z2, setZ2] = useFig<V>('z2', [0.8, 1])
   const f = plane(560, 380, 4)
   const p = cmul(z1, z2)
   const unit = f.X(1) - f.X(0)
@@ -389,8 +389,8 @@ export function PolarProductFig() {
 }
 
 export function DeMoivreFig() {
-  const [n, setN] = useState(6)
-  const [z, setZ] = useState<V>([0.95, 0.4])
+  const [n, setN] = useFig('n', 6)
+  const [z, setZ] = useFig<V>('z', [0.95, 0.4])
   const f = plane(560, 380, 2.2)
   const pows: V[] = [[1, 0]]
   for (let k = 1; k <= n; k++) pows.push(cmul(pows[k - 1], z))
@@ -427,7 +427,7 @@ export function DeMoivreFig() {
 }
 
 export function EulerFormulaFig() {
-  const [th, setTh] = useState(Math.PI / 3)
+  const [th, setTh] = useFig('th', Math.PI / 3)
   const f = plane(560, 360, 2.3)
   const p: V = [Math.cos(th), Math.sin(th)]
   const unit = f.X(1) - f.X(0)

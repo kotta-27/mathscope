@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { readHash, useSyncHash } from '../lib/route'
 import { MathText } from '../components/MathText'
 import { Tex } from '../components/Tex'
 import { FIELDS, THEOREMS, type FieldId, type Theorem } from '../lib/theorems'
 import { FIGURES } from '../figures'
+import { figStore } from '../figures/state'
+import { FigScope } from '../figures/FigScope'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, '')
@@ -20,9 +22,16 @@ export function TheoremsTab() {
     return FIELDS.find((x) => x.id === f)?.id ?? 'all'
   })
   const [q, setQ] = useState(() => readHash().params.get('q') ?? '')
+  // URL にある図の状態（#theorems?id=bayes&v.s=0.9）を、図を描く前に読み込む
+  useState(() => {
+    const p = readHash().params
+    const vals: Record<string, string> = {}
+    p.forEach((v, k) => {
+      if (k.startsWith('v.')) vals[k.slice(2)] = v
+    })
+    figStore.load(p.get('id'), vals)
+  })
   const hits = useMemo(() => THEOREMS.filter((t) => matches(t, q)), [q])
-  // 検索語と分野を URL に残す
-  useSyncHash('theorems', { q: q || null, field: field === 'all' ? null : field })
   const count = (f: FieldId) => hits.filter((t) => t.field === f).length
   useEffect(() => {
     const id = readHash().params.get('id')
@@ -32,6 +41,7 @@ export function TheoremsTab() {
 
   return (
     <div className="layout theorems-layout">
+      <HashSync q={q} field={field} />
       <aside className="panel sticky theorems-side">
         <h2>検索</h2>
         <input className="wide" placeholder="定理名・用途で検索" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -70,6 +80,21 @@ export function TheoremsTab() {
   )
 }
 
+/**
+ * 検索語・分野と、最後に触った図の状態を URL に残す。
+ * 図を動かすたびに定理の一覧ごと描き直さないよう、小さな部品に分けている。
+ */
+function HashSync({ q, field }: { q: string; field: FieldId | 'all' }) {
+  const fig = useSyncExternalStore(figStore.subscribe, figStore.get)
+  useSyncHash('theorems', {
+    q: q || null,
+    field: field === 'all' ? null : field,
+    id: fig.id,
+    ...Object.fromEntries(Object.entries(fig.vals).map(([k, v]) => [`v.${k}`, v])),
+  })
+  return null
+}
+
 function TheoremCard({ t }: { t: Theorem }) {
   const Figure = FIGURES[t.id]
   return (
@@ -84,7 +109,9 @@ function TheoremCard({ t }: { t: Theorem }) {
       </div>
       {Figure && (
         <ErrorBoundary label="この図">
-          <Figure />
+          <FigScope id={t.id}>
+            <Figure />
+          </FigScope>
         </ErrorBoundary>
       )}
       {t.conditions && (

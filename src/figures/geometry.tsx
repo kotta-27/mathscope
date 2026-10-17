@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { AngleArc, Fig, Handle, TexAt } from './common'
 import { C, angleBetween, clamp, deg, fitBox, r2 } from './util'
+import { useFig } from './state'
 
 type P = [number, number]
 const dist = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1])
@@ -14,8 +14,8 @@ const angleAt = (v: P, p: P, q: P) => angleBetween(p[0] - v[0], p[1] - v[1], q[0
 /* ---------- 三平方の定理 ---------- */
 
 export function PythagorasFig() {
-  const [a, setA] = useState(3)
-  const [b, setB] = useState(4)
+  const [a, setA] = useFig('a', 3)
+  const [b, setB] = useFig('b', 4)
   const S = 40
   const Cc: P = [0, 0]
   const A: P = [Cc[0], Cc[1] - b * S]
@@ -56,9 +56,9 @@ export function PythagorasFig() {
 /* ---------- 余弦定理 ---------- */
 
 export function LawOfCosinesFig() {
-  const [b, setB] = useState(3)
-  const [c, setC] = useState(4.5)
-  const [A, setAng] = useState(60)
+  const [b, setB] = useFig('b', 3)
+  const [c, setC] = useFig('c', 4.5)
+  const [A, setAng] = useFig('A', 60)
   const S = 45
   const t = (A * Math.PI) / 180
   const pA: P = [0, 0]
@@ -112,7 +112,7 @@ export function LawOfCosinesFig() {
 /* ---------- 正弦定理 ---------- */
 
 export function LawOfSinesFig() {
-  const [ang, setAng] = useState([110, 215, 330])
+  const [ang, setAng] = useFig('ang', [110, 215, 330])
   const O: P = [220, 200]
   const R = 160
   const pt = (d: number): P => [O[0] + R * Math.cos((d * Math.PI) / 180), O[1] - R * Math.sin((d * Math.PI) / 180)]
@@ -171,7 +171,7 @@ export function LawOfSinesFig() {
 /* ---------- 円周角の定理 ---------- */
 
 export function InscribedAngleFig() {
-  const [ang, setAng] = useState([200, 340, 90])
+  const [ang, setAng] = useFig('ang', [200, 340, 90])
   const O: P = [240, 200]
   const R = 160
   const pt = (d: number): P => [O[0] + R * Math.cos((d * Math.PI) / 180), O[1] - R * Math.sin((d * Math.PI) / 180)]
@@ -225,9 +225,9 @@ export function InscribedAngleFig() {
 /* ---------- 方べきの定理 ---------- */
 
 export function PowerOfPointFig() {
-  const [P0, setP] = useState<P>([100, 150])
-  const [t1, setT1] = useState(4)
-  const [t2, setT2] = useState(26)
+  const [P0, setP] = useFig<P>('P0', [100, 150])
+  const [t1, setT1] = useFig('t1', 4)
+  const [t2, setT2] = useFig('t2', 26)
   const O: P = [340, 210]
   const R = 120
   const pow = (P0[0] - O[0]) ** 2 + (P0[1] - O[1]) ** 2 - R * R
@@ -293,7 +293,7 @@ export function PowerOfPointFig() {
 /* ---------- 角の二等分線の定理 ---------- */
 
 export function AngleBisectorFig() {
-  const [pts, setPts] = useState<P[]>([[200, 60], [60, 330], [500, 330]])
+  const [pts, setPts] = useFig<P[]>('pts', [[200, 60], [60, 330], [500, 330]])
   const [A, B, Cc] = pts
   const ab = dist(A, B)
   const ac = dist(A, Cc)
@@ -336,7 +336,7 @@ export function CevaFig() {
   const A: P = [260, 40]
   const B: P = [50, 360]
   const Cc: P = [520, 360]
-  const [Pp, setP] = useState<P>([280, 250])
+  const [Pp, setP] = useFig<P>('Pp', [280, 250])
   // 重心座標（面積比）
   const area = (p: P, q: P, r: P) => Math.abs((q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1])) / 2
   const T = area(A, B, Cc)
@@ -399,9 +399,9 @@ export function CevaFig() {
 /* ---------- 三角形の面積 ---------- */
 
 export function TriangleAreaFig() {
-  const [a, setA] = useState(3.5)
-  const [b, setB] = useState(5)
-  const [Cd, setCd] = useState(55)
+  const [a, setA] = useFig('a', 3.5)
+  const [b, setB] = useFig('b', 5)
+  const [Cd, setCd] = useFig('Cd', 55)
   const S = 50
   const t = (Cd * Math.PI) / 180
   const pC: P = [190, 300]
@@ -435,7 +435,7 @@ export function TriangleAreaFig() {
 /* ---------- はさみうち（sin x / x） ---------- */
 
 export function SqueezeFig() {
-  const [th, setTh] = useState(0.7)
+  const [th, setTh] = useFig('th', 0.7)
   const O: P = [80, 330]
   const R = 260
   const A: P = [O[0] + R, O[1]]
@@ -476,7 +476,7 @@ export function SqueezeFig() {
 /* ---------- 三角関数の相互関係 ---------- */
 
 export function TrigIdentityFig() {
-  const [th, setTh] = useState(0.9)
+  const [th, setTh] = useFig('th', 0.9)
   const O: P = [200, 200]
   const R = 150
   const Pp: P = [O[0] + R * Math.cos(th), O[1] - R * Math.sin(th)]
@@ -508,8 +508,8 @@ export function TrigIdentityFig() {
 /* ---------- 三角関数の合成 ---------- */
 
 export function HarmonicFig() {
-  const [a, setA] = useState(1)
-  const [b, setB] = useState(1.7)
+  const [a, setA] = useFig('a', 1)
+  const [b, setB] = useFig('b', 1.7)
   const S = 42
   const O: P = [150, 170]
   const X: P = [O[0] + a * S, O[1]]

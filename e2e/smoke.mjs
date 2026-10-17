@@ -139,6 +139,22 @@ await b.goto(shared)
 await b.waitFor(`document.querySelector('path.curve')`)
 await sleep(300)
 check('リンクを開くと同じ状態', (await b.evaluate(`return document.querySelector('path.curve').getAttribute('d').slice(0, 120)`)) === curve)
+// 定理の図の状態も URL に残る
+await b.goto('about:blank')
+await b.goto(BASE + '#theorems?q=binomial-dist')
+await b.waitFor(`document.querySelector('#binomial-dist .fig input[type=range]')`)
+await b.evaluate(`
+  const r = document.querySelector('#binomial-dist .fig input[type=range]')
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+  set.call(r, r.min); r.dispatchEvent(new Event('input', { bubbles: true }))
+`)
+await b.waitFor(`location.hash.includes('id=binomial-dist') && location.hash.includes('v.')`)
+const figUrl = await b.evaluate('return location.href')
+const figVal = await b.evaluate(`return document.querySelector('#binomial-dist .fig input[type=range]').value`)
+await b.goto('about:blank')
+await b.goto(figUrl)
+await b.waitFor(`document.querySelector('#binomial-dist .fig input[type=range]')`)
+check('定理の図の状態が URL に残る', (await b.evaluate(`return document.querySelector('#binomial-dist .fig input[type=range]').value`)) === figVal, figUrl.split('#')[1])
 check('リンクをコピーのボタン', await b.evaluate(`return document.querySelector('.copy-link')?.textContent === 'リンクをコピー'`))
 b.close()
 

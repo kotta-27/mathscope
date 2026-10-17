@@ -1,8 +1,8 @@
-import { useState } from 'react'
 import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { Arrow, Axes, Fig, TexAt } from './common'
 import { C, SERIES, clamp, frame, r2, type Frame } from './util'
+import { useFig } from './state'
 
 /** 数値積分（シンプソン則） */
 function integrate(f: (x: number) => number, a: number, b: number, n = 400) {
@@ -20,8 +20,8 @@ function area(F: Frame, f: (x: number) => number, a: number, b: number) {
 /* ---------- 導関数の定義: 割線が接線に近づく ---------- */
 
 export function DerivativeDefFig() {
-  const [a, setA] = useState(0.6)
-  const [h, setH] = useState(1.5)
+  const [a, setA] = useFig('a', 0.6)
+  const [h, setH] = useFig('h', 1.5)
   const f = (x: number) => 0.25 * x ** 3 - x + 1
   const df = (x: number) => 0.75 * x * x - 1
   const F = frame([-3, 3], [-2, 4], { x: 0, y: 0, w: 560, h: 320 })
@@ -60,7 +60,7 @@ export function DerivativeDefFig() {
 /* ---------- 積の微分: 長方形の面積の増え方 ---------- */
 
 export function ProductRuleFig() {
-  const [d, setD] = useState(0.6)
+  const [d, setD] = useFig('d', 0.6)
   const f = 3
   const g = 2
   const df = 1.2 * d
@@ -102,8 +102,8 @@ export function ProductRuleFig() {
 /* ---------- 連鎖律: 3 本の数直線で伸び率を掛ける ---------- */
 
 export function ChainRuleFig() {
-  const [x, setX] = useState(1)
-  const [h, setH] = useState(0.3)
+  const [x, setX] = useFig('x', 1)
+  const [h, setH] = useFig('h', 0.3)
   const g = (t: number) => t * t
   const f = (u: number) => Math.sin(u)
   const u0 = g(x)
@@ -155,8 +155,8 @@ export function ChainRuleFig() {
 /* ---------- ロルの定理 ---------- */
 
 export function RolleFig() {
-  const [m, setM] = useState(1.2)
-  const [k, setK] = useState(0.6)
+  const [m, setM] = useFig('m', 1.2)
+  const [k, setK] = useFig('k', 0.6)
   const f = (x: number) => k * x * (x - 4) * (x - m)
   // f'(x) = k(3x² − 2(4+m)x + 4m)
   const A = 3
@@ -203,9 +203,9 @@ export function RolleFig() {
 /* ---------- 最大値・最小値の定理 ---------- */
 
 export function ExtremeValueFig() {
-  const [a, setA] = useState(-2.5)
-  const [b, setB] = useState(2.2)
-  const [open, setOpen] = useState(false)
+  const [a, setA] = useFig('a', -2.5)
+  const [b, setB] = useFig('b', 2.2)
+  const [open, setOpen] = useFig('open', false)
   const f = (x: number) => Math.sin(1.4 * x) + 0.3 * x
   const F = frame([-4, 4], [-2.2, 2.2], { x: 0, y: 0, w: 560, h: 280 })
   const lo = Math.min(a, b)
@@ -262,7 +262,7 @@ export function ExtremeValueFig() {
 /* ---------- 導関数の符号と増減 ---------- */
 
 export function MonotonicFig() {
-  const [x, setX] = useState(-0.5)
+  const [x, setX] = useFig('x', -0.5)
   const f = (t: number) => t ** 3 - 3 * t
   const df = (t: number) => 3 * t * t - 3
   const F = frame([-2.4, 2.4], [-4, 4], { x: 0, y: 5, w: 560, h: 180 })
@@ -306,7 +306,7 @@ export function MonotonicFig() {
 /* ---------- ロピタルの定理: 0 の近くでは傾きの比 ---------- */
 
 export function LhopitalFig() {
-  const [x, setX] = useState(1.2)
+  const [x, setX] = useFig('x', 1.2)
   const f = (t: number) => Math.sin(2 * t)
   const g = (t: number) => Math.exp(t) - 1
   const F = frame([-1.5, 1.5], [-1.5, 3], { x: 0, y: 0, w: 560, h: 300 })
@@ -347,8 +347,8 @@ const TAYLOR = {
 }
 
 export function TaylorFig() {
-  const [k, setK] = useState<keyof typeof TAYLOR>('sin')
-  const [n, setN] = useState(5)
+  const [k, setK] = useFig<keyof typeof TAYLOR>('k', 'sin')
+  const [n, setN] = useFig('n', 5)
   const T = TAYLOR[k]
   const fact = (m: number): number => (m <= 1 ? 1 : m * fact(m - 1))
   const p = (x: number) => {
@@ -392,7 +392,7 @@ export function TaylorFig() {
 /* ---------- 置換積分: x の面積と u の面積が等しい ---------- */
 
 export function SubstitutionFig() {
-  const [b, setB] = useState(1.2)
+  const [b, setB] = useFig('b', 1.2)
   const L = frame([0, 1.8], [-1.2, 2.2], { x: 10, y: 20, w: 255, h: 260 })
   const R = frame([0, 3.3], [-1.2, 2.2], { x: 295, y: 20, w: 255, h: 260 })
   const fx = (x: number) => 2 * x * Math.cos(x * x)
@@ -427,8 +427,8 @@ export function SubstitutionFig() {
 /* ---------- 区分求積法（リーマン和） ---------- */
 
 export function RiemannSumFig() {
-  const [n, setN] = useState(8)
-  const [mode, setMode] = useState<'left' | 'mid' | 'right'>('left')
+  const [n, setN] = useFig('n', 8)
+  const [mode, setMode] = useFig<'left' | 'mid' | 'right'>('mode', 'left')
   const f = (x: number) => 1 + Math.sin(x) * 0.8 + x * 0.3
   const a = 0
   const b = 4
@@ -470,7 +470,7 @@ export function RiemannSumFig() {
 /* ---------- 回転体の体積: 円板を積む ---------- */
 
 export function SolidRevolutionFig() {
-  const [n, setN] = useState(8)
+  const [n, setN] = useFig('n', 8)
   const f = (x: number) => 0.6 + Math.sqrt(x) * 0.7
   const a = 0
   const b = 4
@@ -518,7 +518,7 @@ export function SolidRevolutionFig() {
 /* ---------- ガウス積分 ---------- */
 
 export function GaussianIntegralFig() {
-  const [R, setR] = useState(1)
+  const [R, setR] = useFig('R', 1)
   const f = (x: number) => Math.exp(-x * x)
   const F = frame([-3.2, 3.2], [-0.1, 1.15], { x: 0, y: 40, w: 560, h: 220 })
   const I = integrate(f, -R, R)

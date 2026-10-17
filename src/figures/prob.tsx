@@ -1,8 +1,9 @@
-import { useState, type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 import { Slider } from '../components/Slider'
 import { Tex } from '../components/Tex'
 import { Fig, TexAt } from './common'
 import { C, SERIES, frame, r2 } from './util'
+import { useFig } from './state'
 
 /* ---------- ベイズの定理 ---------- */
 
@@ -35,8 +36,8 @@ const BAYES_PRESETS: { label: string; s: BayesState }[] = [
 const pct = (v: number, d = 1) => `${(v * 100).toFixed(d)}%`
 
 export function BayesFig() {
-  const [s, setS] = useState(BAYES_PRESETS[0].s)
-  const [sel, setSel] = useState(0)
+  const [s, setS] = useFig('s', BAYES_PRESETS[0].s)
+  const [sel, setSel] = useFig('sel', 0)
   const k = s.prior.length
   const joint = s.prior.map((p, i) => p * s.like[i])
   const pa = joint.reduce((a, b) => a + b, 0)
@@ -182,7 +183,7 @@ export function BayesFig() {
 /* ---------- 包除原理 ---------- */
 
 export function InclusionExclusionFig() {
-  const [d, setD] = useState(110)
+  const [d, setD] = useFig('d', 110)
   const R = 100
   const lens = d >= 2 * R ? 0 : 2 * R * R * Math.acos(d / (2 * R)) - (d / 2) * Math.sqrt(4 * R * R - d * d)
   const area = Math.PI * R * R
@@ -216,8 +217,8 @@ export function InclusionExclusionFig() {
 /* ---------- 条件付き確率 ---------- */
 
 export function ConditionalFig() {
-  const [a, setA] = useState(0.45)
-  const [bx, setBx] = useState(0.3)
+  const [a, setA] = useFig('a', 0.45)
+  const [bx, setBx] = useFig('bx', 0.3)
   const bw = 0.45
   const bTop = 0.2
   const bH = 0.6
@@ -276,8 +277,8 @@ const choose = (n: number, k: number) => {
 }
 
 export function BinomialDistFig() {
-  const [n, setN] = useState(20)
-  const [p, setP] = useState(0.3)
+  const [n, setN] = useFig('n', 20)
+  const [p, setP] = useFig('p', 0.3)
   const ps = Array.from({ length: n + 1 }, (_, k) => choose(n, k) * p ** k * (1 - p) ** (n - k))
   const max = Math.max(...ps)
   const f = frame([-0.5, n + 0.5], [0, max * 1.15], { x: 40, y: 20, w: 560, h: 220 })
@@ -315,7 +316,7 @@ export function BinomialDistFig() {
 /* ---------- 中心極限定理 ---------- */
 
 export function CltFig() {
-  const [n, setN] = useState(1)
+  const [n, setN] = useFig('n', 1)
   // n 個のサイコロの和の分布（畳み込み）
   let dist = [1]
   for (let i = 0; i < n; i++) {
