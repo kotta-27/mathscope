@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import type { AnyScene, Ctx } from './canvasScenes'
+import { useTheme } from '../lib/display'
 
 const surfaceColor = (el: Element) => getComputedStyle(el).getPropertyValue('--surface').trim() || '#1d2024'
-const isDark = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches
+const isDark = () => getComputedStyle(document.documentElement).colorScheme === 'dark'
 
 /**
  * シーンを Canvas に描き続ける。fixedT を渡すと、その時刻まで早送りして止める。
@@ -10,6 +11,8 @@ const isDark = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-c
  */
 export function HeroCanvas({ scene, fixedT }: { scene: AnyScene; fixedT: number | null }) {
   const ref = useRef<HTMLCanvasElement>(null)
+  // 配色を切り替えたら描き直す
+  const theme = useTheme()
 
   useEffect(() => {
     const canvas = ref.current!
@@ -78,7 +81,7 @@ export function HeroCanvas({ scene, fixedT }: { scene: AnyScene; fixedT: number 
       ro.disconnect()
       io.disconnect()
     }
-  }, [scene, fixedT])
+  }, [scene, fixedT, theme])
 
   return <canvas ref={ref} className="hero-canvas" />
 }

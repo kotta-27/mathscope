@@ -7,6 +7,7 @@ import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
 import { useMedia } from '../lib/useMedia'
+import { usePresent } from '../lib/display'
 import { num, readHash, useSyncHash } from '../lib/route'
 import type { View } from '../components/Plot'
 
@@ -69,6 +70,8 @@ export function GraphTab() {
   const scope = Object.fromEntries(names.map((n) => [n, params[n] ?? 1]))
   const active = names.filter((n) => playing[n])
   const narrow = useMedia('(max-width: 900px)')
+  const present = usePresent()
+  const plotH = present ? Math.max(520, window.innerHeight - 120) : narrow ? 300 : 520
   /** 値が -5〜5 を超えたら、スライダーの範囲を広げる */
   const rangeOf = (n: string) => {
     const m = Math.max(RANGE.max, Math.ceil(Math.abs(scope[n]) / 5) * 5)
@@ -171,7 +174,7 @@ export function GraphTab() {
       </aside>
 
       <section className="stage">
-        <Plot initial={initialView} height={narrow ? 300 : 520} onView={setView}>
+        <Plot initial={initialView} height={plotH} onView={setView}>
           {(ctx) =>
             parsed.map((p, i) =>
               p.ok ? (
