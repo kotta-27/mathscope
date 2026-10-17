@@ -3,7 +3,7 @@ import { Tex } from '../components/Tex'
 import { FIGURES } from '../figures'
 import { FIELDS, THEOREMS } from '../lib/theorems'
 import { hrefTo } from '../lib/route'
-import { useRaf } from '../lib/useRaf'
+import { HeroCarousel } from '../hero/HeroCarousel'
 
 const PALETTE = { blue: '#2e86ab', red: '#e4572e', green: '#3bb273', orange: '#f2a541', purple: '#a259ff' }
 
@@ -50,7 +50,7 @@ export function HomeTab() {
             <button className="btn" type="submit">検索</button>
           </form>
         </div>
-        <HeroArt />
+        <HeroCarousel />
       </section>
 
       <section className="stats">
@@ -88,72 +88,6 @@ export function HomeTab() {
         </div>
       </section>
     </div>
-  )
-}
-
-/* ---------- ヒーローのアニメーション：曲線上を虫眼鏡が動き、接線を見せる ---------- */
-
-function HeroArt() {
-  const [t, setT] = useState(0)
-  useRaf(true, (dt) => setT((v) => v + dt))
-  const W = 480
-  const H = 360
-  const f = (x: number) => 1.1 * Math.sin(1.3 * x + 0.4 * Math.sin(t * 0.5)) + 0.25 * x
-  const df = (x: number) => 1.43 * Math.cos(1.3 * x + 0.4 * Math.sin(t * 0.5)) + 0.25
-  const X = (x: number) => ((x + 4) / 8) * W
-  const Y = (y: number) => H / 2 - y * 55
-  let d = ''
-  for (let i = 0; i <= 160; i++) {
-    const x = -4 + (8 * i) / 160
-    d += `${i ? 'L' : 'M'}${X(x).toFixed(1)},${Y(f(x)).toFixed(1)}`
-  }
-  const px = 2.8 * Math.sin(t * 0.45)
-  const py = f(px)
-  const k = df(px)
-  const cx = X(px)
-  const cy = Y(py)
-  const R = 62
-  const L = 1.6
-  return (
-    <svg className="hero-art" viewBox={`0 0 ${W} ${H}`} aria-hidden>
-      <defs>
-        <clipPath id="hero-lens">
-          <circle cx={cx} cy={cy} r={R} />
-        </clipPath>
-      </defs>
-      {Array.from({ length: 9 }, (_, i) => (
-        <line key={`v${i}`} x1={(i * W) / 8} x2={(i * W) / 8} y1={0} y2={H} className="fig-grid" />
-      ))}
-      {Array.from({ length: 7 }, (_, i) => (
-        <line key={`h${i}`} y1={(i * H) / 6} y2={(i * H) / 6} x1={0} x2={W} className="fig-grid" />
-      ))}
-      <line x1={0} x2={W} y1={H / 2} y2={H / 2} className="fig-axis" />
-      <line x1={W / 2} x2={W / 2} y1={0} y2={H} className="fig-axis" />
-      <path d={d} fill="none" stroke={PALETTE.blue} strokeWidth={3} opacity={0.55} />
-
-      {/* レンズの中は拡大表示 */}
-      <circle cx={cx} cy={cy} r={R} fill="var(--surface)" />
-      <g clipPath="url(#hero-lens)">
-        <g transform={`translate(${cx} ${cy}) scale(1.8) translate(${-cx} ${-cy})`}>
-          {Array.from({ length: 17 }, (_, i) => (
-            <line key={`lv${i}`} x1={(i * W) / 16} x2={(i * W) / 16} y1={0} y2={H} className="fig-grid" />
-          ))}
-          {Array.from({ length: 13 }, (_, i) => (
-            <line key={`lh${i}`} y1={(i * H) / 12} y2={(i * H) / 12} x1={0} x2={W} className="fig-grid" />
-          ))}
-          <path d={d} fill="none" stroke={PALETTE.blue} strokeWidth={2} />
-          <line x1={X(px - L)} y1={Y(py - k * L)} x2={X(px + L)} y2={Y(py + k * L)} stroke={PALETTE.green} strokeWidth={1.6} />
-          <circle cx={cx} cy={cy} r={3} fill={PALETTE.green} />
-        </g>
-      </g>
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--text)" strokeWidth={5} />
-      <line x1={cx + R * 0.72} y1={cy + R * 0.72} x2={cx + R * 1.25} y2={cy + R * 1.25} stroke={PALETTE.orange} strokeWidth={11} strokeLinecap="round" />
-      <foreignObject x={Math.min(W - 170, cx + R * 0.9)} y={Math.max(4, cy - R - 34)} width={170} height={30} className="fig-fo">
-        <div className="hero-slope">
-          <Tex tex={`f'(x)=${k.toFixed(2)}`} />
-        </div>
-      </foreignObject>
-    </svg>
   )
 }
 
