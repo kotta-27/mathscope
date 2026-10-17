@@ -46,8 +46,14 @@ export function HeroCanvas({ scene, fixedT }: { scene: AnyScene; fixedT: number 
       return
     }
 
+    // 画面外にあるあいだは描かない
+    let visible = true
     let last = performance.now()
     const loop = (now: number) => {
+      if (!visible) {
+        raf = 0
+        return
+      }
       const dt = Math.min(0.05, (now - last) / 1000)
       last = now
       t += dt
@@ -55,6 +61,14 @@ export function HeroCanvas({ scene, fixedT }: { scene: AnyScene; fixedT: number 
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting
+      if (visible && !raf) {
+        last = performance.now()
+        raf = requestAnimationFrame(loop)
+      }
+    })
+    io.observe(canvas)
     const ro = new ResizeObserver(() => {
       if (Math.abs(parent.clientWidth - c.w) > 2) setup()
     })
@@ -62,6 +76,7 @@ export function HeroCanvas({ scene, fixedT }: { scene: AnyScene; fixedT: number 
     return () => {
       cancelAnimationFrame(raf)
       ro.disconnect()
+      io.disconnect()
     }
   }, [scene, fixedT])
 
