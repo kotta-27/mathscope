@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ConstantNode, ParenthesisNode, isSymbolNode, type MathNode } from 'mathjs'
+import { ConstantNode, ParenthesisNode, derivative, isSymbolNode, simplify, type EvalFunction, type MathNode } from 'mathjs'
 import { Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
 import { MathInput } from '../components/MathInput'
@@ -12,9 +12,11 @@ import { useMedia } from '../lib/useMedia'
 import { usePresent } from '../lib/display'
 import { findFeatures, type Feature } from '../lib/features'
 import { num, readHash, useSyncHash } from '../lib/route'
-import type { View } from '../components/Plot'
+import type { PlotCtx, View } from '../components/Plot'
 
-type Row = { id: number; src: string }
+/** hidden: 隠す、deriv: 導関数を重ねる、area: [a, b] の面積を塗る */
+type Row = { id: number; src: string; hidden?: boolean; deriv?: boolean; area?: [number, number] }
+type Range = { min: number; max: number; step: number }
 
 const PRESETS: { label: string; rows: string[] }[] = [
   { label: '正弦波', rows: ['a*sin(b*x + c)'] },
@@ -33,7 +35,7 @@ const PRESETS: { label: string; rows: string[] }[] = [
 const RANGE = { min: -5, max: 5 }
 const VIEW: View = { xMin: -8, xMax: 8, yMin: -5, yMax: 5 }
 /** パラメータ以外に使う URL のキー */
-const RESERVED = new Set(['f', 'view', 'play', 'pts', 'trail'])
+const RESERVED = new Set(['f', 'view', 'play', 'pts', 'trail', 'hide', 'deriv', 'area', 'rng'])
 /** 残像の数と、軌跡の点の数の上限 */
 const MAX_SNAPS = 12
 const MAX_TRAIL = 800
@@ -46,6 +48,48 @@ function isQuadratic(f: (x: number) => number) {
 }
 
 const fmtPt = (v: number) => String(Number(v.toFixed(2)) || 0)
+const r2 = (v: number, d = 2) => (Number.isFinite(v) ? Number(v.toFixed(d)) || 0 : NaN)
+
+/** 数値積分（シンプソン則） */
+function integrate(f: (x: number) => number, a: number, b: number, n = 400) {
+  const h = (b - a) / n
+  let s = f(a) + f(b)
+  for (let i = 1; i < n; i++) s += f(a + i * h) * (i % 2 ? 4 : 2)
+  return (s * h) / 3
+}
+
+/** スライダーの最小・最大・刻みを決める */
+function RangeEditor({ value, onChange, onReset }: { value: Range; onChange: (r: Range) => void; onReset: () => void }) {
+  const field = (k: keyof Range, label: string) => (
+    <label>
+      {label}
+      <input
+        type="number"
+        value={value[k]}
+        step={k === 'step' ? 0.01 : 1}
+        onChange={(e) => {
+          const v = Number(e.target.value)
+          if (e.target.value === '' || !Number.isFinite(v)) return
+          const next = { ...value, [k]: v }
+          if (next.min < next.max && next.step > 0) onChange(next)
+        }}
+      />
+    </label>
+  )
+  return (
+    <div className="range-edit">
+      {field('min', '最小')}
+      {field('max', '最大')}
+      {field('step', '刻み')}
+      <button className="chip" onClick={() => onChange({ ...value, step: 1 })}>
+        整数だけ
+      </button>
+      <button className="chip" onClick={onReset}>
+        元に戻す
+      </button>
+    </div>
+  )
+}
 const LABEL: Record<Feature['kind'], string> = { root: '', yint: '', max: '極大', min: '極小', cross: '交点' }
 
 function readView(s: string | null): View {
@@ -66,8 +110,28 @@ export function GraphTab() {
   const [hp] = useState(() => readHash().params)
   const [rows, setRows] = useState<Row[]>(() => {
     const fs = hp.getAll('f')
-    return (fs.length ? fs : ['a*sin(b*x + c)']).map((src, i) => ({ id: i + 1, src }))
+    const list = (k: string) => new Set((hp.get(k) ?? '').split(',').filter(Boolean).map(Number))
+    const hide = list('hide')
+    const deriv = list('deriv')
+    const areas = new Map(
+      hp.getAll('area').flatMap((s) => {
+        const [i, a, b] = s.split(':').map(Number)
+        return [i, a, b].every(Number.isFinite) ? [[i, [a, b] as [number, number]] as const] : []
+      }),
+    )
+    return (fs.length ? fs : ['a*sin(b*x + c)']).map((src, i) => ({ id: i + 1, src, hidden: hide.has(i) || undefined, deriv: deriv.has(i) || undefined, area: areas.get(i) }))
   })
+  const [ranges, setRanges] = useState<Record<string, Range>>(() =>
+    Object.fromEntries(
+      hp.getAll('rng').flatMap((s) => {
+        const [n, ...v] = s.split(':')
+        const [min, max, step] = v.map(Number)
+        return n && [min, max, step].every(Number.isFinite) && min < max && step > 0 ? [[n, { min, max, step }]] : []
+      }),
+    ),
+  )
+  const [editRange, setEditRange] = useState<string | null>(null)
+  const [hover, setHover] = useState<{ x: number; y: number } | null>(null)
   const [params, setParams] = useState<Record<string, number>>(() => {
     const o: Record<string, number> = {}
     hp.forEach((v, k) => {
@@ -98,11 +162,28 @@ export function GraphTab() {
   const narrow = useMedia('(max-width: 900px)')
   const present = usePresent()
   const plotH = present ? Math.max(520, window.innerHeight - 120) : narrow ? 300 : 520
-  /** 値が -5〜5 を超えたら、スライダーの範囲を広げる */
-  const rangeOf = (n: string) => {
-    const m = Math.max(RANGE.max, Math.ceil(Math.abs(scope[n]) / 5) * 5)
-    return { min: -m, max: m }
+  /** スライダーの範囲。決めていなければ -5〜5 で、値がはみ出したら広げる */
+  const rangeOf = (n: string): Range => {
+    if (ranges[n]) return ranges[n]
+    const m = Math.max(RANGE.max, Math.ceil(Math.abs(scope[n] ?? 1) / 5) * 5)
+    return { min: -m, max: m, step: 0.01 }
   }
+  const ids = rows.map((r) => r.id)
+  const hidden = useMemo(() => new Set(rows.filter((r) => r.hidden).map((r) => r.id)), [rows])
+  // 導関数（式で求められるときは式で、だめなら数値で）
+  const derivs = useMemo(
+    () =>
+      exprs.map((e) => {
+        if (!e.ok || e.curve.kind !== 'fn') return null
+        try {
+          const node = simplify(derivative(e.curve.f.node, 'x'))
+          return { node, code: node.compile() as EvalFunction }
+        } catch {
+          return null
+        }
+      }),
+    [exprs],
+  )
 
   // 式・パラメータの値・表示範囲・再生中のパラメータを URL に残す
   // y の範囲は横幅に合わせて決まるので、x の範囲と y の中心だけで比べる
@@ -117,6 +198,10 @@ export function GraphTab() {
     play: active.length ? active.join(',') : null,
     pts: showPts ? null : '0',
     trail: trail ? '1' : null,
+    hide: rows.some((r) => r.hidden) ? rows.flatMap((r, i) => (r.hidden ? [i] : [])).join(',') : null,
+    deriv: rows.some((r) => r.deriv) ? rows.flatMap((r, i) => (r.deriv ? [i] : [])).join(',') : null,
+    area: rows.flatMap((r, i) => (r.area ? [`${i}:${num(r.area[0])}:${num(r.area[1])}`] : [])),
+    rng: Object.entries(ranges).map(([n, r]) => `${n}:${num(r.min)}:${num(r.max)}:${num(r.step)}`),
   })
 
   useRaf(active.length > 0, (dt) => {
@@ -124,9 +209,10 @@ export function GraphTab() {
       const next = { ...p }
       for (const k of active) {
         let d = dirs.current[k] ?? 1
-        let v = (next[k] ?? 1) + d * dt * 1.5
-        if (v > RANGE.max) [v, d] = [RANGE.max, -1]
-        if (v < RANGE.min) [v, d] = [RANGE.min, 1]
+        const rg = rangeOf(k)
+        let v = (next[k] ?? 1) + d * dt * 1.5 * ((rg.max - rg.min) / 10)
+        if (v > rg.max) [v, d] = [rg.max, -1]
+        if (v < rg.min) [v, d] = [rg.min, 1]
         dirs.current[k] = d
         next[k] = v
       }
@@ -135,7 +221,6 @@ export function GraphTab() {
   })
 
   // 動かした跡: パラメータが変わるたびに（0.1 秒おきに）、そのときの値と、頂点などの位置を残す
-  const ids = rows.map((r) => r.id)
   const scopeKey = JSON.stringify(scope)
   const clearTrail = () => {
     setSnaps([])
@@ -154,7 +239,7 @@ export function GraphTab() {
     lastSnap.current = now
     const sc = JSON.parse(scopeKey) as Record<string, number>
     setSnaps((s) => [...s, sc].slice(-MAX_SNAPS))
-    const fns = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' ? [{ c: e.curve.f.code, i }] : []))
+    const fns = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' && !rows[i].hidden ? [{ c: e.curve.f.code, i }] : []))
     if (!fns.length) return
     const feats = findFeatures(
       fns.map(({ c }) => (x: number) => evalNum(c, { ...sc, x })),
@@ -168,6 +253,7 @@ export function GraphTab() {
   }, [scopeKey, trail])
 
   const setRow = (id: number, src: string) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, src } : r)))
+  const patchRow = (id: number, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...p } : r)))
   const loadPreset = (srcs: string[]) => {
     setRows(srcs.map((src) => ({ id: nextId.current++, src })))
     setPlaying({})
@@ -189,17 +275,50 @@ export function GraphTab() {
                 parsed={e.parsed}
                 before={<span className="swatch" style={{ background: color }} />}
                 after={
-                  rows.length > 1 && (
-                    <button className="icon-btn" onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} title="削除">
-                      ×
+                  <>
+                    <button
+                      className={`icon-btn eye ${r.hidden ? 'off' : ''}`}
+                      onClick={() => patchRow(r.id, { hidden: !r.hidden || undefined })}
+                      title={r.hidden ? '表示する' : '隠す'}
+                      aria-pressed={!r.hidden}
+                    >
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+                        <circle cx="12" cy="12" r="3" />
+                        {r.hidden && <path d="M3 3l18 18" />}
+                      </svg>
                     </button>
-                  )
+                    {rows.length > 1 && (
+                      <button className="icon-btn" onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} title="削除">
+                        ×
+                      </button>
+                    )}
+                  </>
                 }
               />
               {e.ok && (
                 <div className="expr-tex">
                   <Tex tex={e.join(e.parts.map((n) => texOf(n)))} />
                   {e.symbols.length > 0 && <Tex className="sub" tex={`\\to\\ ${e.join(e.parts.map((n) => texOf(substitute(n, scope))))}`} />}
+                  {r.deriv && derivs[i] && <Tex className="sub" tex={`y' = ${texOf(derivs[i]!.node)}`} />}
+                </div>
+              )}
+              {e.ok && e.curve.kind === 'fn' && (
+                <div className="row-tools">
+                  <button className={`chip ${r.deriv ? 'on' : ''}`} onClick={() => patchRow(r.id, { deriv: !r.deriv || undefined })} title="導関数のグラフを点線で重ねる">
+                    導関数 y′
+                  </button>
+                  <button className={`chip ${r.area ? 'on' : ''}`} onClick={() => patchRow(r.id, { area: r.area ? undefined : [0, 2] })} title="区間の面積（定積分）を塗る">
+                    面積 ∫
+                  </button>
+                  {r.area && (
+                    <span className="area-range">
+                      <input type="number" step="0.5" value={r.area[0]} aria-label="積分の下端" onChange={(ev) => ev.target.value !== '' && patchRow(r.id, { area: [Number(ev.target.value), r.area![1]] })} />
+                      〜
+                      <input type="number" step="0.5" value={r.area[1]} aria-label="積分の上端" onChange={(ev) => ev.target.value !== '' && patchRow(r.id, { area: [r.area![0], Number(ev.target.value)] })} />
+                      <Tex tex={`=\\ ${r2(integrate((x) => evalNum((e.curve as { f: { code: EvalFunction } }).f.code, { ...scope, x }), r.area[0], r.area[1]), 4)}`} />
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -213,15 +332,32 @@ export function GraphTab() {
           <>
             <h2>パラメータ</h2>
             {names.map((n) => (
-              <Slider
-                key={n}
-                name={n}
-                value={scope[n]}
-                {...rangeOf(n)}
-                onChange={(v) => setParams((p) => ({ ...p, [n]: v }))}
-                playing={!!playing[n]}
-                onTogglePlay={() => setPlaying((p) => ({ ...p, [n]: !p[n] }))}
-              />
+              <div key={n} className="param-row">
+                <Slider
+                  name={n}
+                  value={scope[n]}
+                  {...rangeOf(n)}
+                  onChange={(v) => setParams((p) => ({ ...p, [n]: v }))}
+                  playing={!!playing[n]}
+                  onTogglePlay={() => setPlaying((p) => ({ ...p, [n]: !p[n] }))}
+                />
+                <button className="icon-btn range-btn" onClick={() => setEditRange(editRange === n ? null : n)} title="範囲と刻みを変える" aria-expanded={editRange === n}>
+                  ⋯
+                </button>
+                {editRange === n && (
+                  <RangeEditor
+                    value={rangeOf(n)}
+                    onChange={(rg) => setRanges((o) => ({ ...o, [n]: rg }))}
+                    onReset={() =>
+                      setRanges((o) => {
+                        const next = { ...o }
+                        delete next[n]
+                        return next
+                      })
+                    }
+                  />
+                )}
+              </div>
             ))}
           </>
         )}
@@ -257,15 +393,51 @@ export function GraphTab() {
       </aside>
 
       <section className="stage">
-        <Plot initial={initialView} height={plotH} onView={setView} equal>
+        <Plot initial={initialView} height={plotH} onView={setView} equal onHover={setHover}>
           {(ctx) => {
             // y = f(x) の式（頂点・交点の印の対象）
-            const ok = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' ? [{ f: ((c) => (x: number) => evalNum(c, { ...scope, x }))(e.curve.f.code), i }] : []))
+            const ok = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' && !rows[i].hidden ? [{ f: ((c) => (x: number) => evalNum(c, { ...scope, x }))(e.curve.f.code), i }] : []))
             const feats = showPts ? findFeatures(ok.map((o) => o.f), ctx.view.xMin, ctx.view.xMax, ctx.view.yMax - ctx.view.yMin) : []
             return (
               <>
-                {trail && <Ghosts exprs={exprs} ids={ids} snaps={snaps} ctx={ctx} />}
-                <Curves exprs={exprs} ids={ids} scope={scope} ctx={ctx} />
+                {/* 面積（定積分）: 曲線と x 軸の間。x 軸より下（負の面積）は灰色 */}
+                {ok.map(({ f, i }) => {
+                  const ar = rows[i].area
+                  if (!ar) return null
+                  const [a, b] = ar[0] <= ar[1] ? ar : [ar[1], ar[0]]
+                  const n = 200
+                  const up: string[] = []
+                  const down: string[] = []
+                  for (let k = 0; k <= n; k++) {
+                    const x = a + ((b - a) * k) / n
+                    const y = f(x)
+                    if (!Number.isFinite(y)) continue
+                    const pt = `${ctx.sx(x).toFixed(1)},${ctx.sy(Math.max(Math.min(y, ctx.view.yMax * 4), ctx.view.yMin * 4)).toFixed(1)}`
+                    up.push(pt)
+                    down.push(`${ctx.sx(x).toFixed(1)},${ctx.sy(0).toFixed(1)}`)
+                  }
+                  const color = PALETTE[i % PALETTE.length]
+                  return (
+                    <g key={`area-${ids[i]}`}>
+                      <clipPath id={`above-${ids[i]}`}>
+                        <rect x={0} y={0} width={ctx.w} height={Math.max(0, ctx.sy(0))} />
+                      </clipPath>
+                      <polygon points={[...up, ...down.reverse()].join(' ')} fill="var(--muted)" opacity={0.35} />
+                      <polygon points={[...up, ...down].join(' ')} fill={color} opacity={0.3} clipPath={`url(#above-${ids[i]})`} />
+                      {[a, b].map((x) => (
+                        <line key={x} x1={ctx.sx(x)} x2={ctx.sx(x)} y1={ctx.sy(0)} y2={ctx.sy(f(x))} stroke={color} strokeDasharray="4 3" />
+                      ))}
+                    </g>
+                  )
+                })}
+                {trail && <Ghosts exprs={exprs} ids={ids} snaps={snaps} ctx={ctx} hidden={hidden} />}
+                <Curves exprs={exprs} ids={ids} scope={scope} ctx={ctx} hidden={hidden} />
+                {/* 導関数: 同じ色の点線 */}
+                {derivs.map((d, i) =>
+                  d && rows[i].deriv && !rows[i].hidden ? (
+                    <path key={`d-${ids[i]}`} d={ctx.path((x) => evalNum(d.code, { ...scope, x }))} stroke={PALETTE[i % PALETTE.length]} className="curve deriv" />
+                  ) : null,
+                )}
                 {trail &&
                   trailPts.map((p, k) => (
                     <circle key={k} cx={ctx.sx(p.x)} cy={ctx.sy(p.y)} r={2.6} fill={PALETTE[p.i % PALETTE.length]} opacity={0.75} className="trail-pt" />
@@ -295,6 +467,7 @@ export function GraphTab() {
                       )
                     })
                 })}
+                {hover && <TracePoint ok={ok} ctx={ctx} p={hover} />}
               </>
             )
           }}
@@ -302,5 +475,34 @@ export function GraphTab() {
         <p className="hint">{narrow ? 'ドラッグで移動、2 本の指で拡大縮小。' : 'ドラッグで移動、ホイールで拡大縮小。'}</p>
       </section>
     </div>
+  )
+}
+
+/** なぞった点: マウス（指）の位置に一番近いグラフの上の点と、その傾き */
+function TracePoint({ ok, ctx, p }: { ok: { f: (x: number) => number; i: number }[]; ctx: PlotCtx; p: { x: number; y: number } }) {
+  let best: { f: (x: number) => number; i: number; d: number } | null = null
+  for (const o of ok) {
+    const y = o.f(p.x)
+    if (!Number.isFinite(y)) continue
+    const d = Math.abs(ctx.sy(y) - ctx.sy(p.y))
+    if (d < 90 && (!best || d < best.d)) best = { ...o, d }
+  }
+  if (!best) return null
+  const x = p.x
+  const y = best.f(x)
+  const m = (best.f(x + 1e-5) - best.f(x - 1e-5)) / 2e-5
+  const color = PALETTE[best.i % PALETTE.length]
+  const L = 50 / Math.hypot(1, (m * (ctx.sx(1) - ctx.sx(0))) / (ctx.sy(0) - ctx.sy(1)) || 1) / (ctx.sx(1) - ctx.sx(0))
+  const label = `(${fmtPt(x)}, ${fmtPt(y)})  傾き ${Number.isFinite(m) ? fmtPt(m) : '—'}`
+  const left = ctx.sx(x) > ctx.w - 190
+  return (
+    <g className="trace" pointerEvents="none">
+      {Number.isFinite(m) && <line x1={ctx.sx(x - L)} y1={ctx.sy(y - m * L)} x2={ctx.sx(x + L)} y2={ctx.sy(y + m * L)} stroke={color} strokeWidth={1.5} />}
+      <line x1={ctx.sx(x)} x2={ctx.sx(x)} y1={ctx.sy(y)} y2={ctx.sy(0)} className="trace-drop" />
+      <circle cx={ctx.sx(x)} cy={ctx.sy(y)} r={5.5} fill={color} stroke="var(--surface)" strokeWidth={2} />
+      <text x={ctx.sx(x) + (left ? -10 : 10)} y={ctx.sy(y) - 12} textAnchor={left ? 'end' : 'start'} className="pt-label">
+        {label}
+      </text>
+    </g>
   )
 }

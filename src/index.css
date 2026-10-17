@@ -601,3 +601,19 @@ body { overflow-x: clip; }
 .theorem-pager a span { font-size: 12px; color: var(--muted); }
 .theorem-pager .next { text-align: right; }
 @media (max-width: 640px) { .theorem-page .theorem { padding: 14px 12px; } .theorem-page .theorem-head h3 { font-size: 21px; } }
+
+/* グラフ: 式ごとの道具・スライダーの範囲・なぞった点・導関数 */
+.row-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 2px 22px; }
+.row-tools .chip { font-size: 12px; padding: 2px 9px; }
+.area-range { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.area-range input { width: 56px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); }
+.icon-btn.eye.off { opacity: 0.45; }
+.param-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
+.param-row .range-edit { grid-column: 1 / -1; }
+.range-btn { width: 26px; height: 26px; padding: 0; font-size: 14px; }
+.range-btn[aria-expanded='true'] { color: var(--accent); border-color: var(--accent); }
+.range-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 8px 10px; font-size: 12px; color: var(--muted); }
+.range-edit label { display: inline-flex; align-items: center; gap: 4px; }
+.range-edit input { width: 62px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--text); }
+.curve.deriv { stroke-dasharray: 7 5; stroke-width: 2; opacity: 0.85; }
+.trace-drop { stroke: var(--muted); stroke-dasharray: 3 3; }
