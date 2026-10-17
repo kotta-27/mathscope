@@ -148,6 +148,11 @@ const circle = await b.evaluate(`
   const p = document.querySelectorAll('path.curve')[0].getBBox()
   return [Math.round(p.width), Math.round(p.height), document.querySelectorAll('.mi-error').length]`)
 check('グラフ: 円が円に見える・領域・極座標', Math.abs(circle[0] - circle[1]) <= 3 && circle[0] > 50 && circle[2] === 0, JSON.stringify(circle))
+// グラフ: 動かした跡（残像と頂点の軌跡）
+await b.goto('about:blank')
+await b.goto(BASE + '#graph?f=' + encodeURIComponent('(x - p)^2 + q') + '&q=-1&p=-3&trail=1&play=p')
+await b.waitFor(`document.querySelectorAll('.ghosts path').length >= 5 && document.querySelectorAll('.trail-pt').length >= 5`)
+check('グラフ: 動かした跡が残る', true)
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')

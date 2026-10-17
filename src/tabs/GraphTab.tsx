@@ -1,12 +1,12 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ConstantNode, ParenthesisNode, isSymbolNode, type MathNode } from 'mathjs'
 import { Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
 import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, texOf } from '../lib/math'
-import { holds, readGraphExpr } from '../lib/graphExpr'
-import { contour, paramPath, region } from '../lib/contour'
+import { readGraphExpr } from '../lib/graphExpr'
+import { Curves, Ghosts } from '../components/GraphCurves'
 import { useRaf } from '../lib/useRaf'
 import { useMedia } from '../lib/useMedia'
 import { usePresent } from '../lib/display'
@@ -29,12 +29,14 @@ const PRESETS: { label: string; rows: string[] }[] = [
   { label: '媒介変数（リサジュー）', rows: ['(sin(a*t), sin(b*t))'] },
   { label: '極座標（バラ曲線）', rows: ['r = cos(k*θ)'] },
 ]
-const TAU = 2 * Math.PI
 
 const RANGE = { min: -5, max: 5 }
 const VIEW: View = { xMin: -8, xMax: 8, yMin: -5, yMax: 5 }
 /** パラメータ以外に使う URL のキー */
-const RESERVED = new Set(['f', 'view', 'play', 'pts'])
+const RESERVED = new Set(['f', 'view', 'play', 'pts', 'trail'])
+/** 残像の数と、軌跡の点の数の上限 */
+const MAX_SNAPS = 12
+const MAX_TRAIL = 800
 
 /** 2 次関数か（2 階差分が一定で 0 でない）。極値を「頂点」と呼ぶため */
 function isQuadratic(f: (x: number) => number) {
@@ -78,6 +80,10 @@ export function GraphTab() {
   )
   const [initialView] = useState(() => readView(hp.get('view')))
   const [showPts, setShowPts] = useState(() => hp.get('pts') !== '0')
+  const [trail, setTrail] = useState(() => hp.get('trail') === '1')
+  const [snaps, setSnaps] = useState<Record<string, number>[]>([])
+  const [trailPts, setTrailPts] = useState<{ x: number; y: number; i: number }[]>([])
+  const lastSnap = useRef(0)
   const [view, setView] = useState(initialView)
   const dirs = useRef<Record<string, number>>({})
 
@@ -110,6 +116,7 @@ export function GraphTab() {
     view: sameView ? null : [view.xMin, view.xMax, view.yMin, view.yMax].map(num).join(','),
     play: active.length ? active.join(',') : null,
     pts: showPts ? null : '0',
+    trail: trail ? '1' : null,
   })
 
   useRaf(active.length > 0, (dt) => {
@@ -126,6 +133,39 @@ export function GraphTab() {
       return next
     })
   })
+
+  // 動かした跡: パラメータが変わるたびに（0.1 秒おきに）、そのときの値と、頂点などの位置を残す
+  const ids = rows.map((r) => r.id)
+  const scopeKey = JSON.stringify(scope)
+  const clearTrail = () => {
+    setSnaps([])
+    setTrailPts([])
+  }
+  const [prevExprs, setPrevExprs] = useState(exprs)
+  if (prevExprs !== exprs) {
+    // 式が変わったら、跡は消す
+    setPrevExprs(exprs)
+    clearTrail()
+  }
+  useEffect(() => {
+    if (!trail || !names.length) return
+    const now = performance.now()
+    if (now - lastSnap.current < 100) return
+    lastSnap.current = now
+    const sc = JSON.parse(scopeKey) as Record<string, number>
+    setSnaps((s) => [...s, sc].slice(-MAX_SNAPS))
+    const fns = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' ? [{ c: e.curve.f.code, i }] : []))
+    if (!fns.length) return
+    const feats = findFeatures(
+      fns.map(({ c }) => (x: number) => evalNum(c, { ...sc, x })),
+      view.xMin,
+      view.xMax,
+      view.yMax - view.yMin,
+    )
+    const pts = feats.flatMap((ps, k) => ps.filter((p) => p.kind === 'max' || p.kind === 'min' || p.kind === 'cross').map((p) => ({ x: p.x, y: p.y, i: fns[k].i })))
+    setTrailPts((t) => [...t, ...pts].slice(-MAX_TRAIL))
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- パラメータの値が変わったときだけ残す
+  }, [scopeKey, trail])
 
   const setRow = (id: number, src: string) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, src } : r)))
   const loadPreset = (srcs: string[]) => {
@@ -189,6 +229,22 @@ export function GraphTab() {
         <label className="check">
           <input type="checkbox" checked={showPts} onChange={(e) => setShowPts(e.target.checked)} /> 頂点・極値・交点に印をつける
         </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={trail}
+            onChange={(e) => {
+              setTrail(e.target.checked)
+              clearTrail()
+            }}
+          />{' '}
+          動かした跡を残す（前の形と、頂点などが動いた跡）
+        </label>
+        {trail && (snaps.length > 0 || trailPts.length > 0) && (
+          <button className="chip" onClick={clearTrail}>
+            跡を消す
+          </button>
+        )}
 
         <h2>例</h2>
         <div className="chips">
@@ -206,34 +262,14 @@ export function GraphTab() {
             // y = f(x) の式（頂点・交点の印の対象）
             const ok = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' ? [{ f: ((c) => (x: number) => evalNum(c, { ...scope, x }))(e.curve.f.code), i }] : []))
             const feats = showPts ? findFeatures(ok.map((o) => o.f), ctx.view.xMin, ctx.view.xMax, ctx.view.yMax - ctx.view.yMin) : []
-            const { view: v, w, h } = ctx
-            const wx = (px: number) => v.xMin + (px / w) * (v.xMax - v.xMin)
-            const wy = (py: number) => v.yMax - (py / h) * (v.yMax - v.yMin)
-            const step = Math.max(3, Math.round(Math.min(w, h) / 120))
             return (
               <>
-                {exprs.map((e, i) => {
-                  if (!e.ok) return null
-                  const color = PALETTE[i % PALETTE.length]
-                  const c = e.curve
-                  const key = rows[i].id
-                  if (c.kind === 'fn') return <path key={key} d={ctx.path((x) => evalNum(c.f.code, { ...scope, x }))} stroke={color} className="curve" />
-                  if (c.kind === 'param' || c.kind === 'polar') {
-                    const X = c.kind === 'param' ? (t: number) => evalNum(c.x.code, { ...scope, t }) : (t: number) => evalNum(c.r.code, { ...scope, theta: t }) * Math.cos(t)
-                    const Y = c.kind === 'param' ? (t: number) => evalNum(c.y.code, { ...scope, t }) : (t: number) => evalNum(c.r.code, { ...scope, theta: t }) * Math.sin(t)
-                    return <path key={key} d={paramPath(X, Y, 0, TAU, ctx.sx, ctx.sy, h, 1200)} stroke={color} className="curve" />
-                  }
-                  const F = (x: number, y: number) => evalNum(c.F.code, { ...scope, x, y })
-                  const line = contour({ w, h, step, wx, wy, F })
-                  if (c.kind === 'implicit') return <path key={key} d={line} stroke={color} className="curve" />
-                  const strict = c.op === '<' || c.op === '>'
-                  return (
-                    <g key={key}>
-                      <path d={region({ w, h, step, wx, wy, F, test: (val) => holds(val, c.op) })} fill={color} opacity={0.2} />
-                      <path d={line} stroke={color} className="curve" strokeDasharray={strict ? '7 5' : undefined} />
-                    </g>
-                  )
-                })}
+                {trail && <Ghosts exprs={exprs} ids={ids} snaps={snaps} ctx={ctx} />}
+                <Curves exprs={exprs} ids={ids} scope={scope} ctx={ctx} />
+                {trail &&
+                  trailPts.map((p, k) => (
+                    <circle key={k} cx={ctx.sx(p.x)} cy={ctx.sy(p.y)} r={2.6} fill={PALETTE[p.i % PALETTE.length]} opacity={0.75} className="trail-pt" />
+                  ))}
                 {feats.map((pts, k) => {
                   const { f, i } = ok[k]
                   const quad = isQuadratic(f)
