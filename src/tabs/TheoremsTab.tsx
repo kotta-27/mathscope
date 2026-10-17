@@ -27,10 +27,10 @@ export function TheoremsTab() {
   const groups = FIELDS.filter((f) => (field === 'all' || f.id === field) && count(f.id) > 0)
 
   return (
-    <div className="layout">
-      <aside className="panel sticky">
+    <div className="layout theorems-layout">
+      <aside className="panel sticky theorems-side">
         <h2>検索</h2>
-        <input className="wide" placeholder="定理名・用途で検索（例：最大値、角度）" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="wide" placeholder="定理名・用途で検索" value={q} onChange={(e) => setQ(e.target.value)} />
         <label className="check">
           <input type="checkbox" checked={figOnly} onChange={(e) => setFigOnly(e.target.checked)} /> 図がある定理だけ
         </label>
