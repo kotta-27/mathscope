@@ -4,8 +4,8 @@ import { FIGURE_IDS } from '../figures/ids'
 import { FIELDS, THEOREMS } from '../lib/theorems'
 import { hrefTo } from '../lib/route'
 import { HeroCarousel } from '../hero/HeroCarousel'
+import { BayesArt, ParabolaArt, PartsArt, TangentArt, TransformArt } from '../hero/usecaseArt'
 
-const PALETTE = { blue: '#2e86ab', red: '#e4572e', green: '#3bb273', orange: '#f2a541', purple: '#a259ff' }
 
 const QUAD = '(-b + sqrt(b^2 - 4*a*c)) / (2*a)'
 
@@ -125,107 +125,5 @@ export function HomeTab() {
         <div><strong>{figCount}</strong><span>個の動く図</span></div>
       </section>
     </div>
-  )
-}
-
-/* ---------- 使い方カードの小さな絵 ---------- */
-
-/** a を変えた放物線を重ねる */
-function ParabolaArt() {
-  const curve = (a: number, col: string, op: number) => {
-    let d = ''
-    for (let i = 0; i <= 60; i++) {
-      const x = -2 + (4 * i) / 60
-      const y = a * (x - 0.3) ** 2 - 1.2
-      d += `${i ? 'L' : 'M'}${(100 + x * 45).toFixed(1)},${(70 - y * 22).toFixed(1)}`
-    }
-    return <path d={d} stroke={col} strokeWidth={2.2} fill="none" opacity={op} />
-  }
-  return (
-    <svg viewBox="0 0 200 120">
-      <line x1={0} x2={200} y1={70} y2={70} className="fig-axis" />
-      <line x1={100} x2={100} y1={0} y2={120} className="fig-axis" />
-      {curve(0.35, PALETTE.blue, 0.35)}
-      {curve(0.7, PALETTE.blue, 0.6)}
-      {curve(1.4, PALETTE.red, 1)}
-      <line x1={30} x2={170} y1={110} y2={110} stroke="var(--border)" strokeWidth={4} strokeLinecap="round" />
-      <circle cx={130} cy={110} r={6} fill={PALETTE.blue} />
-    </svg>
-  )
-}
-
-/** 解の公式を色分けして見せる */
-function PartsArt() {
-  return (
-    <div className="feature-tex">
-      <Tex
-        block
-        tex={`\\frac{\\textcolor{${PALETTE.red}}{-b}\\pm\\sqrt{\\textcolor{${PALETTE.green}}{b^2-4ac}}}{\\textcolor{${PALETTE.blue}}{2a}}`}
-      />
-      <div className="feature-legend">
-        <span style={{ color: PALETTE.green }}>判別式</span>
-        <span style={{ color: PALETTE.blue }}>分母</span>
-      </div>
-    </div>
-  )
-}
-
-/** 方程式を解く途中を 3 行で（式変形の例） */
-function TransformArt() {
-  return (
-    <div className="feature-tex steps-mini">
-      <Tex tex="x^2-5x+6=0" />
-      <Tex tex={`\\textcolor{${PALETTE.green}}{(x-2)(x-3)}=0`} />
-      <Tex tex={`x=\\textcolor{${PALETTE.green}}{2},\\ \\textcolor{${PALETTE.green}}{3}`} />
-    </div>
-  )
-}
-
-/** h を縮めると割線が接線に近づく */
-function TangentArt() {
-  const f = (x: number) => 0.18 * x ** 3 - 0.9 * x
-  const X = (x: number) => 100 + x * 38
-  const Y = (y: number) => 60 - y * 30
-  const x0 = 1.2
-  let d = ''
-  for (let i = 0; i <= 60; i++) {
-    const x = -2.6 + (5.2 * i) / 60
-    d += `${i ? 'L' : 'M'}${X(x).toFixed(1)},${Y(f(x)).toFixed(1)}`
-  }
-  const line = (m: number, col: string, op: number) => (
-    <line x1={X(x0 - 2.4)} y1={Y(f(x0) - m * 2.4)} x2={X(x0 + 2.4)} y2={Y(f(x0) + m * 2.4)} stroke={col} strokeWidth={1.6} opacity={op} />
-  )
-  const sec = (h: number) => (f(x0 + h) - f(x0)) / h
-  return (
-    <svg viewBox="0 0 200 120">
-      <path d={d} stroke={PALETTE.blue} strokeWidth={2.2} fill="none" />
-      {line(sec(1.4), PALETTE.orange, 0.35)}
-      {line(sec(0.8), PALETTE.orange, 0.6)}
-      {line(0.54 * x0 * x0 - 0.9, PALETTE.green, 1)}
-      <circle cx={X(x0)} cy={Y(f(x0))} r={4} fill={PALETTE.green} />
-    </svg>
-  )
-}
-
-function BayesArt() {
-  const cols = [
-    { w: 90, h: 0.25, c: PALETTE.blue },
-    { w: 50, h: 0.6, c: PALETTE.red },
-    { w: 30, h: 0.9, c: PALETTE.green },
-  ]
-  let x = 15
-  return (
-    <svg viewBox="0 0 200 120">
-      {cols.map((c, i) => {
-        const el = (
-          <g key={i}>
-            <rect x={x} y={12} width={c.w} height={96} fill={c.c} opacity={0.12} stroke={c.c} />
-            <rect x={x} y={12 + 96 * (1 - c.h)} width={c.w} height={96 * c.h} fill={c.c} opacity={0.6} />
-          </g>
-        )
-        x += c.w
-        return el
-      })}
-    </svg>
   )
 }
