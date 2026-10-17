@@ -34,7 +34,15 @@ export async function launch(width = 1280, height = 900) {
     return r.result?.result?.value
   }
   const goto = async (url) => { await send('Page.navigate', { url }); await sleep(1500) }
+  /** 式 expr が真になるまで待つ（タブの遅延読み込みなど）。最大 timeout ミリ秒 */
+  const waitFor = async (expr, timeout = 8000) => {
+    for (let t = 0; t < timeout; t += 200) {
+      if (await evaluate(`return !!(${expr})`)) return true
+      await sleep(200)
+    }
+    return false
+  }
   const close = () => { ws.close(); proc.kill() }
-  return { send, evaluate, goto, close }
+  return { send, evaluate, goto, waitFor, close }
 }
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
