@@ -31,6 +31,7 @@ export function Plot({
   children,
   onView,
   equal = false,
+  onHover,
 }: {
   initial: View
   height?: number
@@ -39,6 +40,8 @@ export function Plot({
   onView?: (v: View) => void
   /** x と y の 1 目盛りを同じ長さにする（円が円に見えるように）。y の範囲は中心を保って合わせる */
   equal?: boolean
+  /** マウスを乗せた位置（指ではタップした位置）。離れたら null */
+  onHover?: (p: { x: number; y: number } | null) => void
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [svg, setSvg] = useState<SVGSVGElement | null>(null)
@@ -179,16 +182,23 @@ export function Plot({
             return
           }
           const d = drag.current
-          if (!d) return
+          if (!d) {
+            if (e.pointerType === 'mouse' && onHover) onHover(toWorld(e.clientX, e.clientY))
+            return
+          }
           const mx = ((e.clientX - d.x) / w) * dx
           const my = ((e.clientY - d.y) / h) * dy
           setView({ xMin: d.view.xMin - mx, xMax: d.view.xMax - mx, yMin: d.view.yMin + my, yMax: d.view.yMax + my })
         }}
         onPointerUp={(e) => {
+          // 指でほとんど動かさずに離したら、その位置をなぞった点にする
+          const d = drag.current
+          if (d && e.pointerType !== 'mouse' && onHover && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) onHover(toWorld(e.clientX, e.clientY))
           touches.current.delete(e.pointerId)
           pinch.current = null
           drag.current = null
         }}
+        onPointerLeave={(e) => e.pointerType === 'mouse' && onHover?.(null)}
         onPointerCancel={(e) => {
           touches.current.delete(e.pointerId)
           pinch.current = null

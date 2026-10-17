@@ -153,6 +153,12 @@ await b.goto('about:blank')
 await b.goto(BASE + '#graph?f=' + encodeURIComponent('(x - p)^2 + q') + '&q=-1&p=-3&trail=1&play=p')
 await b.waitFor(`document.querySelectorAll('.ghosts path').length >= 5 && document.querySelectorAll('.trail-pt').length >= 5`)
 check('グラフ: 動かした跡が残る', true)
+// グラフ: 導関数・面積・隠す・スライダーの範囲
+await b.goto('about:blank')
+await b.goto(BASE + '#graph?f=' + encodeURIComponent('x^2') + '&f=' + encodeURIComponent('sin(x)') + '&deriv=0&area=0:0:3&hide=1&rng=a:0:4:1')
+await b.waitFor(`document.querySelector('.curve.deriv')`)
+const tools = await b.evaluate(`return [document.querySelectorAll('path.curve:not(.deriv)').length, document.querySelector('.area-range .katex-mathml annotation')?.textContent]`)
+check('グラフ: 導関数・面積・隠す', tools[0] === 1 && /=\\ 9/.test(tools[1] ?? ''), JSON.stringify(tools))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')
