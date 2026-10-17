@@ -186,7 +186,7 @@ export function StructureTab() {
             )}
 
             <h2>式の木構造</h2>
-            <p className="hint">外側の演算から内側へ分解したもの。行にマウスを乗せると、上の式で該当部分が光る。</p>
+            <p className="hint">外側の演算から内側へ分解したもの。行にマウスを乗せる（スマホでは行をタップする）と、上の式で該当部分が光る。▾ で開閉する。</p>
             <ul className="tree">
               <TreeRow t={tree} hover={hover} setHover={setHover} valueOf={valueOf} />
             </ul>
@@ -213,11 +213,22 @@ function TreeRow({
     <li>
       <div
         className={`tree-row ${hover === t.node ? 'hot' : ''}`}
-        onMouseEnter={() => setHover(t.node)}
-        onMouseLeave={() => setHover(null)}
-        onClick={() => t.children.length && setOpen(!open)}
+        onPointerEnter={(e) => e.pointerType === 'mouse' && setHover(t.node)}
+        onPointerLeave={(e) => e.pointerType === 'mouse' && setHover(null)}
+        onPointerUp={(e) => e.pointerType !== 'mouse' && setHover(hover === t.node ? null : t.node)}
+        onClick={(e) => (e.nativeEvent as PointerEvent).pointerType === 'mouse' && t.children.length && setOpen(!open)}
       >
-        <span className="caret">{t.children.length ? (open ? '▾' : '▸') : '·'}</span>
+        <button
+          className="caret"
+          aria-label={open ? '閉じる' : '開く'}
+          disabled={!t.children.length}
+          onClick={(e) => {
+            e.stopPropagation()
+            setOpen(!open)
+          }}
+        >
+          {t.children.length ? (open ? '▾' : '▸') : '·'}
+        </button>
         {t.role && <span className="role">{t.role}</span>}
         <span className="kind">{t.kind}</span>
         <Tex tex={texOf(t.node)} />

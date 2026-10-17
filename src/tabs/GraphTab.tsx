@@ -6,6 +6,7 @@ import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
+import { useMedia } from '../lib/useMedia'
 import { num, readHash, useSyncHash } from '../lib/route'
 import type { View } from '../components/Plot'
 
@@ -67,6 +68,12 @@ export function GraphTab() {
   }, [parsed])
   const scope = Object.fromEntries(names.map((n) => [n, params[n] ?? 1]))
   const active = names.filter((n) => playing[n])
+  const narrow = useMedia('(max-width: 900px)')
+  /** 値が -5〜5 を超えたら、スライダーの範囲を広げる */
+  const rangeOf = (n: string) => {
+    const m = Math.max(RANGE.max, Math.ceil(Math.abs(scope[n]) / 5) * 5)
+    return { min: -m, max: m }
+  }
 
   // 式・パラメータの値・表示範囲・再生中のパラメータを URL に残す
   const sameView = (Object.keys(VIEW) as (keyof View)[]).every((k) => Math.abs(view[k] - VIEW[k]) < 1e-9)
@@ -99,7 +106,7 @@ export function GraphTab() {
   }
 
   return (
-    <div className="layout">
+    <div className="layout graph-layout">
       <aside className="panel">
         <h2>式</h2>
         <p className="hint">x 以外の文字はパラメータになり、スライダーで動かせる。x²・√x・sin 2x・|x| のような書き方も、LaTeX もそのまま使える。</p>
@@ -144,7 +151,7 @@ export function GraphTab() {
                 key={n}
                 name={n}
                 value={scope[n]}
-                {...RANGE}
+                {...rangeOf(n)}
                 onChange={(v) => setParams((p) => ({ ...p, [n]: v }))}
                 playing={!!playing[n]}
                 onTogglePlay={() => setPlaying((p) => ({ ...p, [n]: !p[n] }))}
@@ -164,7 +171,7 @@ export function GraphTab() {
       </aside>
 
       <section className="stage">
-        <Plot initial={initialView} height={520} onView={setView}>
+        <Plot initial={initialView} height={narrow ? 300 : 520} onView={setView}>
           {(ctx) =>
             parsed.map((p, i) =>
               p.ok ? (
@@ -178,7 +185,7 @@ export function GraphTab() {
             )
           }
         </Plot>
-        <p className="hint">ドラッグで移動、ホイールで拡大縮小。</p>
+        <p className="hint">{narrow ? 'ドラッグで移動、2 本の指で拡大縮小。' : 'ドラッグで移動、ホイールで拡大縮小。'}</p>
       </section>
     </div>
   )

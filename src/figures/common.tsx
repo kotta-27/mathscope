@@ -54,7 +54,7 @@ export function Handle({
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null
   return (
     <g className="fig-handle">
-      <circle cx={x} cy={y} r={r + 10} fill="transparent"
+      <circle cx={x} cy={y} r={r + 18} fill="transparent"
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId)
           setDrag(true)
