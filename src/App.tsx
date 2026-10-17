@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
-import { GraphTab } from './tabs/GraphTab'
-import { StructureTab } from './tabs/StructureTab'
-import { GeometryTab } from './tabs/GeometryTab'
-import { StepsTab } from './tabs/StepsTab'
-import { TheoremsTab } from './tabs/TheoremsTab'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { HomeTab } from './tabs/HomeTab'
 import { readHash } from './lib/route'
 import { HomeBackground } from './hero/HomeBackground'
+
+// ホーム以外は開いたときに読み込む（数式ライブラリ mathjs をトップで読み込まないため）
+const GraphTab = lazy(() => import('./tabs/GraphTab').then((m) => ({ default: m.GraphTab })))
+const StructureTab = lazy(() => import('./tabs/StructureTab').then((m) => ({ default: m.StructureTab })))
+const GeometryTab = lazy(() => import('./tabs/GeometryTab').then((m) => ({ default: m.GeometryTab })))
+const StepsTab = lazy(() => import('./tabs/StepsTab').then((m) => ({ default: m.StepsTab })))
+const TheoremsTab = lazy(() => import('./tabs/TheoremsTab').then((m) => ({ default: m.TheoremsTab })))
 
 const TABS = [
   { id: 'home', label: 'ホーム', desc: '数式が、景色になる。', el: () => <HomeTab /> },
@@ -65,7 +67,9 @@ export default function App() {
           ))}
         </nav>
       </header>
-      <main key={`${tab}|${hash}`}>{current.el()}</main>
+      <main key={`${tab}|${hash}`}>
+        <Suspense fallback={<div className="loading">読み込み中…</div>}>{current.el()}</Suspense>
+      </main>
     </div>
     </>
   )

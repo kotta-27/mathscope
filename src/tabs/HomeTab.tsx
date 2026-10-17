@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Tex } from '../components/Tex'
-import { FIGURES } from '../figures'
+import { FIGURE_IDS } from '../figures/ids'
 import { FIELDS, THEOREMS } from '../lib/theorems'
 import { hrefTo } from '../lib/route'
 import { HeroCarousel } from '../hero/HeroCarousel'
@@ -52,7 +52,7 @@ const PICKS = ['bayes', 'pythagoras', 'euler-formula', 'clt', 'ftc', 'diagonaliz
 
 export function HomeTab() {
   const [q, setQ] = useState('')
-  const figCount = THEOREMS.filter((t) => FIGURES[t.id]).length
+  const figCount = FIGURE_IDS.length
   const picks = PICKS.map((id) => THEOREMS.find((t) => t.id === id)!).filter(Boolean)
   return (
     <div className="home">

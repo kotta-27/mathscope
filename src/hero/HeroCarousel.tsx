@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Tex } from '../components/Tex'
 import { readHash } from '../lib/route'
 import { useRaf } from '../lib/useRaf'
+import { useVisible } from '../lib/useVisible'
 import { HeroCanvas } from './HeroCanvas'
 import { epicycles, fern, flowField, harmonograph, lorenz, phyllotaxis, timesTable, type AnyScene } from './canvasScenes'
 
@@ -31,8 +32,11 @@ export function HeroCarousel() {
   const [t, setT] = useState(0)
   const [hover, setHover] = useState(false)
   const s = SCENES[idx]
+  const rootRef = useRef<HTMLDivElement>(null)
+  const visible = useVisible(rootRef)
 
-  useRaf(!still, (dt) => {
+  // 画面外にあるあいだは切り替えも止める
+  useRaf(!still && visible, (dt) => {
     // ホバー中は切り替えだけ止める（描画は続く）
     if (hover) return
     if (t + dt >= s.duration) {
@@ -48,7 +52,7 @@ export function HeroCarousel() {
   const opacity = still || hover ? 1 : Math.max(0, Math.min(1, t / FADE, (s.duration - t) / FADE))
 
   return (
-    <div className="hero-carousel" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+    <div ref={rootRef} className="hero-carousel" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div className="hero-stage" style={{ opacity }} role="img" aria-label={`${s.field}: ${s.title}`}>
         <HeroCanvas key={s.id} scene={s.scene} fixedT={still ? (fixedT ?? s.duration * 0.7) : null} />
         <div className="hero-overlay">

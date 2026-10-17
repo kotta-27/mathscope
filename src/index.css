@@ -314,3 +314,5 @@ body { overflow-x: clip; }
 .feature-tex .katex-display { margin: 0; font-size: 1.15em; }
 .feature-legend { display: flex; gap: 10px; font-size: 11px; }
 .steps-mini { align-items: flex-start; padding-left: 14%; font-size: 15px; }
+
+.loading { color: var(--muted); padding: 40px 0; text-align: center; }
