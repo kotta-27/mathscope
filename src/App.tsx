@@ -78,7 +78,9 @@ export default function App() {
           </nav>
           {tab !== 'home' && <CopyLink />}
           {tab !== 'home' && <PresentButton />}
-          <ThemeButton />
+          <span className="theme-in-header">
+            <ThemeButton />
+          </span>
         </div>
       </header>
       <main key={`${tab}|${hash}`}>
@@ -95,6 +97,9 @@ export default function App() {
         <a href="https://github.com/kotta-27/mathscope" target="_blank" rel="noreferrer">
           GitHub
         </a>
+        <span className="theme-in-footer">
+          <ThemeButton />
+        </span>
       </footer>
     </div>
     </>
