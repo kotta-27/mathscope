@@ -159,6 +159,15 @@ await b.goto(BASE + '#graph?f=' + encodeURIComponent('x^2') + '&f=' + encodeURIC
 await b.waitFor(`document.querySelector('.curve.deriv')`)
 const tools = await b.evaluate(`return [document.querySelectorAll('path.curve:not(.deriv)').length, document.querySelector('.area-range .katex-mathml annotation')?.textContent]`)
 check('グラフ: 導関数・面積・隠す', tools[0] === 1 && /=\\ 9/.test(tools[1] ?? ''), JSON.stringify(tools))
+// グラフ: 例の選択メニュー
+await b.goto('about:blank')
+await b.goto(BASE + '#graph')
+await b.waitFor(`document.querySelector('.dropdown-btn')`)
+await b.evaluate(`document.querySelector('.dropdown-btn').click()`)
+await b.waitFor(`document.querySelectorAll('.dropdown-item').length > 20`)
+await b.evaluate(`[...document.querySelectorAll('.dropdown-item')].find(e => e.textContent === '円と直線').click()`)
+await sleep(300)
+check('グラフ: 例を選ぶ', await b.evaluate(`return document.querySelector('.math-input input').value.startsWith('(x - a)^2') && !document.querySelector('.dropdown-list')`))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')

@@ -3,6 +3,7 @@ import { ConstantNode, ParenthesisNode, derivative, isSymbolNode, simplify, type
 import { Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
 import { MathInput } from '../components/MathInput'
+import { Dropdown } from '../components/Dropdown'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, texOf } from '../lib/math'
 import { readGraphExpr } from '../lib/graphExpr'
@@ -379,27 +380,11 @@ export function GraphTab() {
         </div>
 
         <h2>例</h2>
-        <select
-          className="preset-select"
-          value=""
-          aria-label="例を選ぶ"
-          onChange={(e) => {
-            const [g, k] = e.target.value.split(':').map(Number)
-            const p = PRESET_GROUPS[g]?.items[k]
-            if (p) loadPreset(p)
-          }}
-        >
-          <option value="">例を選ぶ（単元ごと）…</option>
-          {PRESET_GROUPS.map((g, gi) => (
-            <optgroup key={g.unit} label={g.unit}>
-              {g.items.map((p, k) => (
-                <option key={p.label} value={`${gi}:${k}`}>
-                  {p.label}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        <Dropdown
+          label="例を選ぶ（単元ごと）"
+          groups={PRESET_GROUPS.map((g) => ({ label: g.unit, items: g.items.map((p) => ({ label: p.label, value: p })) }))}
+          onSelect={loadPreset}
+        />
       </aside>
 
       <section className="stage">
