@@ -138,3 +138,14 @@ describe('normalizeExpr', () => {
     same('f(x)=sin x', 'sin(x)')
   })
 })
+
+describe('LaTeX の指数', () => {
+  it('1 つの数や文字の指数には括弧を付けない', () => {
+    expect(normalizeExpr('\\sqrt{x^{2}+1}')).toBe('sqrt(x^2+1)')
+    expect(normalizeExpr('e^{x}')).toBe('e^x')
+  })
+  it('式の指数は括弧でまとめる', () => {
+    expect(normalizeExpr('x^{n+1}')).toBe('x^(n+1)')
+    expect(normalizeExpr('x^{-1}')).toBe('x^(-1)')
+  })
+})

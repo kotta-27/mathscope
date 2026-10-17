@@ -98,6 +98,9 @@ export function texOf(node: MathNode, colors?: Map<MathNode, string>): string {
       return `\\frac{${a.toTex(options)}}{${b.toTex(options)}}`
     }
     if (isParenthesisNode(n) && isOperatorNode(n.content) && n.content.fn === 'divide') return n.content.toTex(options)
+    // 指数は上付きで範囲が分かるので、指数を囲む括弧は描かない（x^(n+1) → x^{n+1}）
+    if (isOperatorNode(n) && n.fn === 'pow' && n.args.length === 2 && isParenthesisNode(n.args[1]))
+      return `{${n.args[0].toTex(options)}}^{${n.args[1].content.toTex(options)}}`
     return undefined
   }
   const tex = node.toTex({ parenthesis: 'keep', implicit: 'hide', handler } as object)
