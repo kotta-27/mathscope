@@ -8,6 +8,7 @@ import {
   type MathNode,
 } from 'mathjs'
 import { Slider } from '../components/Slider'
+import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { readHash } from '../lib/route'
 import { PALETTE, fmt, parseExpr, texOf, unwrap } from '../lib/math'
@@ -126,8 +127,8 @@ export function StructureTab() {
     <div className="layout">
       <aside className="panel">
         <h2>式</h2>
-        <input className="wide" value={src} onChange={(e) => setSrc(e.target.value)} spellCheck={false} />
-        {!p.ok && <div className="error">{p.error}</div>}
+        <MathInput value={src} onChange={setSrc} parsed={p} />
+        <p className="hint">x²・√x・sin 2x・|x|・ax+b のような書き方もそのまま使える。</p>
         {p.ok && p.symbols.length > 0 && (
           <>
             <h2>文字の値</h2>

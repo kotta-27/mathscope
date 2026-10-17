@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { parseExpr, texOf } from '../lib/math'
 import { deriveSteps } from '../lib/steps'
@@ -44,8 +45,8 @@ export function StepsTab() {
     <div className="layout">
       <aside className="panel">
         <h2>展開したい式</h2>
-        <input className="wide" value={src} onChange={(e) => setSrc(e.target.value)} spellCheck={false} />
-        {!p.ok && <div className="error">{p.error}</div>}
+        <MathInput value={src} onChange={setSrc} parsed={p} />
+        <p className="hint">x²・√x・sin 2x・|x|・ax+b のような書き方もそのまま使える。</p>
         <div className="controls">
           <button className="btn" onClick={() => setShown(0)} disabled={shown === 0}>⏮</button>
           <button className="btn" onClick={() => setShown(Math.max(0, shown - 1))} disabled={shown === 0}>◀ 戻る</button>

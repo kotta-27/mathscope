@@ -250,3 +250,13 @@ a.btn.primary { color: var(--accent-ink); }
 .pick-field { font-size: 11px; color: var(--accent); }
 .pick-name { font-weight: 600; }
 .pick-tex { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; mask-image: linear-gradient(to right, #000 85%, transparent); }
+
+/* math input */
+.math-input { display: flex; flex-direction: column; gap: 4px; }
+.math-input input[aria-invalid='true'] { border-color: #e4572e; }
+.mi-preview { padding: 2px 4px 0; overflow-x: auto; }
+.mi-note { font-size: 12px; color: var(--muted); padding: 0 4px; }
+.mi-note code, .mi-where { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; background: var(--surface-2); border-radius: 4px; padding: 1px 6px; }
+.mi-error { font-size: 13px; color: #e4572e; padding: 0 4px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.mi-where { color: var(--text); white-space: pre; }
+.mi-where mark { background: #e4572e; color: #fff; border-radius: 2px; padding: 0 1px; }
