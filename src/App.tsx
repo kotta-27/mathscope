@@ -6,6 +6,7 @@ import { StepsTab } from './tabs/StepsTab'
 import { TheoremsTab } from './tabs/TheoremsTab'
 import { HomeTab } from './tabs/HomeTab'
 import { readHash } from './lib/route'
+import { HomeBackground } from './hero/HomeBackground'
 
 const TABS = [
   { id: 'home', label: 'ホーム', desc: '数式が、景色になる。', el: () => <HomeTab /> },
@@ -38,6 +39,8 @@ export default function App() {
   }, [])
   const current = TABS.find((t) => t.id === tab)!
   return (
+    <>
+    {tab === 'home' && <HomeBackground />}
     <div className="app">
       <header className="header">
         <a className="brand" href="#home">
@@ -64,5 +67,6 @@ export default function App() {
       </header>
       <main key={`${tab}|${hash}`}>{current.el()}</main>
     </div>
+    </>
   )
 }
