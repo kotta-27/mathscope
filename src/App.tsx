@@ -19,7 +19,7 @@ const TABS = [
   { id: 'graph', label: 'グラフ', desc: 'パラメータを動かして形の変化を見る', el: () => <GraphTab /> },
   { id: 'structure', label: '構造', desc: '式を部品に分けて役割と値を見る', el: () => <StructureTab /> },
   { id: 'geometry', label: '図解', desc: '基本のしくみを動く図で見る（関数・微積・ベクトル・確率）', el: () => <GeometryTab /> },
-  { id: 'steps', label: '式変形', desc: '展開・因数分解・方程式・微分を 1 手ずつ追う', el: () => <StepsTab /> },
+  { id: 'steps', label: '式変形', desc: '展開・因数分解・平方完成・方程式・微分を 1 手ずつ追う', el: () => <StepsTab /> },
   { id: 'theorems', label: '定理', desc: '分野ごとの有名な定理と使いどころ', el: () => <TheoremsTab /> },
 ] as const
 

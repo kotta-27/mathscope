@@ -173,3 +173,50 @@ describe('展開', () => {
     })
   }
 })
+
+describe('平方完成', () => {
+  for (const src of mode('complete').presets) {
+    it(`${src} は元の式と同じ値`, () => {
+      const r = mode('complete').run(src)
+      expect(r.ok).toBe(true)
+      if (!r.ok) return
+      sameValue(normalizeExpr(src), r.result!)
+    })
+  }
+  it('x^2 - 4x + 1 = (x - 2)^2 - 3、頂点 (2, -3)', () => {
+    const r = mode('complete').run('x^2 - 4x + 1')
+    if (!r.ok) throw new Error(r.error)
+    expect(r.moves.at(-2)!.tex).toContain('(x - 2)^2')
+    expect(r.moves.at(-1)!.tex).toContain('2,\\ -3')
+  })
+  it('2 次式でなければエラー', () => {
+    expect(mode('complete').run('x^3 + 1').ok).toBe(false)
+  })
+})
+
+describe('連立方程式', () => {
+  const cases: [string, number[] | 'none' | 'many'][] = [
+    ['2x + y = 5, x - y = 1', [2, 1]],
+    ['3x + 2y = 12, x + 2y = 8', [2, 3]],
+    ['x + y = 10, 2x + 4y = 28', [6, 4]],
+    ['y = 2x - 1, y = -x + 5', [2, 3]],
+    ['2x - 3y = 1, 4x - 6y = 5', 'none'],
+    ['x + y = 2, 2x + 2y = 4', 'many'],
+  ]
+  for (const [src, want] of cases) {
+    it(`${src} → ${JSON.stringify(want)}`, () => {
+      const r = mode('system').run(src)
+      if (!r.ok) throw new Error(r.error)
+      if (want === 'none') expect(r.moves.at(-1)!.tex).toContain('解なし')
+      else if (want === 'many') expect(r.moves.at(-1)!.tex).toContain('無数')
+      else {
+        expect(r.roots![0]).toBeCloseTo(want[0], 9)
+        expect(r.roots![1]).toBeCloseTo(want[1], 9)
+      }
+    })
+  }
+  it('2 次の式や 3 文字はエラー', () => {
+    expect(mode('system').run('x^2 + y = 1, x - y = 0').ok).toBe(false)
+    expect(mode('system').run('x + y + z = 1, x - y = 0').ok).toBe(false)
+  })
+})

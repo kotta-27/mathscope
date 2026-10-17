@@ -30,7 +30,7 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
   {
     verb: '式変形を追う',
     tab: '式変形',
-    text: <>展開・因数分解・方程式・微分を 1 手ずつ再生し、どこが書き換わったかを色で追う</>,
+    text: <>展開・因数分解・平方完成・方程式・連立方程式・微分を 1 手ずつ再生し、どこが書き換わったかを色で追う</>,
     href: hrefTo('steps', { mode: 'solve', f: 'x^2 - 5x + 6 = 0' }),
     art: <TransformArt />,
   },

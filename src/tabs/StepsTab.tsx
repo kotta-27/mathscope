@@ -3,22 +3,27 @@ import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { parseExpr, type Parsed } from '../lib/math'
 import { MODES, type ModeId } from '../lib/transforms'
+import { parseSystem } from '../lib/transforms/system'
 import { useRaf } from '../lib/useRaf'
 import { readHash, readNum, useSyncHash } from '../lib/route'
 
 const HINTS: Record<ModeId, string> = {
   expand: '括弧をはずし、同類項をまとめる。',
   factor: '1 つの文字の多項式を、積の形にする。',
+  complete: '2 次式を a(x − p)² + q の形にして、頂点と軸を読む。',
   simplify: '分数式は通分と約分。それ以外は展開して同類項をまとめる。',
   solve: '「=」を含む 1 つの文字の方程式（1 次〜3 次）。',
+  system: '2 つの文字の 1 次方程式を「,」で区切って 2 つ。加減法で 1 文字ずつ消す。',
   derive: '和・積・商・合成関数の規則を、外側から 1 つずつ当てる。',
 }
 
 const PLACEHOLDERS: Record<ModeId, string> = {
   expand: '例: (a+b)², (x+1)(x−2)',
   factor: '例: x² − 5x + 6',
+  complete: '例: x² − 4x + 1, 2x² − 8x + 3',
   simplify: '例: 1/x + 1/(x+1)',
   solve: '例: 2x + 3 = 7, x² = 5x − 6',
+  system: '例: 2x + y = 5, x − y = 1',
   derive: '例: x² sin x, (3x+1)⁵',
 }
 
@@ -44,7 +49,7 @@ export function StepsTab() {
   const [play, setPlay] = useState(false)
   const [acc, setAcc] = useState(0)
 
-  const parsed = useMemo(() => (mode === 'solve' ? parseEquation(src) : parseExpr(src)), [mode, src])
+  const parsed = useMemo(() => (mode === 'solve' ? parseEquation(src) : mode === 'system' ? parseSystem(src) : parseExpr(src)), [mode, src])
   const result = useMemo(() => (parsed.ok ? m.run(src) : null), [m, src, parsed])
   const moves = result?.ok ? result.moves : []
 
