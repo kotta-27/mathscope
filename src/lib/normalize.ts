@@ -40,7 +40,13 @@ const CHARS: [RegExp, string][] = [
 const isLetter = (c: string) => /[A-Za-zͰ-Ͽ]/.test(c)
 const isDigit = (c: string) => /[0-9.]/.test(c)
 
+/** 下付き文字（log₁₀ など）→ _10 */
+function subscripts(s: string) {
+  return s.replace(/[₀₁₂₃₄₅₆₇₈₉]+/g, (m) => `_${[...m].map((c) => c.charCodeAt(0) - 0x2080).join('')}`)
+}
+
 function superscripts(s: string) {
+  s = subscripts(s)
   return s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿˣʸ⁽⁾]+/g, (m) => {
     const t = [...m].map((c) => SUP[c]).join('')
     return /^\d+$/.test(t) || /^[a-z]$/.test(t) ? `^${t} ` : `^(${t}) `
@@ -173,6 +179,15 @@ function words(s: string): string {
       continue
     }
     if (isLetter(c)) {
+      // 底つきの対数: log10 x、log_10(x)、log_2 8、log_a x、lg x
+      const prevChar = out.slice(-1)
+      const lm = /[A-Za-z_]/.test(prevChar) ? null : /^(?:log(?:_(\d+(?:\.\d+)?|[a-zA-Z](?![a-zA-Z]))|(\d+(?:\.\d+)?))|lg(?![a-zA-Z]))/.exec(s.slice(i))
+      if (lm) {
+        i += lm[0].length
+        const base = lm[1] ?? lm[2] ?? '10'
+        applyFn(base === '10' ? 'log10' : base === '2' ? 'log2' : `LOGBASE${base}`, [])
+        continue
+      }
       const st = i
       while (i < s.length && (isLetter(s[i]) || s[i] === '_')) i++
       const w = s.slice(st, i)
@@ -299,8 +314,31 @@ export function normalizeExpr(src: string): string {
   s = s.normalize('NFKC')
   for (const [re, to] of CHARS) s = s.replace(re, to)
   s = latex(s)
+  // \log_{10} は latex() のあと「log _10」になるので詰める
+  s = s.replace(/\blog\s+_/g, 'log_')
   s = s.replace(/^\s*(?:y|f\s*\(\s*x\s*\))\s*=/, '')
   s = bars(s)
   s = words(s)
+  s = logBase(s)
   return s.replace(/\s+/g, ' ').trim()
+}
+
+/** words() が残した LOGBASE{底}(…) を log(…, 底) にする（括弧の対応を数える） */
+function logBase(s: string): string {
+  for (let guard = 0; guard < 20; guard++) {
+    const m = /LOGBASE(\d+(?:\.\d+)?|[a-zA-Z])\(/.exec(s)
+    if (!m) return s
+    const open = m.index + m[0].length - 1
+    let depth = 0
+    let close = s.length
+    for (let j = open; j < s.length; j++) {
+      if (s[j] === '(') depth++
+      if (s[j] === ')' && --depth === 0) {
+        close = j
+        break
+      }
+    }
+    s = `${s.slice(0, m.index)}log(${s.slice(open + 1, close)}, ${m[1]})${s.slice(close + 1)}`
+  }
+  return s
 }

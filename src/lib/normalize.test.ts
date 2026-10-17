@@ -93,6 +93,25 @@ describe('normalizeExpr', () => {
     same('2pix', '2*pi*x')
   })
 
+  it('底つきの対数', () => {
+    same('log10(x)', 'log10(x)')
+    same('log10 x', 'log10(x)')
+    same('log_10(x)', 'log10(x)')
+    same('log_{10} x', 'log10(x)')
+    same('\\log_{10} x', 'log10(x)')
+    same('\\log_{10}(x+1)', 'log10(x+1)')
+    same('log₁₀x', 'log10(x)')
+    same('lg x', 'log10(x)')
+    same('log_2 8', 'log2(8)')
+    same('log_3(x+1)', 'log(x+1, 3)')
+    same('log_a x', 'log(x, a)')
+    same('2log_3(x^2+1) + 1', '2log(x^2+1, 3) + 1')
+    // 底のない log は自然対数のまま
+    same('log x', 'log(x)')
+    same('logx', 'log(x)')
+    same('log(x, 10)', 'log(x, 10)')
+  })
+
   it('LaTeX の書き方', () => {
     same('\\frac{1}{x+1}', '1/(x+1)')
     same('\\dfrac{x^{2}-1}{x-1}', '(x^2-1)/(x-1)')

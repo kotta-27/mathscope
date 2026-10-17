@@ -62,21 +62,28 @@ function rule(u: MathNode, v: string): Rule {
     }
   }
 
-  if (isFunctionNode(u) && u.args.length === 1) {
+  // log(□, 底) は 底 が定数なら log_底 として扱う
+  const logBase = isFunctionNode(u) && u.fn.name === 'log' && u.args.length === 2 && !dep(u.args[1]) ? u.args[1] : null
+  if (isFunctionNode(u) && (u.args.length === 1 || logBase)) {
     const w = u.args[0]
+    /** 1 / (□ log 底) */
+    const logRule = (b: MathNode) => () => op('/', 'divide', [num(1), mul(w, fnc('log', b))])
     const table: Record<string, () => MathNode> = {
       sin: () => fnc('cos', w),
       cos: () => op('-', 'unaryMinus', [fnc('sin', w)]),
       tan: () => op('/', 'divide', [num(1), op('^', 'pow', [fnc('cos', w), num(2)])]),
       exp: () => fnc('exp', w),
-      log: () => op('/', 'divide', [num(1), wrap(w)]),
+      log: logBase ? logRule(logBase) : () => op('/', 'divide', [num(1), wrap(w)]),
+      log10: logRule(num(10)),
+      log2: logRule(num(2)),
       sqrt: () => op('/', 'divide', [num(1), mul(num(2), fnc('sqrt', w))]),
     }
     const f = table[u.fn.name]
     if (f) {
       const inner = unwrap(w)
-      if (isSymbolNode(inner) && inner.name === v) return { label: `${u.fn.name} の微分`, to: f() }
-      return { label: `合成関数の微分: ${u.fn.name} を微分 × 内側を微分`, to: mul(f(), D(w, v)) }
+      const name = logBase ? `log_${logBase.toString()}` : u.fn.name
+      if (isSymbolNode(inner) && inner.name === v) return { label: `${name} の微分`, to: f() }
+      return { label: `合成関数の微分: ${name} を微分 × 内側を微分`, to: mul(f(), D(w, v)) }
     }
   }
   throw new Error(`「${u.toString()}」の微分の規則がありません`)

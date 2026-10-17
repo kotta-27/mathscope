@@ -59,6 +59,7 @@ const READINGS: [string, string][] = [
   ['\\frac{1}{x+1}', '\\frac{1}{x+1}'],
   ['\\sqrt{x^{2}+1}', '\\sqrt{x^2+1}'],
   ['\\sin^2 x + \\cos^2 x', '\\sin(x)^2+\\cos(x)^2'],
+  ['log10 x、log_2 8', '\\log_{10}(x),\\ \\log_{2}(8)'],
 ]
 
 // 入力欄は数式ライブラリ（mathjs）を使うので、節が画面に近づいてから読み込む
