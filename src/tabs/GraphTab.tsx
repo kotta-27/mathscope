@@ -6,7 +6,8 @@ import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
-import { readHash } from '../lib/route'
+import { num, readHash, useSyncHash } from '../lib/route'
+import type { View } from '../components/Plot'
 
 type Row = { id: number; src: string }
 
@@ -20,6 +21,14 @@ const PRESETS: { label: string; rows: string[] }[] = [
 ]
 
 const RANGE = { min: -5, max: 5 }
+const VIEW: View = { xMin: -8, xMax: 8, yMin: -5, yMax: 5 }
+/** パラメータ以外に使う URL のキー */
+const RESERVED = new Set(['f', 'view', 'play'])
+
+function readView(s: string | null): View {
+  const v = (s ?? '').split(',').map(Number)
+  return v.length === 4 && v.every(Number.isFinite) && v[0] < v[1] && v[2] < v[3] ? { xMin: v[0], xMax: v[1], yMin: v[2], yMax: v[3] } : VIEW
+}
 
 function substitute(node: MathNode, scope: Record<string, number>): MathNode {
   return node.transform((n) => {
@@ -31,12 +40,23 @@ function substitute(node: MathNode, scope: Record<string, number>): MathNode {
 
 export function GraphTab() {
   const nextId = useRef(100)
+  const [hp] = useState(() => readHash().params)
   const [rows, setRows] = useState<Row[]>(() => {
-    const fs = readHash().params.getAll('f')
+    const fs = hp.getAll('f')
     return (fs.length ? fs : ['a*sin(b*x + c)']).map((src, i) => ({ id: i + 1, src }))
   })
-  const [params, setParams] = useState<Record<string, number>>({})
-  const [playing, setPlaying] = useState<Record<string, boolean>>({})
+  const [params, setParams] = useState<Record<string, number>>(() => {
+    const o: Record<string, number> = {}
+    hp.forEach((v, k) => {
+      if (!RESERVED.has(k) && v !== '' && Number.isFinite(Number(v))) o[k] = Number(v)
+    })
+    return o
+  })
+  const [playing, setPlaying] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries((hp.get('play') ?? '').split(',').filter(Boolean).map((k) => [k, true])),
+  )
+  const [initialView] = useState(() => readView(hp.get('view')))
+  const [view, setView] = useState(initialView)
   const dirs = useRef<Record<string, number>>({})
 
   const parsed = useMemo(() => rows.map((r) => parseExpr(r.src)), [rows])
@@ -47,6 +67,15 @@ export function GraphTab() {
   }, [parsed])
   const scope = Object.fromEntries(names.map((n) => [n, params[n] ?? 1]))
   const active = names.filter((n) => playing[n])
+
+  // 式・パラメータの値・表示範囲・再生中のパラメータを URL に残す
+  const sameView = (Object.keys(VIEW) as (keyof View)[]).every((k) => Math.abs(view[k] - VIEW[k]) < 1e-9)
+  useSyncHash('graph', {
+    f: rows.map((r) => r.src),
+    ...Object.fromEntries(names.filter((n) => !RESERVED.has(n)).map((n) => [n, scope[n]])),
+    view: sameView ? null : [view.xMin, view.xMax, view.yMin, view.yMax].map(num).join(','),
+    play: active.length ? active.join(',') : null,
+  })
 
   useRaf(active.length > 0, (dt) => {
     setParams((p) => {
@@ -135,7 +164,7 @@ export function GraphTab() {
       </aside>
 
       <section className="stage">
-        <Plot initial={{ xMin: -8, xMax: 8, yMin: -5, yMax: 5 }} height={520}>
+        <Plot initial={initialView} height={520} onView={setView}>
           {(ctx) =>
             parsed.map((p, i) =>
               p.ok ? (

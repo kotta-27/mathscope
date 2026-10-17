@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { readHash } from '../lib/route'
+import { readHash, useSyncHash } from '../lib/route'
 import { MathText } from '../components/MathText'
 import { Tex } from '../components/Tex'
 import { FIELDS, THEOREMS, type FieldId, type Theorem } from '../lib/theorems'
@@ -15,9 +15,14 @@ function matches(t: Theorem, q: string) {
 }
 
 export function TheoremsTab() {
-  const [field, setField] = useState<FieldId | 'all'>('all')
+  const [field, setField] = useState<FieldId | 'all'>(() => {
+    const f = readHash().params.get('field')
+    return FIELDS.find((x) => x.id === f)?.id ?? 'all'
+  })
   const [q, setQ] = useState(() => readHash().params.get('q') ?? '')
   const hits = useMemo(() => THEOREMS.filter((t) => matches(t, q)), [q])
+  // 検索語と分野を URL に残す
+  useSyncHash('theorems', { q: q || null, field: field === 'all' ? null : field })
   const count = (f: FieldId) => hits.filter((t) => t.field === f).length
   useEffect(() => {
     const id = readHash().params.get('id')

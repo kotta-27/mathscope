@@ -4,7 +4,7 @@ import { Tex } from '../components/Tex'
 import { parseExpr, type Parsed } from '../lib/math'
 import { MODES, type ModeId } from '../lib/transforms'
 import { useRaf } from '../lib/useRaf'
-import { readHash } from '../lib/route'
+import { readHash, readNum, useSyncHash } from '../lib/route'
 
 const HINTS: Record<ModeId, string> = {
   expand: '括弧をはずし、同類項をまとめる。',
@@ -36,11 +36,11 @@ function parseEquation(src: string): Parsed {
 }
 
 export function StepsTab() {
-  const params = readHash().params
+  const [params] = useState(() => readHash().params)
   const [mode, setMode] = useState<ModeId>(() => MODES.find((m) => m.id === params.get('mode'))?.id ?? 'expand')
   const m = MODES.find((x) => x.id === mode)!
   const [src, setSrc] = useState(() => params.get('f') ?? m.presets[0])
-  const [shown, setShown] = useState(0)
+  const [shown, setShown] = useState(() => Math.max(0, Math.round(readNum(params, 'n', 0))))
   const [play, setPlay] = useState(false)
   const [acc, setAcc] = useState(0)
 
@@ -68,7 +68,10 @@ export function StepsTab() {
     setMode(id)
     setSrc(MODES.find((x) => x.id === id)!.presets[0])
   }
+  if (shown > moves.length && moves.length) setShown(moves.length)
   const cur = shown > 0 ? moves[shown - 1] : null
+  // 種類・式・何手目かを URL に残す
+  useSyncHash('steps', { mode, f: src, n: shown || null })
 
   return (
     <div className="layout">

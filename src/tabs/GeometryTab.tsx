@@ -6,16 +6,23 @@ import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { evalNum, fmt, parseExpr, texOf } from '../lib/math'
 import { useRaf } from '../lib/useRaf'
-import { readHash } from '../lib/route'
+import { readHash, readNum, replaceHash, useSyncHash } from '../lib/route'
 
 const DEMOS = [
   { id: 'circle', label: '単位円と三角関数' },
   { id: 'deriv', label: '微分 = 接線の傾き' },
   { id: 'integral', label: '積分 = 面積' },
 ] as const
+type DemoId = (typeof DEMOS)[number]['id']
+
+/** そのデモを URL で開いたときだけ、URL の値を初期値に使う */
+function demoParams(id: DemoId) {
+  const { params } = readHash()
+  return params.get('demo') === id || (id === 'circle' && !params.get('demo')) ? params : new URLSearchParams()
+}
 
 export function GeometryTab() {
-  const [demo, setDemo] = useState<(typeof DEMOS)[number]['id']>(() => {
+  const [demo, setDemo] = useState<DemoId>(() => {
     const d = readHash().params.get('demo')
     return DEMOS.find((x) => x.id === d)?.id ?? 'circle'
   })
@@ -23,7 +30,10 @@ export function GeometryTab() {
     <>
       <div className="subtabs">
         {DEMOS.map((d) => (
-          <button key={d.id} className={`chip ${demo === d.id ? 'on' : ''}`} onClick={() => setDemo(d.id)}>
+          <button key={d.id} className={`chip ${demo === d.id ? 'on' : ''}`} onClick={() => {
+              setDemo(d.id)
+              replaceHash('geometry', { demo: d.id })
+            }}>
             {d.label}
           </button>
         ))}
@@ -51,9 +61,11 @@ function piFrac(t: number) {
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : Math.abs(a))
 
 function UnitCircle() {
-  const [t, setT] = useState(Math.PI / 6)
+  const [hp] = useState(() => demoParams('circle'))
+  const [t, setT] = useState(() => readNum(hp, 't', Math.PI / 6))
   const [play, setPlay] = useState(false)
-  const [showTan, setShowTan] = useState(false)
+  const [showTan, setShowTan] = useState(() => hp.get('tan') === '1')
+  useSyncHash('geometry', { demo: 'circle', t, tan: showTan })
   const svgRef = useRef<SVGSVGElement>(null)
   const dragging = useRef(false)
   useRaf(play, (dt) => setT((v) => (v + dt * 0.8) % TAU))
@@ -173,11 +185,13 @@ function useFn(src: string) {
 }
 
 function Derivative() {
-  const [src, setSrc] = useState('x^3/3 - x')
-  const [x0, setX0] = useState(1.5)
-  const [h, setH] = useState(1.2)
-  const [showD, setShowD] = useState(true)
+  const [hp] = useState(() => demoParams('deriv'))
+  const [src, setSrc] = useState(() => hp.get('f') ?? 'x^3/3 - x')
+  const [x0, setX0] = useState(() => readNum(hp, 'x0', 1.5))
+  const [h, setH] = useState(() => readNum(hp, 'h', 1.2))
+  const [showD, setShowD] = useState(() => hp.get('df') !== '0')
   const [play, setPlay] = useState(false)
+  useSyncHash('geometry', { demo: 'deriv', f: src, x0, h, df: showD ? null : '0' })
   const fn = useFn(src)
   useRaf(play, (dt) => {
     if (h <= 0.002) setPlay(false)
@@ -277,11 +291,16 @@ function simpson(f: (x: number) => number, a: number, b: number, n = 2000) {
 }
 
 function Integral() {
-  const [src, setSrc] = useState('sin(x) + 1.5')
-  const [a, setA] = useState(-1)
-  const [b, setB] = useState(3)
-  const [n, setN] = useState(6)
-  const [method, setMethod] = useState<Method>('mid')
+  const [hp] = useState(() => demoParams('integral'))
+  const [src, setSrc] = useState(() => hp.get('f') ?? 'sin(x) + 1.5')
+  const [a, setA] = useState(() => readNum(hp, 'a', -1))
+  const [b, setB] = useState(() => readNum(hp, 'b', 3))
+  const [n, setN] = useState(() => Math.max(1, Math.round(readNum(hp, 'n', 6))))
+  const [method, setMethod] = useState<Method>(() => {
+    const m = hp.get('m')
+    return m === 'left' || m === 'mid' || m === 'right' || m === 'trap' ? m : 'mid'
+  })
+  useSyncHash('geometry', { demo: 'integral', f: src, a, b, n, m: method })
   const [play, setPlay] = useState(false)
   const acc = useRef(0)
   const fn = useFn(src)

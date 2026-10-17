@@ -10,7 +10,7 @@ import {
 import { Slider } from '../components/Slider'
 import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
-import { readHash } from '../lib/route'
+import { readHash, useSyncHash } from '../lib/route'
 import { PALETTE, fmt, parseExpr, texOf, unwrap } from '../lib/math'
 
 type TNode = { node: MathNode; kind: string; detail: string; role?: string; children: TNode[] }
@@ -101,11 +101,21 @@ const PRESETS = [
 ]
 
 export function StructureTab() {
-  const [src, setSrc] = useState(() => readHash().params.get('f') ?? PRESETS[0])
-  const [vals, setVals] = useState<Record<string, number>>({ a: 1, b: -3, c: 2 })
+  const [hp] = useState(() => readHash().params)
+  const [src, setSrc] = useState(() => hp.get('f') ?? PRESETS[0])
+  const [vals, setVals] = useState<Record<string, number>>(() => {
+    const o: Record<string, number> = { a: 1, b: -3, c: 2 }
+    hp.forEach((v, k) => {
+      if (k !== 'f' && v !== '' && Number.isFinite(Number(v))) o[k] = Number(v)
+    })
+    return o
+  })
   const [hover, setHover] = useState<MathNode | null>(null)
   const p = useMemo(() => parseExpr(src), [src])
   const scope = p.ok ? Object.fromEntries(p.symbols.map((s) => [s, vals[s] ?? 1])) : {}
+
+  // 式と文字の値を URL に残す
+  useSyncHash('structure', { f: src, ...Object.fromEntries(Object.entries(scope).filter(([k]) => k !== 'f')) })
 
   const tree = useMemo(() => (p.ok ? build(p.node) : null), [p])
   const terms = useMemo(() => (p.ok ? topTerms(p.node) : []), [p])

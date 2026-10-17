@@ -117,6 +117,29 @@ await b.evaluate(`document.querySelector('button[aria-label="最後へ"]').click
 await sleep(300)
 const solveLast = await b.evaluate(`return document.querySelector('.hero-tex').textContent`)
 check('式変形: 方程式の解が出る', /x=2,\s*3/.test(solveLast.replace(/\s+/g, '')) || solveLast.includes('x=2,3'), solveLast.slice(0, 40))
+await sleep(600)
+check('式変形: 何手目かが URL に残る', /[?&]n=\d+/.test(await b.evaluate('return location.hash')), await b.evaluate('return location.hash'))
+
+// 状態を URL に残す: スライダーを動かす → URL が変わる → 開き直すと同じ状態
+await b.goto('about:blank')
+await b.goto(BASE + '#graph?f=' + encodeURIComponent('a*(x - p)^2 + q'))
+await b.waitFor(`document.querySelector('.slider input[type=range]')`)
+check('開いただけでは URL を書き換えない', (await b.evaluate('return location.hash')) === '#graph?f=' + encodeURIComponent('a*(x - p)^2 + q'))
+await b.evaluate(`
+  const r = document.querySelectorAll('.slider input[type=range]')[1]
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
+  set.call(r, '2'); r.dispatchEvent(new Event('input', { bubbles: true }))
+`)
+await b.waitFor(`location.hash.includes('p=2')`)
+const shared = await b.evaluate('return location.href')
+check('スライダーの値が URL に残る', shared.includes('p=2'), shared.split('#')[1])
+const curve = await b.evaluate(`return document.querySelector('path.curve').getAttribute('d').slice(0, 120)`)
+await b.goto('about:blank')
+await b.goto(shared)
+await b.waitFor(`document.querySelector('path.curve')`)
+await sleep(300)
+check('リンクを開くと同じ状態', (await b.evaluate(`return document.querySelector('path.curve').getAttribute('d').slice(0, 120)`)) === curve)
+check('リンクをコピーのボタン', await b.evaluate(`return document.querySelector('.copy-link')?.textContent === 'リンクをコピー'`))
 b.close()
 
 // スマホ幅の定理集
