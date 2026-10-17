@@ -57,7 +57,7 @@ for (const [i, expect] of [[0, ['#graph', 'a*(x - p)^2 + q']], [1, ['#structure'
   check(`使い方カード ${i + 1}`, ok, `${hash} / ${input}`)
 }
 // ベイズの計算表: スライダーで結果が変わる・行を押すと結果が切り替わる
-await b.goto(BASE + '#theorems?q=bayes')
+await b.goto(BASE + '#theorems?id=bayes')
 await b.waitFor(`document.querySelector('.bayes-row:not(.head):not(.foot)')`)
 const res0 = await b.evaluate(`return document.querySelector('.bayes-result > strong').textContent`)
 await b.evaluate(`
@@ -142,7 +142,7 @@ check('リンクを開くと同じ状態', (await b.evaluate(`return document.qu
 check('グラフに頂点の印と座標', await b.evaluate(`return [...document.querySelectorAll('.pt-label')].some(t => t.textContent === '頂点 (2, 1)')`), await b.evaluate(`return [...document.querySelectorAll('.pt-label')].map(t => t.textContent).join(' / ')`))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
-await b.goto(BASE + '#theorems?q=binomial-dist')
+await b.goto(BASE + '#theorems?id=binomial-dist')
 await b.waitFor(`document.querySelector('#binomial-dist .fig input[type=range]')`)
 await b.evaluate(`
   const r = document.querySelector('#binomial-dist .fig input[type=range]')
@@ -163,7 +163,23 @@ check('定理カードに「ひとことで」「動かしてみよう」', awai
 await b.evaluate(`document.querySelector('#completing-square .theorem-related a').click()`)
 await b.waitFor(`location.hash.includes('id=quadratic-formula')`)
 await sleep(800)
-check('つながる定理へ移る', await b.evaluate(`const e = document.getElementById('quadratic-formula'); return !!e && Math.abs(e.getBoundingClientRect().top) < 60`))
+check('つながる定理のページへ移る', await b.evaluate(`return !!document.getElementById('quadratic-formula') && document.title.startsWith('2次方程式の解の公式')`), await b.evaluate('return document.title'))
+// 一覧 → 定理のページ → 戻ると、一覧の同じ位置に戻る
+await b.goto('about:blank')
+await b.goto(BASE + '#theorems')
+await b.waitFor(`document.querySelectorAll('.theorem-item').length > 90`)
+check('一覧には図を描かない', await b.evaluate(`return document.querySelectorAll('.fig').length === 0`))
+await b.evaluate(`document.querySelectorAll('.theorem-item')[40].scrollIntoView({ block: 'center' })`)
+await sleep(300)
+const listY = await b.evaluate('return Math.round(scrollY)')
+await b.evaluate(`document.querySelectorAll('.theorem-item')[40].click()`)
+await b.waitFor(`document.querySelector('.theorem-page .fig')`)
+check('一覧から定理のページを開く', await b.evaluate(`return location.hash.includes('id=') && !!document.querySelector('.crumbs')`), await b.evaluate('return location.hash'))
+await b.evaluate('history.back()')
+await b.waitFor(`document.querySelectorAll('.theorem-item').length > 90`)
+await sleep(500)
+const backY = await b.evaluate('return Math.round(scrollY)')
+check('戻ると一覧の同じ位置', Math.abs(backY - listY) < 5, `${listY} → ${backY}`)
 const themeBefore = await b.evaluate(`return getComputedStyle(document.body).backgroundColor`)
 await b.evaluate(`document.querySelector('.icon-tool[aria-label]').click()`)
 await sleep(300)
@@ -180,10 +196,10 @@ b.close()
 // スマホ幅の定理集
 const m = await launch(390, 800)
 await m.goto(BASE + '#theorems')
-await m.waitFor(`document.querySelector('.theorem')`)
+await m.waitFor(`document.querySelector('.theorem-item')`)
 const dir = await m.evaluate(`return getComputedStyle(document.querySelector('.field-list')).flexDirection`)
 check('スマホの分野チップは横並び', dir === 'row', dir)
-const top = await m.evaluate(`return Math.round(document.querySelector('.theorem').getBoundingClientRect().top)`)
+const top = await m.evaluate(`return Math.round(document.querySelector('.theorem-item').getBoundingClientRect().top)`)
 check('スマホで最初の定理が 1 画面目付近', top < 700, `top=${top}px`)
 m.close()
 

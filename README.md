@@ -46,7 +46,7 @@
 | `#geometry?demo=deriv&f=x^2&x0=1&h=0.5` | 微分デモの関数・接点・幅（`df=0` で導関数を隠す） |
 | `#geometry?demo=integral&f=sin(x)&a=0&b=3&n=10&m=left` | 積分デモの関数・区間・分割数・方法（`left` `mid` `right` `trap`） |
 | `#theorems?q=bayes&field=prob` | 定理集の検索語と分野 |
-| `#theorems?id=bayes` | その定理までスクロールして開く |
+| `#theorems?id=bayes` | その定理のページを開く（図を動かした状態は `&v.<名前>=<値>` で残る） |
 | `#home?scene=lorenz&t=8` | トップのアニメーションをそのシーン・時刻で止める |
 
 ## 誰のためのアプリか

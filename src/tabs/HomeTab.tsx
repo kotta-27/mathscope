@@ -45,7 +45,7 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
     verb: '確かめる',
     tab: '定理集',
     text: <>ベイズの定理を面積の図で確かめる。ほかにも {THEOREMS.length} 個の定理を図つきで</>,
-    href: hrefTo('theorems', { q: 'bayes' }),
+    href: hrefTo('theorems', { id: 'bayes' }),
     art: <BayesArt />,
   },
 ]
@@ -203,7 +203,7 @@ export function HomeTab() {
         />
         <div className="picks">
           {picks.map(({ t, tex }) => (
-            <a key={t.id} className="pick" href={hrefTo('theorems', { q: t.id })}>
+            <a key={t.id} className="pick" href={hrefTo('theorems', { id: t.id })}>
               <span className="pick-field">{FIELDS.find((f) => f.id === t.field)?.label}</span>
               <span className="pick-name">{t.name}</span>
               <span className="pick-tex">
