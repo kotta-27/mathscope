@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Tex } from '../components/Tex'
 import { FIGURE_IDS } from '../figures/ids'
 import { FIELDS, THEOREMS } from '../lib/theorems'
@@ -47,6 +47,43 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
     art: <BayesArt />,
   },
 ]
+
+/** 書き方と読み方の対応（数式ライブラリを使わずに描けるよう、読み方は TeX で持つ） */
+const READINGS: [string, string][] = [
+  ['x² − 2x − 3', 'x^2-2x-3'],
+  ['sin 2x', '\\sin(2x)'],
+  ['√(x+4)', '\\sqrt{x+4}'],
+  ['|x − 1|', '\\left|x-1\\right|'],
+  ['ｘ＋１（全角）', 'x+1'],
+  ['ax² + bx + c', 'a\\cdot x^2+b\\cdot x+c'],
+  ['\\frac{1}{x+1}', '\\frac{1}{x+1}'],
+  ['\\sqrt{x^{2}+1}', '\\sqrt{x^2+1}'],
+  ['\\sin^2 x + \\cos^2 x', '\\sin(x)^2+\\cos(x)^2'],
+]
+
+// 入力欄は数式ライブラリ（mathjs）を使うので、節が画面に近づいてから読み込む
+const InputDemo = lazy(() => import('../hero/InputDemo').then((m) => ({ default: m.InputDemo })))
+
+function LazyInputDemo() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === 'undefined') return setNear(true)
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && setNear(true), { rootMargin: '200px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return (
+    <div ref={ref} className="input-demo-wrap">
+      {near && (
+        <Suspense fallback={null}>
+          <InputDemo />
+        </Suspense>
+      )}
+    </div>
+  )
+}
 
 const PICKS = ['bayes', 'pythagoras', 'euler-formula', 'clt', 'ftc', 'diagonalization', 'euclid-algorithm', 'am-gm']
 
@@ -100,6 +137,34 @@ export function HomeTab() {
               <span className="feature-go">試す →</span>
             </a>
           ))}
+        </div>
+      </section>
+
+      <section className="input-section">
+        <h2 className="usecases-title">普段の書き方でも、LaTeX でも。</h2>
+        <p className="usecases-lead">x²、√x、sin 2x、全角の文字も、\frac や \sqrt を使った LaTeX も、そのまま入れられる。読み方が違うときは「読み取り」で教えてくれる。</p>
+        <div className="input-grid">
+          <table className="input-table">
+            <thead>
+              <tr>
+                <th>こう書くと</th>
+                <th>こう読む</th>
+              </tr>
+            </thead>
+            <tbody>
+              {READINGS.map(([raw, tex]) => (
+                <tr key={raw}>
+                  <td>
+                    <code>{raw}</code>
+                  </td>
+                  <td>
+                    <Tex tex={tex} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <LazyInputDemo />
         </div>
       </section>
 

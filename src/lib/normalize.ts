@@ -198,10 +198,107 @@ function words(s: string): string {
   return out
 }
 
+/* ---------- LaTeX ---------- */
+
+const GREEK = [
+  'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'varepsilon', 'zeta', 'eta', 'theta', 'vartheta',
+  'kappa', 'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', 'tau', 'phi', 'varphi', 'chi', 'psi', 'omega',
+]
+const LATEX_FUNCS: Record<string, string> = {
+  arcsin: 'asin', arccos: 'acos', arctan: 'atan', sinh: 'sinh', cosh: 'cosh', tanh: 'tanh',
+  sin: 'sin', cos: 'cos', tan: 'tan', sec: 'sec', csc: 'csc', cot: 'cot', log: 'log', ln: 'log', exp: 'exp',
+}
+const LATEX_SPACES = [',', ';', ':', '!', ' ', 'quad', 'qquad']
+const LATEX_STYLES = ['mathrm', 'mathit', 'mathbf', 'operatorname', 'text', 'textrm']
+const LATEX_DROP = ['left', 'right', 'big', 'Big', 'bigg', 'Bigg', 'displaystyle']
+
+/** s[i] から始まる引数を取り出す。{…} なら中身、そうでなければ 1 文字（\frac12 など）。[中身, 次の位置] */
+function group(s: string, i: number): [string, number] {
+  while (s[i] === ' ') i++
+  if (s[i] !== '{') return [s[i] ?? '', i + 1]
+  let depth = 0
+  for (let j = i; j < s.length; j++) {
+    if (s[j] === '{') depth++
+    else if (s[j] === '}' && --depth === 0) return [s.slice(i + 1, j), j + 1]
+  }
+  return [s.slice(i + 1), s.length]
+}
+
+/** LaTeX の書き方（\frac{1}{x}、\sqrt{x}、x^{2}、\sin x など）を mathjs が読める形にする */
+function latex(s: string): string {
+  if (!s.includes('\\') && !s.includes('{')) return s
+  let out = ''
+  let i = 0
+  while (i < s.length) {
+    const c = s[i]
+    if (c === '\\') {
+      const m = /^\\([A-Za-z]+|.)/.exec(s.slice(i))
+      if (!m) {
+        i++
+        continue
+      }
+      const cmd = m[1]
+      i += m[0].length
+      if (cmd === 'frac' || cmd === 'dfrac' || cmd === 'tfrac') {
+        const [a, j] = group(s, i)
+        const [b, k] = group(s, j)
+        i = k
+        // 1 語（1、x、2a など）の分子・分母には括弧を付けない
+        const w = (x: string) => (/^\s*[A-Za-z0-9.]+\s*$/.test(x) ? x.trim() : `(${x})`)
+        out += `(${w(latex(a))}/${w(latex(b))})`
+      } else if (cmd === 'sqrt') {
+        while (s[i] === ' ') i++
+        if (s[i] === '[') {
+          const e = s.indexOf(']', i)
+          const n = s.slice(i + 1, e < 0 ? s.length : e)
+          const [a, j] = group(s, e < 0 ? s.length : e + 1)
+          i = j
+          out += `nthRoot(${latex(a)}, ${latex(n)})`
+        } else {
+          const [a, j] = group(s, i)
+          i = j
+          out += `sqrt(${latex(a)})`
+        }
+      } else if (cmd === 'cdot' || cmd === 'times' || cmd === 'ast') out += '*'
+      else if (cmd === 'div') out += '/'
+      else if (cmd === 'infty') out += 'Infinity'
+      else if (cmd === '{') out += '('
+      else if (cmd === '}') out += ')'
+      else if (LATEX_SPACES.includes(cmd)) out += ' '
+      else if (LATEX_DROP.includes(cmd)) {
+        // \left. のような見えない区切りも消す
+        if (s[i] === '.') i++
+      } else if (LATEX_STYLES.includes(cmd)) {
+        const [a, j] = group(s, i)
+        i = j
+        out += ` ${a} `
+      } else if (GREEK.includes(cmd)) out += ` ${cmd.replace(/^var/, '')} `
+      else if (LATEX_FUNCS[cmd]) out += ` ${LATEX_FUNCS[cmd]} `
+      else out += cmd
+    } else if (c === '_' && s[i + 1] === '{') {
+      // 添字 x_{1} → x_1
+      const [a, j] = group(s, i + 1)
+      i = j
+      out += `_${a.replace(/[^A-Za-z0-9]/g, '')}`
+    } else if (c === '{') {
+      out += '('
+      i++
+    } else if (c === '}') {
+      out += ')'
+      i++
+    } else {
+      out += c
+      i++
+    }
+  }
+  return out
+}
+
 export function normalizeExpr(src: string): string {
   let s = superscripts(src)
   s = s.normalize('NFKC')
   for (const [re, to] of CHARS) s = s.replace(re, to)
+  s = latex(s)
   s = s.replace(/^\s*(?:y|f\s*\(\s*x\s*\))\s*=/, '')
   s = bars(s)
   s = words(s)

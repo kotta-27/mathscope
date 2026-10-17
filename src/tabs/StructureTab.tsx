@@ -128,7 +128,7 @@ export function StructureTab() {
       <aside className="panel">
         <h2>式</h2>
         <MathInput value={src} onChange={setSrc} parsed={p} />
-        <p className="hint">x²・√x・sin 2x・|x|・ax+b のような書き方もそのまま使える。</p>
+        <p className="hint">x²・√x・sin 2x・|x|・ax+b のような書き方も、LaTeX もそのまま使える。</p>
         {p.ok && p.symbols.length > 0 && (
           <>
             <h2>文字の値</h2>

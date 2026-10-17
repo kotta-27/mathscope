@@ -4,6 +4,7 @@ import {
   isSymbolNode,
   isFunctionNode,
   isParenthesisNode,
+  isOperatorNode,
   type MathNode,
   type EvalFunction,
 } from 'mathjs'
@@ -85,11 +86,19 @@ export function texOf(node: MathNode, colors?: Map<MathNode, string>): string {
       const inner = `\\frac{d}{d${v}}\\left(${n.args[0].toTex(options)}\\right)`
       return c ? `\\textcolor{${c}}{${inner}}` : inner
     }
-    if (!c || active.has(n)) return undefined
-    active.add(n)
-    const inner = n.toTex(options)
-    active.delete(n)
-    return `\\textcolor{${c}}{${inner}}`
+    if (c && !active.has(n)) {
+      active.add(n)
+      const inner = n.toTex(options)
+      active.delete(n)
+      return `\\textcolor{${c}}{${inner}}`
+    }
+    // 分数は線で範囲が分かるので、分子・分母と分数全体を囲む括弧は描かない（計算には残す）
+    if (isOperatorNode(n) && n.fn === 'divide' && n.args.length === 2) {
+      const [a, b] = n.args.map((x) => (isParenthesisNode(x) ? x.content : x))
+      return `\\frac{${a.toTex(options)}}{${b.toTex(options)}}`
+    }
+    if (isParenthesisNode(n) && isOperatorNode(n.content) && n.content.fn === 'divide') return n.content.toTex(options)
+    return undefined
   }
   const tex = node.toTex({ parenthesis: 'keep', implicit: 'hide', handler } as object)
   return tex.replace(/\\mathrm\{([a-zA-Z])\}/g, '{$1}')
