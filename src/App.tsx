@@ -5,6 +5,7 @@ import { HomeBackground } from './hero/HomeBackground'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Loader } from './components/Loader'
 import { CopyLink } from './components/CopyLink'
+import { PresentButton, ThemeButton } from './components/DisplayButtons'
 
 // ホーム以外は開いたときに読み込む（数式ライブラリ mathjs をトップで読み込まないため）
 const GraphTab = lazy(() => import('./tabs/GraphTab').then((m) => ({ default: m.GraphTab })))
@@ -76,6 +77,8 @@ export default function App() {
             ))}
           </nav>
           {tab !== 'home' && <CopyLink />}
+          {tab !== 'home' && <PresentButton />}
+          <ThemeButton />
         </div>
       </header>
       <main key={`${tab}|${hash}`}>

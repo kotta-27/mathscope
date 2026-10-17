@@ -18,10 +18,15 @@
     <meta property="og:locale" content="ja_JP" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      // 前回選んだ配色を、描く前に当てる（ちらつかないように）
+      try { var t = localStorage.getItem('mathscope-theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t } catch (e) {}
+    </script>
     <style>
       /* JS が読み込まれるまでの表示（React の描画で #root ごと置き換わる） */
       body { margin: 0; background: #f6f5f1; }
-      @media (prefers-color-scheme: dark) { body { background: #15171a; } }
+      @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body { background: #15171a; } }
+      :root[data-theme="dark"] body { background: #15171a; }
       .boot { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
       .boot svg { width: 96px; height: 96px; }
       .boot g { transform-origin: 50px 50px; animation: boot-spin 6s linear infinite; }

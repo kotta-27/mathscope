@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MathInput } from '../components/MathInput'
 import { Tex } from '../components/Tex'
 import { parseExpr, type Parsed } from '../lib/math'
@@ -69,6 +69,20 @@ export function StepsTab() {
     setSrc(MODES.find((x) => x.id === id)!.presets[0])
   }
   if (shown > moves.length && moves.length) setShown(moves.length)
+  // → / PageDown で次の手、← / PageUp で前の手、スペースで再生（入力欄にいるときは除く）
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement
+      if (el.closest('input, textarea, [contenteditable]') || e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') setShown((s) => Math.min(moves.length, s + 1))
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') setShown((s) => Math.max(0, s - 1))
+      else if (e.key === ' ' && !el.closest('button')) setPlay((p) => !p)
+      else return
+      e.preventDefault()
+    }
+    addEventListener('keydown', onKey)
+    return () => removeEventListener('keydown', onKey)
+  }, [moves.length])
   const cur = shown > 0 ? moves[shown - 1] : null
   // 種類・式・何手目かを URL に残す
   useSyncHash('steps', { mode, f: src, n: shown || null })
@@ -108,7 +122,7 @@ export function StepsTab() {
         </div>
         <p className="hint">
           {result?.ok ? (moves.length ? `全 ${moves.length} 手。` : 'この式は、これ以上変形できない。') : ''}
-          緑は書き換えた結果、赤は書き換える前の部分。
+          緑は書き換えた結果、赤は書き換える前の部分。キーボードの ← → でも進める。
         </p>
 
         <h2>例</h2>

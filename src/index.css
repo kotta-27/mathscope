@@ -17,7 +17,7 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #15171a;
     --surface: #1d2024;
     --surface-2: #262a2f;
@@ -32,6 +32,21 @@
     --shadow: none;
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a;
+  --surface: #1d2024;
+  --surface-2: #262a2f;
+  --text: #e8e6e1;
+  --muted: #9a9ea6;
+  --border: #2f343a;
+  --grid: #262a2f;
+  --axis: #5d636b;
+  --accent: #5bb3d6;
+  --accent-ink: #0f1215;
+  --area: rgba(91, 179, 214, 0.14);
+  --shadow: none;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -493,3 +508,21 @@ body { overflow-x: clip; }
   background: linear-gradient(to left, var(--bg), var(--bg)) local right / 28px 100% no-repeat,
     radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--text) 30%, transparent), transparent) scroll right / 14px 100% no-repeat;
 }
+
+/* ヘッダーの小さな道具（配色・発表） */
+.icon-tool { display: inline-flex; align-items: center; gap: 6px; flex: none; border: 1px solid var(--border); background: var(--surface); color: var(--muted); padding: 7px 10px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 13px; }
+.icon-tool:hover { color: var(--text); background: var(--surface-2); }
+.icon-tool.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+@media (max-width: 640px) { .icon-tool span { display: none; } .icon-tool { padding: 8px; } .icon-tool[aria-pressed] { display: none; } }
+
+/* 発表モード: 教室の後ろから読めるように文字を大きくし、説明やフッターを隠す */
+:root[data-present] body { font-size: 19px; }
+:root[data-present] .app { max-width: none; padding: 12px 20px 20px; }
+:root[data-present] .header { margin-bottom: 12px; }
+:root[data-present] .brand p, :root[data-present] .site-footer, :root[data-present] .panel > .hint, :root[data-present] .stage > .hint { display: none; }
+:root[data-present] .layout { grid-template-columns: 400px minmax(0, 1fr); }
+:root[data-present] .tick { font-size: 16px; }
+:root[data-present] .curve { stroke-width: 4; }
+:root[data-present] .katex { font-size: 1.3em; }
+:root[data-present] .hero-tex .katex { font-size: 1.6em; }
+:root[data-present] .slider-num { font-size: 18px; }

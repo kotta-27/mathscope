@@ -121,7 +121,7 @@ export function Plot({
   for (let x = Math.ceil(view.xMin / xs) * xs; x <= view.xMax; x += xs) {
     const px = sx(x)
     grid.push(<line key={`gx${x}`} x1={px} x2={px} y1={0} y2={h} className="grid" />)
-    if (Math.abs(x) > xs / 2)
+    if (Math.abs(x) > xs / 2 && px > 12 && px < w - 12)
       grid.push(
         <text key={`lx${x}`} x={px} y={Math.min(h - 6, y0 + 14)} className="tick" textAnchor="middle">
           {label(x, xs)}
@@ -131,7 +131,7 @@ export function Plot({
   for (let y = Math.ceil(view.yMin / ys) * ys; y <= view.yMax; y += ys) {
     const py = sy(y)
     grid.push(<line key={`gy${y}`} x1={0} x2={w} y1={py} y2={py} className="grid" />)
-    if (Math.abs(y) > ys / 2)
+    if (Math.abs(y) > ys / 2 && py > 10 && py < h - 6)
       grid.push(
         <text key={`ly${y}`} x={Math.min(w - 6, x0 + 6)} y={py + 4} className="tick">
           {label(y, ys)}
