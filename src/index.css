@@ -717,7 +717,8 @@ body { overflow-x: clip; }
 /* 悩みから「できること」へつなぐ線 */
 .problems-bridge { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 36px 0 calc(-1 * clamp(40px, 6vw, 80px)); color: var(--accent); }
 .bridge-line { width: 2px; height: 28px; background: linear-gradient(var(--border), var(--accent)); }
-.bridge-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; }
+.bridge-label { font-size: 18px; font-weight: 700; color: var(--text); }
+.bridge-wordmark { font-size: 24px; color: var(--text); }
 .bridge-arrow { font-size: 18px; line-height: 1; }
 /* 「こんなこと、ありませんか？」のイラスト */
 .problems-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); align-items: center; gap: 12px 40px; margin-bottom: 8px; }
