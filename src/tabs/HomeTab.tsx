@@ -5,6 +5,7 @@ import { FIELDS, THEOREMS } from '../lib/theorems'
 import { hrefTo } from '../lib/route'
 import { HeroCarousel } from '../hero/HeroCarousel'
 import { ProblemsArt } from '../hero/ProblemsArt'
+import { ProblemSpot } from '../hero/ProblemSpots'
 import { BayesArt, ParabolaArt, PartsArt, TangentArt, TransformArt } from '../hero/usecaseArt'
 
 
@@ -172,6 +173,7 @@ export function HomeTab() {
             <li key={p.verb}>
               {/* 押すと、下の「できること」の対応するカードへ */}
               <button type="button" className="problem" onClick={() => showFeature(p.verb)}>
+                <ProblemSpot index={i} />
                 <span className="problem-num">{String(i + 1).padStart(2, '0')}</span>
                 <span className="problem-pain">{p.pain}</span>
                 <span className="problem-go">
