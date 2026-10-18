@@ -4,6 +4,7 @@ import { Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
 import { MathInput } from '../components/MathInput'
 import { Dropdown } from '../components/Dropdown'
+import { GraphSaves } from '../components/GraphSaves'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, texOf } from '../lib/math'
 import { readGraphExpr } from '../lib/graphExpr'
@@ -175,11 +176,13 @@ export function GraphTab() {
   )
 
   // 式・パラメータの値・表示範囲・再生中のパラメータを URL に残す
-  // y の範囲は横幅に合わせて決まるので、x の範囲と y の中心だけで比べる
+  // 縦横の目盛りをそろえるため、表示範囲は既定の範囲（x −8〜8、y −5〜5）を含むように広がる。
+  // 中心が同じで、どちらかの幅が既定と同じなら、既定のまま（URL に書かない）
+  const near = (a: number, b: number) => Math.abs(a - b) < 1e-6
   const sameView =
-    Math.abs(view.xMin - VIEW.xMin) < 1e-9 &&
-    Math.abs(view.xMax - VIEW.xMax) < 1e-9 &&
-    Math.abs((view.yMin + view.yMax) / 2 - (VIEW.yMin + VIEW.yMax) / 2) < 1e-9
+    near((view.xMin + view.xMax) / 2, (VIEW.xMin + VIEW.xMax) / 2) &&
+    near((view.yMin + view.yMax) / 2, (VIEW.yMin + VIEW.yMax) / 2) &&
+    (near(view.xMax - view.xMin, VIEW.xMax - VIEW.xMin) || near(view.yMax - view.yMin, VIEW.yMax - VIEW.yMin))
   useSyncHash('graph', {
     f: rows.map((r) => r.src),
     ...Object.fromEntries(names.filter((n) => !RESERVED.has(n)).map((n) => [n, scope[n]])),
@@ -254,6 +257,7 @@ export function GraphTab() {
   return (
     <div className="layout graph-layout">
       <aside className="panel">
+        <GraphSaves suggest={rows.find((r) => r.src.trim())?.src.trim().slice(0, 40) ?? ''} />
         <h2>式</h2>
         <details className="howto">
           <summary>x 以外の文字はスライダーになる。書き方の例</summary>
