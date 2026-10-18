@@ -5,7 +5,6 @@ import { FIELDS, THEOREMS } from '../lib/theorems'
 import { hrefTo } from '../lib/route'
 import { HeroCarousel } from '../hero/HeroCarousel'
 import { ProblemsArt } from '../hero/ProblemsArt'
-import { ProblemSpot } from '../hero/ProblemSpots'
 import { BayesArt, ParabolaArt, PartsArt, TangentArt, TransformArt } from '../hero/usecaseArt'
 
 
@@ -52,24 +51,12 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
   },
 ]
 
-/** 「こんなこと、ありませんか？」: よくあるつまずき。並びと verb は下の「できること」のカードに 1 対 1 で対応する */
-const PROBLEMS: { pain: string; verb: string }[] = [
-  { pain: '数式を見ているだけでは、グラフの形がイメージできない', verb: '動かす' },
-  { pain: '式に並ぶ記号が、それぞれ何を表しているのか分からない', verb: '分解する' },
-  { pain: '解答の途中式が、どこで何をしたのか追えない', verb: '式変形を追う' },
-  { pain: '微分や積分が、言葉の説明だけではピンとこない', verb: '体感する' },
-  { pain: '公式は覚えたけど、どうしてこうなるのかが分からない', verb: '確かめる' },
+/** 「こんなこと、ありませんか？」: よくあるつまずきを 3 つにまとめる（下の「できること」とは 1 対 1 にしない） */
+const PROBLEMS = [
+  '式を見ているだけでは、グラフの形が思い浮かばない',
+  '途中式や記号を追っても、何をしているのかつかめない',
+  '公式は覚えたけど、どうしてそうなるのかが分からない',
 ]
-
-/** 下の「できること」の、その動詞のカードまでスクロールして、少しのあいだ光らせる */
-function showFeature(verb: string) {
-  const el = document.querySelector<HTMLElement>(`[data-feature="${verb}"]`)
-  if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  el.classList.remove('flash')
-  void el.offsetWidth
-  el.classList.add('flash')
-}
 
 /** 書き方と読み方の対応（数式ライブラリを使わずに描けるよう、読み方は TeX で持つ） */
 const READINGS: [string, string][] = [
@@ -169,18 +156,10 @@ export function HomeTab() {
           <ProblemsArt />
         </div>
         <ol className="problem-list">
-          {PROBLEMS.map((p, i) => (
-            <li key={p.verb}>
-              {/* 押すと、下の「できること」の対応するカードへ */}
-              <button type="button" className="problem" onClick={() => showFeature(p.verb)}>
-                <ProblemSpot index={i} />
-                <span className="problem-num">{String(i + 1).padStart(2, '0')}</span>
-                <span className="problem-pain">{p.pain}</span>
-                <span className="problem-go">
-                  {p.verb}
-                  <span aria-hidden> ↓</span>
-                </span>
-              </button>
+          {PROBLEMS.map((pain, i) => (
+            <li key={pain} className="problem">
+              <span className="problem-num">{String(i + 1).padStart(2, '0')}</span>
+              <span className="problem-pain">{pain}</span>
             </li>
           ))}
         </ol>
@@ -194,13 +173,10 @@ export function HomeTab() {
       </section>
 
       <section className="usecases">
-        <SectionHead eyebrow="Features" title="Mathscope でできること" lead="上の 5 つの悩みに、1 つずつ応える。押すと、例の式が入った状態で開く。" />
+        <SectionHead eyebrow="Features" title="Mathscope でできること" lead="押すと、例の式が入った状態で開く。" />
         <div className="features">
           {USECASES.map((u) => (
             <a key={u.verb} className="feature" href={u.href} data-feature={u.verb}>
-              {PROBLEMS.findIndex((p) => p.verb === u.verb) >= 0 && (
-                <span className="feature-for">悩み {String(PROBLEMS.findIndex((p) => p.verb === u.verb) + 1).padStart(2, '0')}</span>
-              )}
               <div className="feature-art">{u.art}</div>
               <div className="feature-head">
                 <h3>{u.verb}</h3>
