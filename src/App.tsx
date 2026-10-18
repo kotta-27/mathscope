@@ -78,14 +78,16 @@ export default function App() {
               </button>
             ))}
           </nav>
-          {/* ホームでは使わないが、場所は取っておく（タブの位置がページごとにずれないように） */}
-          <span className="header-tools" inert={tab === 'home'} data-hidden={tab === 'home' || undefined}>
-            <CopyLink />
-            <PresentButton />
-          </span>
-          <span className="theme-in-header">
-            <ThemeButton />
-          </span>
+          <div className="header-right">
+            {/* ホームでは使わないが、場所は取っておく（タブの位置がページごとにずれないように） */}
+            <span className="header-tools" inert={tab === 'home'} data-hidden={tab === 'home' || undefined}>
+              <CopyLink />
+              <PresentButton />
+            </span>
+            <span className="theme-in-header">
+              <ThemeButton />
+            </span>
+          </div>
         </div>
       </header>
       <main key={`${tab}|${hash}`}>
