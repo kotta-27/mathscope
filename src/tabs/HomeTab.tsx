@@ -51,39 +51,24 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
   },
 ]
 
-/** 「こんなこと、ありませんか？」: よくあるつまずきと、それに効く画面 */
-const PROBLEMS: { pain: string; answer: string; label: string; href: string }[] = [
-  {
-    pain: '数式を見ているだけでは、グラフの形がイメージできない',
-    answer: '式の中の文字をスライダーで動かすと、形の変わり方が目で見える。',
-    label: 'グラフで動かす',
-    href: hrefTo('graph', { f: 'a*(x - p)^2 + q', p: -2, q: -1, play: 'p', trail: '1' }),
-  },
-  {
-    pain: '公式は覚えたけど、どうしてこうなるのかが分からない',
-    answer: '定理ごとに、動かせる図と「なぜ成り立つか」の筋道がある。',
-    label: '余弦定理で見る',
-    href: hrefTo('theorems', { id: 'law-of-cosines' }),
-  },
-  {
-    pain: '解答の途中式が、どこで何をしたのか追えない',
-    answer: '式変形を 1 手ずつ再生し、書き換えた所を色で示す。',
-    label: '平方完成を追う',
-    href: hrefTo('steps', { mode: 'complete', f: '2x^2 - 8x + 3' }),
-  },
-  {
-    pain: '式に並ぶ記号が、それぞれ何を表しているのか分からない',
-    answer: '式を部品に分けて説明し、指を乗せた部分を式の中で光らせる。',
-    label: 'ベイズの定理で見る',
-    href: hrefTo('theorems', { id: 'bayes' }),
-  },
-  {
-    pain: '授業で動きを見せたいけれど、準備に時間をかけられない',
-    answer: '状態ごと共有できるリンクを開くだけ。大きな文字の発表モードもある。',
-    label: '動く図を開く',
-    href: hrefTo('geometry', { demo: 'deriv' }),
-  },
+/** 「こんなこと、ありませんか？」: よくあるつまずき。並びと verb は下の「できること」のカードに 1 対 1 で対応する */
+const PROBLEMS: { pain: string; verb: string }[] = [
+  { pain: '数式を見ているだけでは、グラフの形がイメージできない', verb: '動かす' },
+  { pain: '式に並ぶ記号が、それぞれ何を表しているのか分からない', verb: '分解する' },
+  { pain: '解答の途中式が、どこで何をしたのか追えない', verb: '式変形を追う' },
+  { pain: '微分や積分が、言葉の説明だけではピンとこない', verb: '体感する' },
+  { pain: '公式は覚えたけど、どうしてこうなるのかが分からない', verb: '確かめる' },
 ]
+
+/** 下の「できること」の、その動詞のカードまでスクロールして、少しのあいだ光らせる */
+function showFeature(verb: string) {
+  const el = document.querySelector<HTMLElement>(`[data-feature="${verb}"]`)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el.classList.remove('flash')
+  void el.offsetWidth
+  el.classList.add('flash')
+}
 
 /** 書き方と読み方の対応（数式ライブラリを使わずに描けるよう、読み方は TeX で持つ） */
 const READINGS: [string, string][] = [
@@ -184,28 +169,36 @@ export function HomeTab() {
         </div>
         <ol className="problem-list">
           {PROBLEMS.map((p, i) => (
-            <li key={p.label} className="problem">
-              <p className="problem-pain">
+            <li key={p.verb}>
+              {/* 押すと、下の「できること」の対応するカードへ */}
+              <button type="button" className="problem" onClick={() => showFeature(p.verb)}>
                 <span className="problem-num">{String(i + 1).padStart(2, '0')}</span>
-                {p.pain}
-              </p>
-              <span className="problem-arrow" aria-hidden>
-                →
-              </span>
-              <div className="problem-answer">
-                <p>{p.answer}</p>
-                <a href={p.href}>{p.label} →</a>
-              </div>
+                <span className="problem-pain">{p.pain}</span>
+                <span className="problem-go">
+                  {p.verb}
+                  <span aria-hidden> ↓</span>
+                </span>
+              </button>
             </li>
           ))}
         </ol>
+        {/* 悩みから「できること」へつなぐ */}
+        <div className="problems-bridge" aria-hidden>
+          <span className="bridge-line" />
+          <span className="bridge-label">Mathscope なら</span>
+          <span className="bridge-line" />
+          <span className="bridge-arrow">↓</span>
+        </div>
       </section>
 
       <section className="usecases">
-        <SectionHead eyebrow="Features" title="Mathscope でできること" lead="気になるものを押すと、例の式が入った状態で開く。" />
+        <SectionHead eyebrow="Features" title="Mathscope でできること" lead="上の 5 つの悩みに、1 つずつ応える。押すと、例の式が入った状態で開く。" />
         <div className="features">
           {USECASES.map((u) => (
-            <a key={u.verb} className="feature" href={u.href}>
+            <a key={u.verb} className="feature" href={u.href} data-feature={u.verb}>
+              {PROBLEMS.findIndex((p) => p.verb === u.verb) >= 0 && (
+                <span className="feature-for">悩み {String(PROBLEMS.findIndex((p) => p.verb === u.verb) + 1).padStart(2, '0')}</span>
+              )}
               <div className="feature-art">{u.art}</div>
               <div className="feature-head">
                 <h3>{u.verb}</h3>
