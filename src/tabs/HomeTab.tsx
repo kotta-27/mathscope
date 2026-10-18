@@ -166,7 +166,7 @@ export function HomeTab() {
         {/* 悩みから「できること」へつなぐ */}
         <div className="problems-bridge" aria-hidden>
           <span className="bridge-line" />
-          <span className="bridge-label">Mathscope なら</span>
+          <span className="bridge-label"><span className="bridge-wordmark">Math<span className="wordmark-scope">scope</span></span> なら</span>
           <span className="bridge-line" />
           <span className="bridge-arrow">↓</span>
         </div>
