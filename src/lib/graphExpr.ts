@@ -85,7 +85,8 @@ export function definedName(src: string): { name: string; fn: boolean } | null {
 }
 
 /** fns: ほかの行で名前をつけた関数の名前 */
-export function readGraphExpr(src: string, fns: readonly string[] = []): GraphExpr {
+/** axis: 名前のない式（x^2 など）の横軸の文字。θ は theta で渡す */
+export function readGraphExpr(src: string, fns: readonly string[] = [], axis = 'x'): GraphExpr {
   // NFKC は ² を 2 にしてしまうので使わず、見分けに使う記号だけを半角にする
   const s = src
     .replace(/[＜]/g, '<')
@@ -106,7 +107,7 @@ export function readGraphExpr(src: string, fns: readonly string[] = []): GraphEx
     parsed: greek(parsed),
     parts,
     join,
-    symbols: symbols.filter((x) => !VARS[curve.kind].includes(x)),
+    symbols: symbols.filter((x) => !(curve.kind === 'fn' ? [curve.arg] : VARS[curve.kind]).includes(x)),
   })
 
   // 媒介変数: (f(t), g(t))
@@ -128,7 +129,7 @@ export function readGraphExpr(src: string, fns: readonly string[] = []): GraphEx
   if (!cmp) {
     const f = parseExpr(s, fns)
     if (!f.ok) return { ok: false, parsed: f }
-    return done({ kind: 'fn', f, arg: 'x' }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
+    return done({ kind: 'fn', f, arg: axis }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
   }
 
   const l = s.slice(0, cmp.i).trim()
@@ -141,7 +142,7 @@ export function readGraphExpr(src: string, fns: readonly string[] = []): GraphEx
     if (l.replace(/\s+/g, '') === 'y') {
       const f = parseExpr(r, fns)
       if (!f.ok) return { ok: false, parsed: f }
-      if (!f.symbols.includes('y')) return done({ kind: 'fn', f, arg: 'x' }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
+      if (!f.symbols.includes('y')) return done({ kind: 'fn', f, arg: axis }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
     }
     // 関数の定義 f(x) = …（自分自身は使えない）
     const def = definedName(`${l}=`)

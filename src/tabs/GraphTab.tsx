@@ -25,7 +25,10 @@ type Range = { min: number; max: number; step: number }
 const RANGE = { min: -5, max: 5 }
 const VIEW: View = { xMin: -8, xMax: 8, yMin: -5, yMax: 5 }
 /** パラメータ以外に使う URL のキー */
-const RESERVED = new Set(['f', 'view', 'play', 'pts', 'trail', 'hide', 'deriv', 'area', 'rng'])
+const RESERVED = new Set(['f', 'view', 'play', 'pts', 'trail', 'hide', 'deriv', 'area', 'rng', 'axis', 'lbl', 'legend'])
+/** 横軸の文字の候補（θ は中では theta） */
+const AXES = ['x', 't', 'θ']
+const axisName = (a: string) => (a === 'θ' ? 'theta' : a)
 /** 残像の数と、軌跡の点の数の上限 */
 const MAX_SNAPS = 12
 const MAX_TRAIL = 800
@@ -49,7 +52,7 @@ function integrate(f: (x: number) => number, a: number, b: number, n = 400) {
 }
 
 /** スライダーの最小・最大・刻みを決める */
-function RangeEditor({ value, onChange, onReset }: { value: Range; onChange: (r: Range) => void; onReset: () => void }) {
+function RangeEditor({ value, onChange, onReset, label, onLabel }: { value: Range; onChange: (r: Range) => void; onReset: () => void; label: string; onLabel: (s: string) => void }) {
   const field = (k: keyof Range, label: string) => (
     <label>
       {label}
@@ -68,6 +71,10 @@ function RangeEditor({ value, onChange, onReset }: { value: Range; onChange: (r:
   )
   return (
     <div className="range-edit">
+      <label className="range-label">
+        表示名
+        <input type="text" value={label} maxLength={16} placeholder="例: 振幅" onChange={(e) => onLabel(e.target.value)} />
+      </label>
       {field('min', '最小')}
       {field('max', '最大')}
       {field('step', '刻み')}
@@ -135,6 +142,19 @@ export function GraphTab() {
   )
   const [initialView] = useState(() => readView(hp.get('view')))
   const [showPts, setShowPts] = useState(() => hp.get('pts') !== '0')
+  const [axis, setAxis] = useState(() => {
+    const a = hp.get('axis')
+    return a && /^([A-Za-z]|θ)$/.test(a) && a !== 'y' ? a : 'x'
+  })
+  const [labels, setLabels] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      hp.getAll('lbl').flatMap((s) => {
+        const i = s.indexOf(':')
+        return i > 0 ? [[s.slice(0, i), s.slice(i + 1).slice(0, 16)]] : []
+      }),
+    ),
+  )
+  const [legend, setLegend] = useState(() => hp.get('legend') !== '0')
   const [trail, setTrail] = useState(() => hp.get('trail') === '1')
   const [snaps, setSnaps] = useState<Record<string, number>[]>([])
   const [trailPts, setTrailPts] = useState<{ x: number; y: number; i: number }[]>([])
@@ -148,8 +168,8 @@ export function GraphTab() {
       const d = definedName(r.src)
       return d?.fn ? [d.name] : []
     })
-    return rows.map((r) => readGraphExpr(r.src, fns))
-  }, [rows])
+    return rows.map((r) => readGraphExpr(r.src, fns, axisName(axis)))
+  }, [rows, axis])
   // 名前をつけた関数・定数
   const defs = useMemo(
     () => exprs.flatMap((e) => (e.ok && (e.curve.kind === 'const' || (e.curve.kind === 'fn' && e.curve.name)) ? [e.curve] : [])) as (Extract<Curve, { kind: 'const' }> | Extract<Curve, { kind: 'fn' }>)[],
@@ -232,6 +252,9 @@ export function GraphTab() {
     view: sameView ? null : [view.xMin, view.xMax, view.yMin, view.yMax].map(num).join(','),
     play: active.length ? active.join(',') : null,
     pts: showPts ? null : '0',
+    axis: axis === 'x' ? null : axis,
+    lbl: Object.entries(labels).filter(([n, l]) => l && names.includes(n)).map(([n, l]) => `${n}:${l}`),
+    legend: legend ? null : '0',
     trail: trail ? '1' : null,
     hide: rows.some((r) => r.hidden) ? rows.flatMap((r, i) => (r.hidden ? [i] : [])).join(',') : null,
     deriv: rows.some((r) => r.deriv) ? rows.flatMap((r, i) => (r.deriv ? [i] : [])).join(',') : null,
@@ -379,6 +402,7 @@ export function GraphTab() {
               <div key={n} className="param-row">
                 <Slider
                   name={n}
+                  label={labels[n] || undefined}
                   value={scope[n]}
                   {...rangeOf(n)}
                   onChange={(v) => setParams((p) => ({ ...p, [n]: v }))}
@@ -390,6 +414,8 @@ export function GraphTab() {
                 </button>
                 {editRange === n && (
                   <RangeEditor
+                    label={labels[n] ?? ''}
+                    onLabel={(l) => setLabels((o) => ({ ...o, [n]: l }))}
                     value={rangeOf(n)}
                     onChange={(rg) => setRanges((o) => ({ ...o, [n]: rg }))}
                     onReset={() =>
@@ -406,7 +432,30 @@ export function GraphTab() {
           </>
         )}
 
+        <div className="axis-pick">
+          <span>横軸の文字</span>
+          {AXES.map((a) => (
+            <button key={a} className={`chip ${axis === a ? 'on' : ''}`} onClick={() => setAxis(a)}>
+              {a}
+            </button>
+          ))}
+          <input
+            className="axis-input"
+            value={AXES.includes(axis) ? '' : axis}
+            maxLength={1}
+            placeholder="他"
+            aria-label="横軸の文字（1 文字）"
+            onChange={(e) => {
+              const v = e.target.value.trim()
+              if (/^[A-Za-z]$/.test(v) && v !== 'y') setAxis(v)
+              else if (!v) setAxis('x')
+            }}
+          />
+        </div>
         <div className="graph-toggles">
+          <button className={`chip ${legend ? 'on' : ''}`} aria-pressed={legend} onClick={() => setLegend(!legend)} title="グラフの中に、色と式の対応を出す">
+            凡例
+          </button>
           <button className={`chip ${showPts ? 'on' : ''}`} aria-pressed={showPts} onClick={() => setShowPts(!showPts)} title="頂点・極値・交点に印と座標をつける">
             頂点・交点の印
           </button>
@@ -437,7 +486,25 @@ export function GraphTab() {
       </aside>
 
       <section className="stage">
-        <Plot initial={initialView} height={plotH} onView={setView} equal onHover={setHover}>
+        <Plot
+          initial={initialView}
+          height={plotH}
+          onView={setView}
+          equal
+          onHover={setHover}
+          overlay={
+            legend && (
+              <Legend
+                items={exprs.flatMap((e, i) =>
+                  e.ok && e.curve.kind !== 'const' && rows[i].src.trim()
+                    ? [{ id: rows[i].id, color: PALETTE[i % PALETTE.length], tex: e.join(e.parts.map((n) => texOf(n))), hidden: !!rows[i].hidden, dashed: e.curve.kind === 'region' }]
+                    : [],
+                )}
+                onToggle={(id) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, hidden: !r.hidden || undefined } : r)))}
+              />
+            )
+          }
+        >
           {(ctx) => {
             // y = f(x) の式（頂点・交点の印の対象）
             const ok = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' && !rows[i].hidden ? [{ f: ((c, arg) => (x: number) => evalNum(c, { ...scope, [arg]: x }))(e.curve.f.code, e.curve.arg), i }] : []))
@@ -517,6 +584,13 @@ export function GraphTab() {
                     })
                 })}
                 {hover && <TracePoint ok={ok} ctx={ctx} p={hover} />}
+                {/* 軸の文字 */}
+                <text x={ctx.w - 8} y={Math.min(ctx.h - 6, Math.max(14, ctx.sy(0) - 8))} textAnchor="end" className="axis-name">
+                  {axis}
+                </text>
+                <text x={Math.min(ctx.w - 14, Math.max(8, ctx.sx(0) + 8))} y={16} className="axis-name">
+                  y
+                </text>
               </>
             )
           }}
@@ -553,5 +627,20 @@ function TracePoint({ ok, ctx, p }: { ok: { f: (x: number) => number; i: number 
         {label}
       </text>
     </g>
+  )
+}
+
+/** グラフの中の凡例。押すと、その式を隠す・表示する */
+function Legend({ items, onToggle }: { items: { id: number; color: string; tex: string; hidden: boolean; dashed?: boolean }[]; onToggle: (id: number) => void }) {
+  if (!items.length) return null
+  return (
+    <div className="graph-legend" role="list" aria-label="凡例">
+      {items.map((it) => (
+        <button key={it.id} role="listitem" className={`legend-item ${it.hidden ? 'off' : ''}`} onClick={() => onToggle(it.id)} title={it.hidden ? '表示する' : '隠す'}>
+          <span className="legend-swatch" style={{ background: it.dashed ? 'transparent' : it.color, borderColor: it.color }} />
+          <Tex tex={it.tex} />
+        </button>
+      ))}
+    </div>
   )
 }

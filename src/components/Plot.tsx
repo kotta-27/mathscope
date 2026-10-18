@@ -32,6 +32,7 @@ export function Plot({
   onView,
   equal = false,
   onHover,
+  overlay,
 }: {
   initial: View
   height?: number
@@ -42,6 +43,8 @@ export function Plot({
   equal?: boolean
   /** マウスを乗せた位置（指ではタップした位置）。離れたら null */
   onHover?: (p: { x: number; y: number } | null) => void
+  /** グラフの上に重ねる HTML（凡例など） */
+  overlay?: ReactNode
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [svg, setSvg] = useState<SVGSVGElement | null>(null)
@@ -212,6 +215,7 @@ export function Plot({
         <line x1={sx(0)} x2={sx(0)} y1={0} y2={h} className="axis" />
         {children({ view, w, h, sx, sy, toWorld, path })}
       </svg>
+      {overlay}
       <button className="plot-reset" onClick={() => setView(initial)}>
         表示をリセット
       </button>

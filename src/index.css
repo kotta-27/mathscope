@@ -669,3 +669,20 @@ body { overflow-x: clip; }
 .saves-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .saves-date { font-size: 11px; color: var(--muted); }
 .icon-btn.danger { color: #e4572e; border-color: #e4572e; font-size: 12px; width: auto; padding: 0 8px; }
+
+/* グラフ: 横軸の文字・凡例・軸の文字 */
+.axis-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+.axis-pick .chip { min-width: 30px; }
+.axis-input { width: 40px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); color: var(--text); text-align: center; font-size: 13px; }
+.range-edit .range-label input { width: 96px; }
+.axis-name { fill: var(--muted); font-size: 13px; font-style: italic; font-family: 'Times New Roman', serif; }
+.graph-legend { position: absolute; top: 8px; left: 8px; z-index: 2; display: flex; flex-direction: column; gap: 2px; max-width: min(60%, 360px); max-height: 60%; overflow: auto; padding: 6px 8px; background: color-mix(in srgb, var(--surface) 88%, transparent); border: 1px solid var(--border); border-radius: 10px; backdrop-filter: blur(4px); }
+.legend-item { display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 2px 4px; border-radius: 6px; color: var(--text); cursor: pointer; text-align: left; font-size: 13px; white-space: nowrap; }
+.legend-item:hover { background: var(--surface-2); }
+.legend-item.off { opacity: 0.4; text-decoration: line-through; }
+.legend-swatch { flex: none; width: 16px; height: 4px; border-radius: 2px; border: 2px solid; }
+:root[data-present] .graph-legend { font-size: 17px; }
+:root[data-present] .legend-item { font-size: 17px; }
+/* 表示名のあるスライダー: 名前の列を広げ、「振幅 A」と 1 行に並べる */
+.slider:not(.stack):has(.slider-label) { grid-template-columns: auto 1fr 68px auto; }
+.slider:not(.stack) .slider-name:has(.slider-label) { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
