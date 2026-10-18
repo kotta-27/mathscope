@@ -4,6 +4,7 @@ import { FIGURE_IDS } from '../figures/ids'
 import { FIELDS, THEOREMS } from '../lib/theorems'
 import { hrefTo } from '../lib/route'
 import { HeroCarousel } from '../hero/HeroCarousel'
+import { ProblemsArt } from '../hero/ProblemsArt'
 import { BayesArt, ParabolaArt, PartsArt, TangentArt, TransformArt } from '../hero/usecaseArt'
 
 
@@ -177,7 +178,10 @@ export function HomeTab() {
       </section>
 
       <section className="problems">
-        <SectionHead eyebrow="Problems" title="こんなこと、ありませんか？" lead="数学でつまずくのは、式の向こうにある形や理由が見えないとき。Mathscope は、それを見えるようにする。" />
+        <div className="problems-head">
+          <SectionHead eyebrow="Problems" title="こんなこと、ありませんか？" lead="数学でつまずくのは、式の向こうにある形や理由が見えないとき。Mathscope は、それを見えるようにする。" />
+          <ProblemsArt />
+        </div>
         <ol className="problem-list">
           {PROBLEMS.map((p, i) => (
             <li key={p.label} className="problem">
