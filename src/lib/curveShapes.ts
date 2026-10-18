@@ -11,7 +11,8 @@ const TAU = 2 * Math.PI
 export function curveShapes(e: OkExpr, scope: Record<string, number>, ctx: PlotCtx, step: number): { line: string; fill?: string; dashed?: boolean } {
   const c = e.curve
   const { view: v, w, h } = ctx
-  if (c.kind === 'fn') return { line: ctx.path((x) => evalNum(c.f.code, { ...scope, x })) }
+  if (c.kind === 'const') return { line: '' }
+  if (c.kind === 'fn') return { line: ctx.path((x) => evalNum(c.f.code, { ...scope, [c.arg]: x })) }
   if (c.kind === 'param' || c.kind === 'polar') {
     const X = c.kind === 'param' ? (t: number) => evalNum(c.x.code, { ...scope, t }) : (t: number) => evalNum(c.r.code, { ...scope, theta: t }) * Math.cos(t)
     const Y = c.kind === 'param' ? (t: number) => evalNum(c.y.code, { ...scope, t }) : (t: number) => evalNum(c.r.code, { ...scope, theta: t }) * Math.sin(t)

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ConstantNode, ParenthesisNode, derivative, isSymbolNode, simplify, type EvalFunction, type MathNode } from 'mathjs'
 import { Plot } from '../components/Plot'
 import { Slider } from '../components/Slider'
@@ -7,7 +7,7 @@ import { Dropdown } from '../components/Dropdown'
 import { GraphSaves } from '../components/GraphSaves'
 import { Tex } from '../components/Tex'
 import { PALETTE, evalNum, texOf } from '../lib/math'
-import { readGraphExpr } from '../lib/graphExpr'
+import { definedName, readGraphExpr, type Curve } from '../lib/graphExpr'
 import { PRESET_GROUPS, type Preset } from '../lib/graphPresets'
 import { Curves, Ghosts } from '../components/GraphCurves'
 import { useRaf } from '../lib/useRaf'
@@ -89,7 +89,8 @@ function readView(s: string | null): View {
 
 function substitute(node: MathNode, scope: Record<string, number>): MathNode {
   return node.transform((n) => {
-    if (!isSymbolNode(n) || !(n.name in scope)) return n
+    // 数の値だけを入れる（名前をつけた関数の名前はそのまま）
+    if (!isSymbolNode(n) || typeof scope[n.name] !== 'number') return n
     const v = Math.round(scope[n.name] * 100) / 100
     return v < 0 ? new ParenthesisNode(new ConstantNode(v)) : new ConstantNode(v)
   })
@@ -141,13 +142,53 @@ export function GraphTab() {
   const [view, setView] = useState(initialView)
   const dirs = useRef<Record<string, number>>({})
 
-  const exprs = useMemo(() => rows.map((r) => readGraphExpr(r.src)), [rows])
+  // 先に名前をつけた関数を拾ってから、各行を読む（f(x) = … の行があれば、ほかの行で f(…) が使える）
+  const exprs = useMemo(() => {
+    const fns = rows.flatMap((r) => {
+      const d = definedName(r.src)
+      return d?.fn ? [d.name] : []
+    })
+    return rows.map((r) => readGraphExpr(r.src, fns))
+  }, [rows])
+  // 名前をつけた関数・定数
+  const defs = useMemo(
+    () => exprs.flatMap((e) => (e.ok && (e.curve.kind === 'const' || (e.curve.kind === 'fn' && e.curve.name)) ? [e.curve] : [])) as (Extract<Curve, { kind: 'const' }> | Extract<Curve, { kind: 'fn' }>)[],
+    [exprs],
+  )
+  const defNames = useMemo(() => new Set(defs.map((d) => (d.kind === 'const' ? d.name : d.name!))), [defs])
   const names = useMemo(() => {
     const s = new Set<string>()
-    exprs.forEach((e) => e.ok && e.symbols.forEach((n) => s.add(n)))
+    exprs.forEach((e) => e.ok && e.symbols.forEach((n) => !defNames.has(n) && s.add(n)))
     return [...s].sort()
-  }, [exprs])
-  const scope = Object.fromEntries(names.map((n) => [n, params[n] ?? 1]))
+  }, [exprs, defNames])
+  /** パラメータの値に、名前をつけた定数・関数を足した scope */
+  const withDefs = useCallback(
+    (base: Record<string, number>) => {
+      const sc: Record<string, unknown> = { ...base }
+      let depth = 0
+      for (const d of defs)
+        if (d.kind === 'fn' && d.name) {
+          const { code } = d.f
+          const arg = d.arg
+          sc[d.name] = (v: number) => {
+            // 互いに呼び合う定義で止まらなくならないように
+            if (depth > 40) return NaN
+            depth++
+            try {
+              return evalNum(code, { ...sc, [arg]: v })
+            } finally {
+              depth--
+            }
+          }
+        }
+      // 定数どうしが参照し合ってもよいように、何回か計算し直す
+      for (let pass = 0; pass < 4; pass++) for (const d of defs) if (d.kind === 'const') sc[d.name] = evalNum(d.v.code, sc)
+      return sc as Record<string, number>
+    },
+    [defs],
+  )
+  const pscope = Object.fromEntries(names.map((n) => [n, params[n] ?? 1]))
+  const scope = withDefs(pscope)
   const active = names.filter((n) => playing[n])
   const narrow = useMedia('(max-width: 900px)')
   const present = usePresent()
@@ -159,6 +200,8 @@ export function GraphTab() {
     return { min: -m, max: m, step: 0.01 }
   }
   const ids = rows.map((r) => r.id)
+  // 残像の各時点の scope（定数・関数を足したもの）
+  const ghostScopes = useMemo(() => snaps.map(withDefs), [snaps, withDefs])
   const hidden = useMemo(() => new Set(rows.filter((r) => r.hidden).map((r) => r.id)), [rows])
   // 導関数（式で求められるときは式で、だめなら数値で）
   const derivs = useMemo(
@@ -166,7 +209,7 @@ export function GraphTab() {
       exprs.map((e) => {
         if (!e.ok || e.curve.kind !== 'fn') return null
         try {
-          const node = simplify(derivative(e.curve.f.node, 'x'))
+          const node = simplify(derivative(e.curve.f.node, e.curve.arg))
           return { node, code: node.compile() as EvalFunction }
         } catch {
           return null
@@ -213,7 +256,8 @@ export function GraphTab() {
   })
 
   // 動かした跡: パラメータが変わるたびに（0.1 秒おきに）、そのときの値と、頂点などの位置を残す
-  const scopeKey = JSON.stringify(scope)
+  // 跡はパラメータの値だけで残す（定数・関数は描くときに足す）
+  const scopeKey = JSON.stringify(pscope)
   const clearTrail = () => {
     setSnaps([])
     setTrailPts([])
@@ -229,12 +273,12 @@ export function GraphTab() {
     const now = performance.now()
     if (now - lastSnap.current < 100) return
     lastSnap.current = now
-    const sc = JSON.parse(scopeKey) as Record<string, number>
+    const sc = withDefs(JSON.parse(scopeKey) as Record<string, number>)
     setSnaps((s) => [...s, sc].slice(-MAX_SNAPS))
-    const fns = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' && !rows[i].hidden ? [{ c: e.curve.f.code, i }] : []))
+    const fns = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' && !rows[i].hidden ? [{ c: e.curve.f.code, arg: e.curve.arg, i }] : []))
     if (!fns.length) return
     const feats = findFeatures(
-      fns.map(({ c }) => (x: number) => evalNum(c, { ...sc, x })),
+      fns.map(({ c, arg }) => (x: number) => evalNum(c, { ...sc, [arg]: x })),
       view.xMin,
       view.xMax,
       view.yMax - view.yMin,
@@ -261,7 +305,7 @@ export function GraphTab() {
         <h2>式</h2>
         <details className="howto">
           <summary>x 以外の文字はスライダーになる。書き方の例</summary>
-          <p className="hint">x²・√x・sin 2x・|x| のようなふだんの書き方も、LaTeX も使える。円 x² + y² = 4、領域 y {'>'} x²、媒介変数 (cos t, sin t)、極座標 r = 1 + cos θ も描ける。</p>
+          <p className="hint">x²・√x・sin 2x・|x| のようなふだんの書き方も、LaTeX も使える。円 x² + y² = 4、領域 y {'>'} x²、媒介変数 (cos t, sin t)、極座標 r = 1 + cos θ も描ける。f(x) = x² のように関数に、k = 2 のように定数に名前をつけると、ほかの行で f(x − k) のように使える。</p>
         </details>
         {rows.map((r, i) => {
           const e = exprs[i]
@@ -300,6 +344,7 @@ export function GraphTab() {
                   <Tex tex={e.join(e.parts.map((n) => texOf(n)))} />
                   {e.symbols.length > 0 && <Tex className="sub" tex={`\\to\\ ${e.join(e.parts.map((n) => texOf(substitute(n, scope))))}`} />}
                   {r.deriv && derivs[i] && <Tex className="sub" tex={`y' = ${texOf(derivs[i]!.node)}`} />}
+                  {e.curve.kind === 'const' && <Tex className="sub" tex={`= ${r2(scope[e.curve.name], 4)}\\ \\text{（定数）}`} />}
                 </div>
               )}
               {e.ok && e.curve.kind === 'fn' && (
@@ -315,7 +360,7 @@ export function GraphTab() {
                       <input type="number" step="0.5" value={r.area[0]} aria-label="積分の下端" onChange={(ev) => ev.target.value !== '' && patchRow(r.id, { area: [Number(ev.target.value), r.area![1]] })} />
                       〜
                       <input type="number" step="0.5" value={r.area[1]} aria-label="積分の上端" onChange={(ev) => ev.target.value !== '' && patchRow(r.id, { area: [r.area![0], Number(ev.target.value)] })} />
-                      <Tex tex={`=\\ ${r2(integrate((x) => evalNum((e.curve as { f: { code: EvalFunction } }).f.code, { ...scope, x }), r.area[0], r.area[1]), 4)}`} />
+                      <Tex tex={`=\\ ${r2(integrate((x) => evalNum((e.curve as { f: { code: EvalFunction } }).f.code, { ...scope, [(e.curve as { arg: string }).arg]: x }), r.area[0], r.area[1]), 4)}`} />
                     </span>
                   )}
                 </div>
@@ -395,7 +440,7 @@ export function GraphTab() {
         <Plot initial={initialView} height={plotH} onView={setView} equal onHover={setHover}>
           {(ctx) => {
             // y = f(x) の式（頂点・交点の印の対象）
-            const ok = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' && !rows[i].hidden ? [{ f: ((c) => (x: number) => evalNum(c, { ...scope, x }))(e.curve.f.code), i }] : []))
+            const ok = exprs.flatMap((e, i) => (e.ok && e.curve.kind === 'fn' && !rows[i].hidden ? [{ f: ((c, arg) => (x: number) => evalNum(c, { ...scope, [arg]: x }))(e.curve.f.code, e.curve.arg), i }] : []))
             const feats = showPts ? findFeatures(ok.map((o) => o.f), ctx.view.xMin, ctx.view.xMax, ctx.view.yMax - ctx.view.yMin) : []
             return (
               <>
@@ -429,14 +474,19 @@ export function GraphTab() {
                     </g>
                   )
                 })}
-                {trail && <Ghosts exprs={exprs} ids={ids} snaps={snaps} ctx={ctx} hidden={hidden} />}
+                {trail && <Ghosts exprs={exprs} ids={ids} snaps={ghostScopes} ctx={ctx} hidden={hidden} />}
                 <Curves exprs={exprs} ids={ids} scope={scope} ctx={ctx} hidden={hidden} />
                 {/* 導関数: 同じ色の点線 */}
-                {derivs.map((d, i) =>
-                  d && rows[i].deriv && !rows[i].hidden ? (
-                    <path key={`d-${ids[i]}`} d={ctx.path((x) => evalNum(d.code, { ...scope, x }))} stroke={PALETTE[i % PALETTE.length]} className="curve deriv" />
-                  ) : null,
-                )}
+                {exprs.map((e, i) => {
+                  if (!e.ok || e.curve.kind !== 'fn' || !rows[i].deriv || rows[i].hidden) return null
+                  const { code } = e.curve.f
+                  const arg = e.curve.arg
+                  const d = derivs[i]
+                  // 式で求められないとき（名前をつけた関数を使う式など）は数値で
+                  const fx = (x: number) => evalNum(code, { ...scope, [arg]: x })
+                  const df = d ? (x: number) => evalNum(d.code, { ...scope, [arg]: x }) : (x: number) => (fx(x + 1e-5) - fx(x - 1e-5)) / 2e-5
+                  return <path key={`d-${ids[i]}`} d={ctx.path(df)} stroke={PALETTE[i % PALETTE.length]} className="curve deriv" />
+                })}
                 {trail &&
                   trailPts.map((p, k) => (
                     <circle key={k} cx={ctx.sx(p.x)} cy={ctx.sy(p.y)} r={2.6} fill={PALETTE[p.i % PALETTE.length]} opacity={0.75} className="trail-pt" />

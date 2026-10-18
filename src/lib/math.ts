@@ -1,6 +1,9 @@
 import * as mathjs from 'mathjs'
 import {
   parse,
+  OperatorNode,
+  ParenthesisNode,
+  SymbolNode,
   isSymbolNode,
   isFunctionNode,
   isParenthesisNode,
@@ -34,7 +37,11 @@ function translateError(msg: string, text: string): { error: string; pos?: numbe
 
 const isMathFunction = (name: string) => typeof (mathjs as unknown as Record<string, unknown>)[name] === 'function'
 
-export function parseExpr(src: string): Parsed {
+/**
+ * 式を読む。fns には、グラフで名前をつけた関数（f, g など）を渡す。
+ * 1 文字の名前にかっこが続くとき、fns にない名前は掛け算として読む（a(x − p) → a·(x − p)）。
+ */
+export function parseExpr(src: string, fns: readonly string[] = []): Parsed {
   const normalized = normalizeExpr(src)
   if (!normalized) return { ok: false, error: '式を入力してください', normalized }
   let node: MathNode
@@ -43,9 +50,14 @@ export function parseExpr(src: string): Parsed {
   } catch (e) {
     return { ok: false, normalized, ...translateError((e as Error).message, normalized) }
   }
+  node = node.transform((n) => {
+    if (isFunctionNode(n) && n.fn.name.length === 1 && !fns.includes(n.fn.name) && !isMathFunction(n.fn.name) && n.args.length === 1)
+      return new OperatorNode('*', 'multiply', [new SymbolNode(n.fn.name), new ParenthesisNode(n.args[0])], true)
+    return n
+  })
   let unknown: string | null = null
   node.traverse((n) => {
-    if (!unknown && isFunctionNode(n) && !isMathFunction(n.fn.name)) unknown = n.fn.name
+    if (!unknown && isFunctionNode(n) && !isMathFunction(n.fn.name) && !fns.includes(n.fn.name)) unknown = n.fn.name
   })
   if (unknown) {
     const pos = normalized.indexOf(unknown)
@@ -64,7 +76,8 @@ export function freeSymbols(node: MathNode): string[] {
   return [...set].sort()
 }
 
-export function evalNum(code: EvalFunction, scope: Record<string, number>): number {
+/** scope には数のほか、グラフで名前をつけた関数（f など）も入る */
+export function evalNum(code: EvalFunction, scope: Record<string, unknown>): number {
   try {
     const v = code.evaluate({ ...scope })
     return typeof v === 'number' ? v : NaN
