@@ -17,8 +17,7 @@ check('aria-current', (await b.evaluate(`return document.querySelector('.tab[ari
 await b.evaluate(`[...document.querySelectorAll('.tab')].find(t => t.textContent === '定理').click()`)
 await sleep(1500)
 await b.evaluate('history.back()')
-await sleep(1500)
-check('戻るで前のタブへ', (await b.evaluate('return location.hash')) === '#graph' && (await b.evaluate(`return document.querySelector('.tab.on')?.textContent`)) === 'グラフ')
+check('戻るで前のタブへ', await b.waitFor(`location.hash === '#graph' && document.querySelector('.tab.on')?.textContent === 'グラフ'`, 10000), await b.evaluate('return location.hash'))
 await b.evaluate('history.back()')
 // 公開版では読み込みに時間がかかることがあるので、決まった秒数ではなく、ホームが出るまで待つ
 const home = await b.waitFor(`document.querySelector('.hero-title')`, 10000)
