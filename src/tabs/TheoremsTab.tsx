@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { flushHash, hrefTo, readHash, useSyncHash } from '../lib/route'
-import { COURSES, TOPICS } from '../lib/courses'
+import { COURSES, TOPICS, type Course } from '../lib/courses'
 import { GUIDE } from '../lib/guide'
+import { PROOFS } from '../lib/proofs'
 import { matches, norm } from '../lib/search'
 import { track } from '../lib/analytics'
 import { MathText } from '../components/MathText'
@@ -11,6 +12,9 @@ import { FIGURES } from '../figures'
 import { figStore } from '../figures/state'
 import { FigScope } from '../figures/FigScope'
 import { ErrorBoundary } from '../components/ErrorBoundary'
+
+/** 科目の並び（学ぶ順） */
+const COURSE_LIST: Course[] = ['中学', '数I', '数A', '数II', '数B', '数III', '数C', '大学']
 
 /** 一覧のスクロール位置（定理のページから戻ったときに元の位置へ戻す） */
 let listScroll: { hash: string; y: number } | null = null
@@ -28,10 +32,14 @@ function TheoremList() {
     return FIELDS.find((x) => x.id === f)?.id ?? 'all'
   })
   const [q, setQ] = useState(() => readHash().params.get('q') ?? '')
-  const hits = useMemo(() => THEOREMS.filter((t) => matches(t, q)), [q])
+  const [course, setCourse] = useState<Course | 'all'>(() => {
+    const c = readHash().params.get('course')
+    return COURSE_LIST.find((x) => x === c) ?? 'all'
+  })
+  const hits = useMemo(() => THEOREMS.filter((t) => matches(t, q) && (course === 'all' || COURSES[t.id]?.course === course)), [q, course])
   const count = (f: FieldId) => hits.filter((t) => t.field === f).length
   const groups = FIELDS.filter((f) => (field === 'all' || f.id === field) && count(f.id) > 0)
-  useSyncHash('theorems', { q: q || null, field: field === 'all' ? null : field })
+  useSyncHash('theorems', { q: q || null, field: field === 'all' ? null : field, course: course === 'all' ? null : course })
   // 定理のページから「戻る」で来たら、前のスクロール位置へ
   useEffect(() => {
     if (listScroll && listScroll.hash === location.hash) window.scrollTo(0, listScroll.y)
@@ -47,6 +55,17 @@ function TheoremList() {
       <aside className="panel sticky theorems-side">
         <h2>検索</h2>
         <input className="wide" placeholder="定理名・単元名・英語で検索" value={q} onChange={(e) => setQ(e.target.value)} />
+        <h2>科目</h2>
+        <div className="chips course-chips">
+          {(['all', ...COURSE_LIST] as const).map((c) => {
+            const n = c === 'all' ? THEOREMS.filter((t) => matches(t, q)).length : THEOREMS.filter((t) => matches(t, q) && COURSES[t.id]?.course === c).length
+            return (
+              <button key={c} className={`chip ${course === c ? 'on' : ''}`} onClick={() => setCourse(c)} disabled={!n}>
+                {c === 'all' ? 'すべて' : c}
+              </button>
+            )
+          })}
+        </div>
         <h2>分野</h2>
         <nav className="field-list">
           <button className={`field-item ${field === 'all' ? 'on' : ''}`} onClick={() => setField('all')}>
@@ -242,6 +261,17 @@ function TheoremCard({ t }: { t: Theorem }) {
             ))}
           </ul>
         </div>
+      )}
+      {PROOFS[t.id] && (
+        <details className="theorem-why">
+          <summary>
+            <span className="tag">なぜ成り立つか</span>
+            <span className="why-hint">証明の筋を見る</span>
+          </summary>
+          <p>
+            <MathText text={PROOFS[t.id]} />
+          </p>
+        </details>
       )}
       {t.conditions && (
         <p className="theorem-cond">
