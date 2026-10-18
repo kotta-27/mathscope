@@ -699,20 +699,25 @@ body { overflow-x: clip; }
 .part-row.on .part-desc { color: var(--text); }
 @media (max-width: 640px) { .part-row { grid-template-columns: 1fr; gap: 2px; } .part-tex { max-width: 100%; } }
 
-/* ホーム: こんなこと、ありませんか？ */
-.problem-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.problem { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px 20px; padding: 18px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
-.problem-pain { margin: 0; display: flex; align-items: baseline; gap: 14px; font-size: 16px; font-weight: 600; line-height: 1.6; }
+/* ホーム: こんなこと、ありませんか？（悩みだけを並べ、押すと下の「できること」へ） */
+.problem-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 10px; }
+.problem { width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: baseline; gap: 12px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+.problem:hover { border-color: var(--accent); transform: translateY(-1px); }
 .problem-num { flex: none; font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
-.problem-arrow { color: var(--muted); font-size: 18px; }
-.problem-answer p { margin: 0 0 4px; color: var(--muted); font-size: 14px; line-height: 1.7; }
-.problem-answer a { color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; }
-.problem-answer a:hover { text-decoration: underline; }
-@media (max-width: 760px) {
-  .problem { grid-template-columns: 1fr; gap: 8px; padding: 16px 16px; }
-  .problem-arrow { display: none; }
-  .problem-answer { padding-left: 32px; }
-}
+.problem-pain { flex: 1; font-size: 15px; font-weight: 600; line-height: 1.6; }
+.problem-go { flex: none; align-self: center; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.problem:hover .problem-go { color: var(--accent); }
+/* 悩みから「できること」へつなぐ線 */
+.problems-bridge { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 36px 0 calc(-1 * clamp(40px, 6vw, 80px)); color: var(--accent); }
+.bridge-line { width: 2px; height: 28px; background: linear-gradient(var(--border), var(--accent)); }
+.bridge-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; }
+.bridge-arrow { font-size: 18px; line-height: 1; }
+/* 「できること」のカード: どの悩みに応えるか */
+.feature { position: relative; }
+.feature-for { position: absolute; top: 10px; left: 10px; z-index: 1; font-size: 11px; font-weight: 700; color: var(--accent); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+.feature.flash { animation: feature-flash 1.4s ease-out; }
+@keyframes feature-flash { 0%, 30% { box-shadow: 0 0 0 3px var(--accent); border-color: var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .feature.flash { animation: none; outline: 3px solid var(--accent); } }
 
 /* 「こんなこと、ありませんか？」のイラスト */
 .problems-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); align-items: center; gap: 12px 40px; margin-bottom: 8px; }
