@@ -645,3 +645,11 @@ body { overflow-x: clip; }
 .zukai-related { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 13px; }
 .zukai-related a { color: var(--accent); text-decoration: none; }
 .zukai-related a:hover { text-decoration: underline; }
+
+/* 定理: 科目の絞り込み・なぜ成り立つか */
+.course-chips { margin-bottom: 4px; }
+.course-chips .chip { font-size: 12px; padding: 3px 9px; }
+.theorem-why { margin: 6px 0 10px; border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--surface-2); }
+.theorem-why summary { cursor: pointer; display: flex; align-items: center; gap: 4px; list-style: revert; }
+.theorem-why .why-hint { font-size: 12px; color: var(--muted); }
+.theorem-why p { margin: 8px 0 2px; font-size: 14px; line-height: 1.9; }

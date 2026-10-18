@@ -49,3 +49,13 @@ describe('定理の手引き', () => {
     expect(bad).toEqual([])
   })
 })
+
+describe('なぜ成り立つか', () => {
+  it('すべての定理にあり、数式が描ける', async () => {
+    const { PROOFS } = await import('./proofs')
+    expect(THEOREMS.filter((t) => !PROOFS[t.id]).map((t) => t.id)).toEqual([])
+    const bad: string[] = []
+    for (const [id, s] of Object.entries(PROOFS)) for (const x of inline(s)) if (ok(x) !== true) bad.push(`${id}: ${x} → ${ok(x)}`)
+    expect(bad).toEqual([])
+  })
+})
