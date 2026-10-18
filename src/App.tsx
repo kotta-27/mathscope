@@ -14,13 +14,14 @@ const GeometryTab = lazy(() => import('./tabs/GeometryTab').then((m) => ({ defau
 const StepsTab = lazy(() => import('./tabs/StepsTab').then((m) => ({ default: m.StepsTab })))
 const TheoremsTab = lazy(() => import('./tabs/TheoremsTab').then((m) => ({ default: m.TheoremsTab })))
 
+/** header: ヘッダーに出すか。ほかはホームのカードや定理ページのリンクから入る（URL はそのまま使える） */
 const TABS = [
   { id: 'home', label: 'ホーム', desc: '数式が、景色になる。', el: () => <HomeTab /> },
-  { id: 'graph', label: 'グラフ', desc: 'パラメータを動かして形の変化を見る', el: () => <GraphTab /> },
+  { id: 'graph', header: true, label: 'グラフ', desc: 'パラメータを動かして形の変化を見る', el: () => <GraphTab /> },
   { id: 'structure', label: '構造', desc: '式を部品に分けて役割と値を見る', el: () => <StructureTab /> },
   { id: 'geometry', label: '図解', desc: '基本のしくみを動く図で見る（関数・微積・ベクトル・確率）', el: () => <GeometryTab /> },
   { id: 'steps', label: '式変形', desc: '展開・因数分解・平方完成・方程式・微分を 1 手ずつ追う', el: () => <StepsTab /> },
-  { id: 'theorems', label: '定理', desc: '分野ごとの有名な定理と使いどころ', el: () => <TheoremsTab /> },
+  { id: 'theorems', header: true, label: '定理', desc: '分野ごとの有名な定理と使いどころ', el: () => <TheoremsTab /> },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -63,7 +64,7 @@ export default function App() {
         </a>
         <div className="header-nav">
           <nav className="tabs">
-            {TABS.filter((t) => t.id !== 'home').map((t) => (
+            {TABS.filter((t) => 'header' in t).map((t) => (
               <button
                 key={t.id}
                 className={`tab ${tab === t.id ? 'on' : ''}`}
@@ -101,6 +102,11 @@ export default function App() {
           <span>Math<span className="wordmark-scope">scope</span></span>
         </a>
         <span>数式が、景色になる。</span>
+        <nav className="site-footer-tools" aria-label="ほかの道具">
+          {TABS.filter((t) => t.id !== 'home' && !('header' in t)).map((t) => (
+            <a key={t.id} href={`#${t.id}`}>{t.label}</a>
+          ))}
+        </nav>
         <a href="https://github.com/kotta-27/mathscope" target="_blank" rel="noreferrer">
           GitHub
         </a>
