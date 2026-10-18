@@ -213,6 +213,13 @@ check('グラフ: 凡例・横軸 t・表示名', await b.evaluate(`return docum
 await b.evaluate(`document.querySelectorAll('.legend-item')[1].click()`)
 await sleep(300)
 check('グラフ: 凡例を押すと隠れる', await b.evaluate(`return document.querySelectorAll('.legend-item.off').length === 1 && location.hash.includes('hide=1')`) || await b.evaluate(`return document.querySelectorAll('.legend-item.off').length === 1`))
+// 定理: 式の部品を押すと、式の同じ部分が光る
+await b.goto('about:blank')
+await b.goto(BASE + '#theorems?id=law-of-cosines')
+await b.waitFor(`document.querySelector('.part-row')`)
+await b.evaluate(`document.querySelectorAll('.part-row')[2].click()`)
+await sleep(200)
+check('定理: 式の部品を光らせる', await b.evaluate(`return document.querySelectorAll('.part-row').length === 3 && document.querySelector('.theorem-statement .katex-mathml annotation').textContent.includes('textcolor')`))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')

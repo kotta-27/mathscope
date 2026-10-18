@@ -59,3 +59,30 @@ describe('なぜ成り立つか', () => {
     expect(bad).toEqual([])
   })
 })
+
+describe('式の部品', () => {
+  it('部品は主張の式の中にあり、光らせても KaTeX で描ける', async () => {
+    const { PARTS, highlight } = await import('./parts')
+    const bad: string[] = []
+    for (const [id, parts] of Object.entries(PARTS)) {
+      const t = THEOREMS.find((x) => x.id === id)
+      if (!t) {
+        bad.push(`${id}: 定理がない`)
+        continue
+      }
+      for (const [tex, desc] of parts) {
+        if (!t.statement.includes(tex)) bad.push(`${id}: 「${tex}」が主張にない`)
+        const res = ok(highlight(t.statement, tex, '#e4572e'), true)
+        if (res !== true) bad.push(`${id}: 「${tex}」を光らせると ${res}`)
+        if (ok(tex) !== true) bad.push(`${id}: 部品「${tex}」が描けない`)
+        for (const x of inline(desc)) if (ok(x) !== true) bad.push(`${id}: 説明の ${x}`)
+      }
+    }
+    expect(bad).toEqual([])
+  })
+  it('言葉だけの主張を除き、すべての定理に部品がある', async () => {
+    const { PARTS } = await import('./parts')
+    const wordsOnly = ['fundamental-algebra', 'monotone-convergence', 'inscribed-angle', 'extreme-value']
+    expect(THEOREMS.filter((t) => !PARTS[t.id] && !wordsOnly.includes(t.id)).map((t) => t.id)).toEqual([])
+  })
+})
