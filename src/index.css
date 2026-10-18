@@ -686,3 +686,15 @@ body { overflow-x: clip; }
 /* 表示名のあるスライダー: 名前の列を広げ、「振幅 A」と 1 行に並べる */
 .slider:not(.stack):has(.slider-label) { grid-template-columns: auto 1fr 68px auto; }
 .slider:not(.stack) .slider-name:has(.slider-label) { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+
+/* 式の部品 */
+.formula-parts { margin: -4px 0 12px; }
+.formula-parts ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; }
+.part-row { width: 100%; display: grid; grid-template-columns: minmax(80px, max-content) 1fr; align-items: center; gap: 4px 14px; padding: 5px 10px; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; font-size: 14px; }
+.part-row:hover, .part-row.on { background: color-mix(in srgb, #e4572e 10%, transparent); border-color: color-mix(in srgb, #e4572e 35%, transparent); }
+.part-row[aria-pressed='true'] { border-color: #e4572e; }
+.part-tex { overflow-x: auto; max-width: 280px; }
+.part-row.on .part-tex { color: #e4572e; }
+.part-desc { color: var(--muted); line-height: 1.6; }
+.part-row.on .part-desc { color: var(--text); }
+@media (max-width: 640px) { .part-row { grid-template-columns: 1fr; gap: 2px; } .part-tex { max-width: 100%; } }

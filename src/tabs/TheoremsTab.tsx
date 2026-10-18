@@ -3,6 +3,7 @@ import { flushHash, hrefTo, readHash, useSyncHash } from '../lib/route'
 import { COURSES, TOPICS, type Course } from '../lib/courses'
 import { GUIDE } from '../lib/guide'
 import { PROOFS } from '../lib/proofs'
+import { PARTS, highlight } from '../lib/parts'
 import { matches, norm } from '../lib/search'
 import { track } from '../lib/analytics'
 import { MathText } from '../components/MathText'
@@ -240,9 +241,7 @@ function TheoremCard({ t }: { t: Theorem }) {
           <MathText text={g.gist} />
         </p>
       )}
-      <div className="theorem-statement">
-        <Tex block tex={t.statement} />
-      </div>
+      <Statement t={t} />
       {Figure && (
         <ErrorBoundary label="この図">
           <FigScope id={t.id}>
@@ -323,5 +322,54 @@ function TheoremCard({ t }: { t: Theorem }) {
         </nav>
       )}
     </article>
+  )
+}
+
+const HL = '#e4572e'
+
+/**
+ * 主張の式と、その部品の説明。
+ * 部品にマウスを乗せる（指では押す）と、式の同じ部分が色で光る。
+ */
+function Statement({ t }: { t: Theorem }) {
+  const parts = PARTS[t.id]
+  const [active, setActive] = useState<number | null>(null)
+  const [pinned, setPinned] = useState<number | null>(null)
+  const cur = active ?? pinned
+  const tex = parts && cur !== null ? highlight(t.statement, parts[cur][0], HL) : t.statement
+  return (
+    <>
+      <div className="theorem-statement">
+        <Tex block tex={tex} />
+      </div>
+      {parts && (
+        <div className="formula-parts" aria-label="式の部品">
+          <span className="tag">式の部品</span>
+          <ul>
+            {parts.map(([ptex, desc], i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  className={`part-row ${cur === i ? 'on' : ''}`}
+                  aria-pressed={pinned === i}
+                  onPointerEnter={(e) => e.pointerType === 'mouse' && setActive(i)}
+                  onPointerLeave={(e) => e.pointerType === 'mouse' && setActive(null)}
+                  onFocus={() => setActive(i)}
+                  onBlur={() => setActive(null)}
+                  onClick={() => setPinned(pinned === i ? null : i)}
+                >
+                  <span className="part-tex">
+                    <Tex tex={ptex} />
+                  </span>
+                  <span className="part-desc">
+                    <MathText text={desc} />
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
   )
 }
