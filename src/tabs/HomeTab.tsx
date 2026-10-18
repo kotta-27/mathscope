@@ -50,6 +50,40 @@ const USECASES: { verb: string; tab: string; text: ReactNode; href: string; art:
   },
 ]
 
+/** 「こんなこと、ありませんか？」: よくあるつまずきと、それに効く画面 */
+const PROBLEMS: { pain: string; answer: string; label: string; href: string }[] = [
+  {
+    pain: '数式を見ているだけでは、グラフの形がイメージできない',
+    answer: '式の中の文字をスライダーで動かすと、形の変わり方が目で見える。',
+    label: 'グラフで動かす',
+    href: hrefTo('graph', { f: 'a*(x - p)^2 + q', p: -2, q: -1, play: 'p', trail: '1' }),
+  },
+  {
+    pain: '公式は覚えたけど、どうしてこうなるのかが分からない',
+    answer: '定理ごとに、動かせる図と「なぜ成り立つか」の筋道がある。',
+    label: '余弦定理で見る',
+    href: hrefTo('theorems', { id: 'law-of-cosines' }),
+  },
+  {
+    pain: '解答の途中式が、どこで何をしたのか追えない',
+    answer: '式変形を 1 手ずつ再生し、書き換えた所を色で示す。',
+    label: '平方完成を追う',
+    href: hrefTo('steps', { mode: 'complete', f: '2x^2 - 8x + 3' }),
+  },
+  {
+    pain: '式に並ぶ記号が、それぞれ何を表しているのか分からない',
+    answer: '式を部品に分けて説明し、指を乗せた部分を式の中で光らせる。',
+    label: 'ベイズの定理で見る',
+    href: hrefTo('theorems', { id: 'bayes' }),
+  },
+  {
+    pain: '授業で動きを見せたいけれど、準備に時間をかけられない',
+    answer: '状態ごと共有できるリンクを開くだけ。大きな文字の発表モードもある。',
+    label: '動く図を開く',
+    href: hrefTo('geometry', { demo: 'deriv' }),
+  },
+]
+
 /** 書き方と読み方の対応（数式ライブラリを使わずに描けるよう、読み方は TeX で持つ） */
 const READINGS: [string, string][] = [
   ['x² − 2x − 3', 'x^2-2x-3'],
@@ -140,6 +174,27 @@ export function HomeTab() {
           </form>
         </div>
         <HeroCarousel />
+      </section>
+
+      <section className="problems">
+        <SectionHead eyebrow="Problems" title="こんなこと、ありませんか？" lead="数学でつまずくのは、式の向こうにある形や理由が見えないとき。Mathscope は、それを見えるようにする。" />
+        <ol className="problem-list">
+          {PROBLEMS.map((p, i) => (
+            <li key={p.label} className="problem">
+              <p className="problem-pain">
+                <span className="problem-num">{String(i + 1).padStart(2, '0')}</span>
+                {p.pain}
+              </p>
+              <span className="problem-arrow" aria-hidden>
+                →
+              </span>
+              <div className="problem-answer">
+                <p>{p.answer}</p>
+                <a href={p.href}>{p.label} →</a>
+              </div>
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="usecases">

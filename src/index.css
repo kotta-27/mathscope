@@ -698,3 +698,18 @@ body { overflow-x: clip; }
 .part-desc { color: var(--muted); line-height: 1.6; }
 .part-row.on .part-desc { color: var(--text); }
 @media (max-width: 640px) { .part-row { grid-template-columns: 1fr; gap: 2px; } .part-tex { max-width: 100%; } }
+
+/* ホーム: こんなこと、ありませんか？ */
+.problem-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.problem { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px 20px; padding: 18px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+.problem-pain { margin: 0; display: flex; align-items: baseline; gap: 14px; font-size: 16px; font-weight: 600; line-height: 1.6; }
+.problem-num { flex: none; font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.problem-arrow { color: var(--muted); font-size: 18px; }
+.problem-answer p { margin: 0 0 4px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.problem-answer a { color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; }
+.problem-answer a:hover { text-decoration: underline; }
+@media (max-width: 760px) {
+  .problem { grid-template-columns: 1fr; gap: 8px; padding: 16px 16px; }
+  .problem-arrow { display: none; }
+  .problem-answer { padding-left: 32px; }
+}

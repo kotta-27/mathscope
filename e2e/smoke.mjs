@@ -220,6 +220,13 @@ await b.waitFor(`document.querySelector('.part-row')`)
 await b.evaluate(`document.querySelectorAll('.part-row')[2].click()`)
 await sleep(200)
 check('定理: 式の部品を光らせる', await b.evaluate(`return document.querySelectorAll('.part-row').length === 3 && document.querySelector('.theorem-statement .katex-mathml annotation').textContent.includes('textcolor')`))
+// ホーム: こんなこと、ありませんか？
+await b.goto('about:blank')
+await b.goto(BASE + '#home')
+await b.waitFor(`document.querySelectorAll('.problem').length === 5`)
+await b.evaluate(`document.querySelectorAll('.problem-answer a')[2].click()`)
+await b.waitFor(`location.hash.startsWith('#steps') && document.querySelector('.math-input input')?.value === '2x^2 - 8x + 3'`)
+check('ホーム: 悩みから式変形へ', true)
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')
