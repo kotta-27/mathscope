@@ -57,7 +57,7 @@ export default function App() {
         <a className="brand" href="#home">
           <img className="logo" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
           <div>
-            <h1>Mathscope</h1>
+            <h1>Math<span className="wordmark-scope">scope</span></h1>
             <p>{current.desc}</p>
           </div>
         </a>
@@ -96,7 +96,7 @@ export default function App() {
       <footer className="site-footer">
         <a className="site-footer-brand" href="#home">
           <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={22} height={22} />
-          <span>Mathscope</span>
+          <span>Math<span className="wordmark-scope">scope</span></span>
         </a>
         <span>数式が、景色になる。</span>
         <a href="https://github.com/kotta-27/mathscope" target="_blank" rel="noreferrer">

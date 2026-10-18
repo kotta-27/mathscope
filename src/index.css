@@ -62,6 +62,7 @@ button, input { font: inherit; color: inherit; }
 .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand h1 { font-size: 20px; margin: 0; letter-spacing: 0.02em; }
+.wordmark-scope { color: var(--accent); }
 .brand p { margin: 0; color: var(--muted); font-size: 13px; }
 .logo { width: 40px; height: 40px; display: block; }
 .tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
