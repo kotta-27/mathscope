@@ -713,3 +713,18 @@ body { overflow-x: clip; }
   .problem-arrow { display: none; }
   .problem-answer { padding-left: 32px; }
 }
+
+/* 「こんなこと、ありませんか？」のイラスト */
+.problems-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); align-items: center; gap: 12px 40px; margin-bottom: 8px; }
+.problems-art { width: 100%; height: auto; display: block; }
+.pa-bg { fill: #dfeaf1; }
+.pa-bubble { fill: #f2f0ea; }
+.pa-clear { fill: #ffffff; }
+.pa-axis { stroke: #9a9ea6; fill: none; }
+.pa-desk { fill: #c9c4b8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pa-bg { fill: #1d2633; } :root:not([data-theme="light"]) .pa-bubble { fill: #262b33; } :root:not([data-theme="light"]) .pa-clear { fill: #e8e6e1; } :root:not([data-theme="light"]) .pa-desk { fill: #3a3f46; } }
+:root[data-theme="dark"] .pa-bg { fill: #1d2633; }
+:root[data-theme="dark"] .pa-bubble { fill: #262b33; }
+:root[data-theme="dark"] .pa-clear { fill: #e8e6e1; }
+:root[data-theme="dark"] .pa-desk { fill: #3a3f46; }
+@media (max-width: 760px) { .problems-head { grid-template-columns: minmax(0, 1fr); } .problems-art { max-width: 300px; margin: 0 auto; } }
