@@ -8,12 +8,16 @@ import { parseExpr, type Parsed } from './math'
  * - 不等式: y > x^2、x^2 + y^2 <= 4 → 領域
  * - 媒介変数: (cos t, sin 2t) → t を 0〜2π で動かした点
  * - 極座標: r = 1 + cos θ → θ を 0〜2π で動かした点
+ * - 関数の定義: f(x) = x^2（グラフも描き、ほかの行で f(x − 1) のように使える）
+ * - 定数の定義: k = 2（スライダーにせず、ほかの行で使える）
  */
 export type Op = '<' | '<=' | '>' | '>='
 type Ok = Extract<Parsed, { ok: true }>
 
 export type Curve =
-  | { kind: 'fn'; f: Ok }
+  /** name があれば関数の定義（f(x) = …）。arg は横軸の変数 */
+  | { kind: 'fn'; f: Ok; arg: string; name?: string }
+  | { kind: 'const'; name: string; v: Ok }
   | { kind: 'implicit'; F: Ok }
   | { kind: 'region'; F: Ok; op: Op }
   | { kind: 'param'; x: Ok; y: Ok }
@@ -35,6 +39,7 @@ export type GraphExpr =
 
 const VARS: Record<Curve['kind'], string[]> = {
   fn: ['x'],
+  const: [],
   implicit: ['x', 'y'],
   region: ['x', 'y'],
   param: ['t'],
@@ -59,20 +64,28 @@ function topLevel(s: string, re: RegExp): { i: number; m: string } | null {
 const fail = (error: string, normalized: string, pos?: number): GraphExpr => ({ ok: false, parsed: { ok: false, error, normalized, pos } })
 
 /** 左辺・右辺をそれぞれ読み、エラーにはどちらの辺かを付ける */
-function sides(l: string, r: string, op: string) {
-  const a = parseExpr(l)
-  const b = parseExpr(r)
+function sides(l: string, r: string, op: string, fns: readonly string[]) {
+  const a = parseExpr(l, fns)
+  const b = parseExpr(r, fns)
   const normalized = `${a.normalized} ${op} ${b.normalized}`
   if (!a.ok) return { error: fail(`左辺: ${a.error}`, normalized) }
   if (!b.ok) return { error: fail(`右辺: ${b.error}`, normalized) }
-  const F = parseExpr(`(${a.normalized}) - (${b.normalized})`)
+  const F = parseExpr(`(${a.normalized}) - (${b.normalized})`, fns)
   if (!F.ok) return { error: fail(F.error, normalized) }
   return { a, b, F, normalized }
 }
 
 const OP_TEX: Record<Op, string> = { '<': '<', '<=': '\\le', '>': '>', '>=': '\\ge' }
 
-export function readGraphExpr(src: string): GraphExpr {
+/** 行の書き方から、名前をつけた関数・定数の名前を拾う（ほかの行を読む前に使う） */
+export function definedName(src: string): { name: string; fn: boolean } | null {
+  const m = /^\s*([A-Za-z])\s*(\(\s*([A-Za-z]|θ|theta)\s*\))?\s*=(?!=)/.exec(src)
+  if (!m || (!m[2] && ['x', 'y'].includes(m[1])) || (m[2] && m[1] === 'y')) return null
+  return { name: m[1], fn: !!m[2] }
+}
+
+/** fns: ほかの行で名前をつけた関数の名前 */
+export function readGraphExpr(src: string, fns: readonly string[] = []): GraphExpr {
   // NFKC は ² を 2 にしてしまうので使わず、見分けに使う記号だけを半角にする
   const s = src
     .replace(/[＜]/g, '<')
@@ -101,8 +114,8 @@ export function readGraphExpr(src: string): GraphExpr {
     const inner = s.slice(1, -1)
     const comma = topLevel(inner, /,/)
     if (comma) {
-      const a = parseExpr(inner.slice(0, comma.i))
-      const b = parseExpr(inner.slice(comma.i + 1))
+      const a = parseExpr(inner.slice(0, comma.i), fns)
+      const b = parseExpr(inner.slice(comma.i + 1), fns)
       const normalized = `(${a.normalized}, ${b.normalized})`
       if (!a.ok) return fail(`x 座標: ${a.error}`, normalized)
       if (!b.ok) return fail(`y 座標: ${b.error}`, normalized)
@@ -113,9 +126,9 @@ export function readGraphExpr(src: string): GraphExpr {
 
   const cmp = topLevel(s, /<=|>=|<|>|=/)
   if (!cmp) {
-    const f = parseExpr(s)
+    const f = parseExpr(s, fns)
     if (!f.ok) return { ok: false, parsed: f }
-    return done({ kind: 'fn', f }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
+    return done({ kind: 'fn', f, arg: 'x' }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
   }
 
   const l = s.slice(0, cmp.i).trim()
@@ -125,24 +138,42 @@ export function readGraphExpr(src: string): GraphExpr {
 
   if (cmp.m === '=') {
     // y = f(x) / f(x) = …（右辺に y がなければ、ふつうの関数）
-    if (/^(y|f\(x\))$/.test(l.replace(/\s+/g, ''))) {
-      const f = parseExpr(r)
+    if (l.replace(/\s+/g, '') === 'y') {
+      const f = parseExpr(r, fns)
       if (!f.ok) return { ok: false, parsed: f }
-      if (!f.symbols.includes('y')) return done({ kind: 'fn', f }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
+      if (!f.symbols.includes('y')) return done({ kind: 'fn', f, arg: 'x' }, f, [f.node], ([t]) => `y = ${t}`, f.symbols)
+    }
+    // 関数の定義 f(x) = …（自分自身は使えない）
+    const def = definedName(`${l}=`)
+    if (def?.fn) {
+      const arg = /\(\s*([A-Za-z]+)\s*\)/.exec(l)![1]
+      const own = fns.filter((n) => n !== def.name)
+      const f = parseExpr(r, own)
+      if (!f.ok) return { ok: false, parsed: f }
+      const curve: Curve = { kind: 'fn', f, arg, name: def.name }
+      const res = done(curve, { ...f, normalized: `${def.name}(${arg}) = ${f.normalized}` }, [f.node], ([t]) => `${def.name}(${arg === 'theta' ? '\\theta' : arg}) = ${t}`, f.symbols)
+      return res.ok ? { ...res, symbols: res.symbols.filter((x) => x !== arg) } : res
     }
     // 極座標: r = f(θ)
     if (l === 'r') {
-      const f = parseExpr(r)
+      const f = parseExpr(r, fns)
       if (!f.ok) return { ok: false, parsed: f }
       if (f.symbols.includes('theta')) return done({ kind: 'polar', r: f }, { ...f, normalized: `r = ${f.normalized}` }, [f.node], ([t]) => `r = ${t}`, f.symbols)
     }
-    const x = sides(l, r, '=')
+    // 定数の定義 k = …（右辺に x も y もない）
+    if (def && !def.fn) {
+      const v = parseExpr(r, fns)
+      if (!v.ok) return { ok: false, parsed: v }
+      if (!v.symbols.includes('x') && !v.symbols.includes('y') && !v.symbols.includes(def.name))
+        return done({ kind: 'const', name: def.name, v }, { ...v, normalized: `${def.name} = ${v.normalized}` }, [v.node], ([t]) => `${def.name} = ${t}`, v.symbols)
+    }
+    const x = sides(l, r, '=', fns)
     if ('error' in x) return x.error as GraphExpr
     return done({ kind: 'implicit', F: x.F }, { ...x.F, normalized: x.normalized }, [x.a.node, x.b.node], ([a, b]) => `${a} = ${b}`, x.F.symbols)
   }
 
   const op = cmp.m as Op
-  const x = sides(l, r, op)
+  const x = sides(l, r, op, fns)
   if ('error' in x) return x.error as GraphExpr
   return done({ kind: 'region', F: x.F, op }, { ...x.F, normalized: x.normalized }, [x.a.node, x.b.node], ([a, b]) => `${a} ${OP_TEX[op]} ${b}`, x.F.symbols)
 }

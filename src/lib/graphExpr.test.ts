@@ -39,3 +39,29 @@ describe('グラフの式の種類', () => {
     expect(kind('x < y < 2')).toMatch(/1 つだけ/)
   })
 })
+
+describe('名前をつけた関数・定数', () => {
+  it('関数の定義と、ほかの行での利用', () => {
+    const f = readGraphExpr('f(x) = x^2 + a')
+    expect(f.ok && f.curve.kind === 'fn' && f.curve.name).toBe('f')
+    expect(f.ok && f.symbols).toEqual(['a'])
+    const g = readGraphExpr('f(x - k) + 1', ['f'])
+    expect(g.ok && g.curve.kind).toBe('fn')
+    expect(g.ok && g.symbols).toEqual(['k'])
+    // 定義していない名前にかっこが続くときは掛け算
+    const h = readGraphExpr('a(x - p)^2')
+    expect(h.ok && h.symbols).toEqual(['a', 'p'])
+  })
+  it('定数の定義', () => {
+    const k = readGraphExpr('k = 2a + 1')
+    expect(k.ok && k.curve.kind).toBe('const')
+    expect(k.ok && k.curve.kind === 'const' && k.curve.name).toBe('k')
+    // x や y を含むなら定数ではなく関係式
+    expect(readGraphExpr('k = x^2').ok && (readGraphExpr('k = x^2') as { curve: { kind: string } }).curve.kind).toBe('implicit')
+  })
+  it('横軸の変数が x 以外の関数', () => {
+    const f = readGraphExpr('g(t) = sin(w*t)')
+    expect(f.ok && f.curve.kind === 'fn' && f.curve.arg).toBe('t')
+    expect(f.ok && f.symbols).toEqual(['w'])
+  })
+})

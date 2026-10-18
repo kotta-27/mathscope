@@ -199,6 +199,11 @@ await b.evaluate(`document.querySelector('.saves-open').click()`)
 await b.waitFor(`document.querySelector('.math-input input')?.value === 'x^3 - k*x'`)
 check('グラフ: 名前をつけて保存して開く', true)
 await b.evaluate(`localStorage.removeItem('mathscope-graph-saves')`)
+// グラフ: 関数・定数に名前をつけて、ほかの行で使う
+await b.goto('about:blank')
+await b.goto(BASE + '#graph?' + ['f(x) = x^2', 'k = 2', 'f(x - k) + a'].map((f) => 'f=' + encodeURIComponent(f)).join('&'))
+await b.waitFor(`document.querySelectorAll('path.curve').length >= 2`)
+check('グラフ: 関数・定数に名前をつける', await b.evaluate(`return document.querySelectorAll('.mi-error').length === 0 && [...document.querySelectorAll('.param-row')].length === 1 && [...document.querySelectorAll('.pt-label')].some(t => t.textContent.startsWith('頂点 (2, 1)'))`))
 // 定理の図の状態も URL に残る
 await b.goto('about:blank')
 await b.goto(BASE + '#theorems?id=binomial-dist')

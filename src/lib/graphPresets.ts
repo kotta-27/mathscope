@@ -70,4 +70,12 @@ export const PRESET_GROUPS: { unit: string; items: Preset[] }[] = [
       { label: 'ハート', rows: ['(x^2 + y^2 - 1)^3 = x^2*y^3'] },
     ],
   },
+  {
+    unit: '名前をつけて組み立てる',
+    items: [
+      { label: '関数の平行移動 f(x − p) + q', rows: ['f(x) = x^3 - 3x', 'f(x - p) + q'], params: { p: 2, q: 1 }, play: 'p' },
+      { label: '合成関数 f(g(x))', rows: ['f(x) = x^2', 'g(x) = sin(x)', 'f(g(x))', 'g(f(x))'] },
+      { label: '定数で式をまとめる', rows: ['w = 2*pi/T', 'A*sin(w*x)'], params: { A: 2, T: 4 } },
+    ],
+  },
 ]
