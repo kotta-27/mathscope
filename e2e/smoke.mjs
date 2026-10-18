@@ -20,8 +20,9 @@ await b.evaluate('history.back()')
 await sleep(1500)
 check('戻るで前のタブへ', (await b.evaluate('return location.hash')) === '#graph' && (await b.evaluate(`return document.querySelector('.tab.on')?.textContent`)) === 'グラフ')
 await b.evaluate('history.back()')
-await sleep(1500)
-check('さらに戻るとホーム', (await b.evaluate('return !!document.querySelector(".hero-title")')))
+// 公開版では読み込みに時間がかかることがあるので、決まった秒数ではなく、ホームが出るまで待つ
+const home = await b.waitFor(`document.querySelector('.hero-title')`, 10000)
+check('さらに戻るとホーム', home)
 
 // スライダーで曲線が変わる
 await b.goto(BASE + '#graph')
