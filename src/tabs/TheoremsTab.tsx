@@ -359,7 +359,8 @@ function Statement({ t }: { t: Theorem }) {
                   onClick={() => setPinned(pinned === i ? null : i)}
                 >
                   <span className="part-tex">
-                    <Tex tex={ptex} />
+                    {/* 分数や Σ が小さくならないよう、別行立ての大きさで描く */}
+                    <Tex tex={`\\displaystyle ${ptex}`} />
                   </span>
                   <span className="part-desc">
                     <MathText text={desc} />
